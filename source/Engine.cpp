@@ -198,8 +198,10 @@ Engine::Engine(PlayerInfo &player)
 {
 	zoom = Preferences::ViewZoom();
 	
+#ifndef ES_NO_THREADS
 	// Start the thread for doing calculations.
 	calcThread = thread(&Engine::ThreadEntryPoint, this);
+#endif // ES_NO_THREADS
 	
 	if(!player.IsLoaded() || !player.GetSystem())
 		return;
@@ -245,12 +247,14 @@ Engine::Engine(PlayerInfo &player)
 
 Engine::~Engine()
 {
+#ifndef ES_NO_THREADS
 	{
 		unique_lock<mutex> lock(swapMutex);
 		terminate = true;
 	}
 	condition.notify_all();
 	calcThread.join();
+#endif // ES_NO_THREADS
 }
 
 
@@ -432,9 +436,11 @@ void Engine::Place(const shared_ptr<Ship> &ship)
 // Wait for the previous calculations (if any) to be done.
 void Engine::Wait()
 {
+#ifndef ES_NO_THREADS
 	unique_lock<mutex> lock(swapMutex);
 	while(calcTickTock != drawTickTock)
 		condition.wait(lock);
+#endif // ES_NO_THREADS
 }
 
 
@@ -865,12 +871,19 @@ void Engine::Step(bool isActive)
 // Begin the next step of calculations.
 void Engine::Go()
 {
+#ifndef ES_NO_THREADS
 	{
 		unique_lock<mutex> lock(swapMutex);
 		++step;
 		drawTickTock = !drawTickTock;
 	}
 	condition.notify_all();
+#else
+	++step;
+	drawTickTock = !drawTickTock;
+	CalculateStep();
+	calcTickTock = drawTickTock;
+#endif // ES_NO_THREADS
 }
 
 
@@ -1267,6 +1280,7 @@ void Engine::EnterSystem()
 // Thread entry point.
 void Engine::ThreadEntryPoint()
 {
+#ifndef ES_NO_THREADS
 	while(true)
 	{
 		{
@@ -1287,6 +1301,7 @@ void Engine::ThreadEntryPoint()
 		}
 		condition.notify_one();
 	}
+#endif // ES_NO_THREADS
 }
 
 
