@@ -100,7 +100,7 @@ void FleetEditor::Render()
 	}
 
 	ImGui::SetNextWindowSize(ImVec2(550, 500), ImGuiCond_FirstUseEver);
-	if(!ImGui::Begin("Government Editor", &show))
+	if(!ImGui::Begin("Fleet Editor", &show))
 	{
 		if(IsDirty())
 			ImGui::PopStyleColor(3);
