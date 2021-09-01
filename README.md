@@ -9,7 +9,7 @@ This is a proof of concept plugin editor for Endless Sky. It uses [Dear ImGui](h
 - You can choose between 5 themes.
 - It doesn't support everything yet (more complicated nodes like `mission`, `conversation`, `event`, ... are missing).
 
-You can build this editor like the game (same build instructions) or use the CD generated artifacts for your OS.
+You can build this editor like the game (same build instructions) or [download it here](https://github.com/quyykk/editor/releases) (click on "Assets").
 
 ![editor-showcase](https://user-images.githubusercontent.com/85879619/131727841-bd3bdfc0-32ce-41c0-bfd2-b5223c37c806.png)
 
