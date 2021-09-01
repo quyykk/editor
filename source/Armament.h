@@ -51,6 +51,7 @@ public:
 	void FinishLoading();
 	// Reload all weapons (because a day passed in-game).
 	void ReloadAll();
+	void UninstallAll();
 	
 	// Swap the weapons in the given two hardpoints.
 	void Swap(int first, int second);
@@ -79,8 +80,26 @@ private:
 	std::map<const Outfit *, int> streamReload;
 	std::vector<Hardpoint> hardpoints;
 
+	friend bool operator==(const Armament &lhs, const Armament &rhs);
+	friend bool operator!=(const Armament &lhs, const Armament &rhs);
+
 	friend class ShipEditor;
 };
+
+
+
+
+inline bool operator==(const Armament &lhs, const Armament &rhs)
+{
+	return lhs.hardpoints == rhs.hardpoints;
+}
+
+
+
+inline bool operator!=(const Armament &lhs, const Armament &rhs)
+{
+	return !(lhs == rhs);
+}
 
 
 

@@ -162,7 +162,16 @@ void SystemEditor::Render()
 
 	if(reset)
 	{
-		*object = *GameData::defaultSystems.Get(object->name);
+		bool found = false;
+		for(auto &&change : Changes())
+			if(change.Name() == object->Name())
+			{
+				*object = change;
+				found = true;
+				break;
+			}
+		if(!found)
+			*object = *GameData::baseSystems.Get(object->name);
 		for(auto &&link : object->links)
 			const_cast<System *>(link)->Link(object);
 		UpdateMap();
@@ -798,7 +807,7 @@ void SystemEditor::RenderObject(StellarObject &object, int index, int &nested, b
 
 
 
-void SystemEditor::WriteObject(DataWriter &writer, const System *system, const StellarObject *object)
+void SystemEditor::WriteObject(DataWriter &writer, const System *system, const StellarObject *object, bool add)
 {
 	// Calculate the nesting of this object. We follow parent indices until we reach
 	// the root node.
@@ -813,16 +822,21 @@ void SystemEditor::WriteObject(DataWriter &writer, const System *system, const S
 	for(i = 0; i < nested; ++i)
 		writer.BeginChild();
 
+	if(add && !nested)
+		writer.WriteToken("add");
 	writer.WriteToken("object");
+
 	if(object->GetPlanet())
 		writer.WriteToken(object->GetPlanet()->TrueName());
 	writer.Write();
 
 	writer.BeginChild();
-	if(object->HasSprite())
+	if(object->GetSprite())
 		writer.Write("sprite", object->GetSprite()->Name());
-	writer.Write("distance", object->Distance());
-	writer.Write("period", 360. / object->Speed());
+	if(object->distance)
+		writer.Write("distance", object->Distance());
+	if(object->speed)
+		writer.Write("period", 360. / object->Speed());
 	if(object->Offset())
 		writer.Write("offset", object->Offset());
 	writer.EndChild();
@@ -835,62 +849,120 @@ void SystemEditor::WriteObject(DataWriter &writer, const System *system, const S
 
 void SystemEditor::WriteToFile(DataWriter &writer, const System *system)
 {
-	// FIXME: Before saving, it would be great to diff the modified system to the one stored on file.
-	// But unfortunately, the game doesn't save whether a system has been modified or not.
-	// This means that after reloading a plugin that modifies an existing system, the game will
-	// think that the modified system is the original one and we missave it.
+	const auto *diff = GameData::baseSystems.Has(system->name)
+		? GameData::baseSystems.Get(system->name)
+		: nullptr;
+
 	writer.Write("system", system->name);
 	writer.BeginChild();
 
-	writer.Write("pos", system->position.X(), system->position.Y());
-	if(system->government)
-		writer.Write("government", system->government->TrueName());
-	if(!system->music.empty())
-		writer.Write("music", system->music);
-	if(system->links.empty())
-		// If there are no links make sure that no other node adds some.
-		writer.Write("remove", "link");
-	for(auto &&link : system->links)
-		writer.Write("link", link->Name());
-	if(system->hidden)
-		writer.Write("hidden");
-	for(auto &&object : system->objects)
-		WriteObject(writer, system, &object);
-	for(auto &&asteroid : system->asteroids)
-		writer.Write(asteroid.Type() ? "minables" : "asteroids", asteroid.Type() ? asteroid.Type()->Name() : asteroid.Name(), asteroid.Count(), asteroid.Energy());
-	if(system->haze)
-		writer.Write("haze", system->haze->Name());
-	for(auto &&fleet : system->fleets)
-		writer.Write("fleet", fleet.Get()->Name(), fleet.Period());
-	for(auto &&hazard : system->hazards)
-		writer.Write("hazard", hazard.Get()->Name(), hazard.Period());
-	writer.Write("habitable", system->habitable);
-	writer.Write("belt", system->asteroidBelt);
-	if(system->jumpRange)
-		writer.Write("jump range", system->jumpRange);
-	if(system->extraHyperArrivalDistance == system->extraJumpArrivalDistance
-			&& system->extraHyperArrivalDistance)
-		writer.Write("arrival", system->extraHyperArrivalDistance);
-	else if(system->extraHyperArrivalDistance != system->extraJumpArrivalDistance)
+	if((!diff && system->hasPosition) || (diff && (system->hasPosition != diff->hasPosition || system->position != diff->position)))
+		writer.Write("pos", system->position.X(), system->position.Y());
+	if(!diff || system->government != diff->government)
 	{
-		writer.Write("arrival");
-		writer.BeginChild();
-		if(system->extraHyperArrivalDistance)
-			writer.Write("link", system->extraHyperArrivalDistance);
-		if(system->extraJumpArrivalDistance)
-			writer.Write("jump", system->extraJumpArrivalDistance);
-		writer.EndChild();
+		if(system->government)
+			writer.Write("government", system->government->TrueName());
+		else if(diff)
+			writer.Write("remove", "government");
 	}
-	for(auto &&trade : system->trade)
-		writer.Write("trade", trade.first, trade.second.base);
-
-	if(!system->attributes.empty() && (system->attributes.size() > 1 || *system->attributes.begin() != "uninhabited"))
+	if(!diff || system->music != diff->music)
 	{
-		writer.WriteToken("attributes");
-		for(auto &&attribute : system->attributes)
-			if(attribute != "uninhabited")
-				writer.WriteToken(attribute);
-		writer.Write();
+		if(!system->music.empty())
+			writer.Write("music", system->music);
+		else if(diff)
+			writer.Write("remove", "music");
+	}
+	WriteDiff(writer, "link", system->links, diff ? &diff->links : nullptr);
+	if(!diff || system->hidden != diff->hidden)
+	{
+		if(system->hidden)
+			writer.Write("hidden");
+		else if(diff)
+			writer.Write("remove hidden");
+	}
+
+	auto asteroids = system->asteroids;
+	asteroids.erase(std::remove_if(asteroids.begin(), asteroids.end(), [](const System::Asteroid &a) { return a.Type(); }), asteroids.end());
+	auto minables = system->asteroids;
+	minables.erase(std::remove_if(minables.begin(), minables.end(), [](const System::Asteroid &a) { return !a.Type(); }), minables.end());
+	auto diffAsteroids = diff ? diff->asteroids : system->asteroids;
+	diffAsteroids.erase(std::remove_if(diffAsteroids.begin(), diffAsteroids.end(), [](const System::Asteroid &a) { return a.Type(); }), diffAsteroids.end());
+	auto diffMinables = diff ? diff->asteroids : system->asteroids;
+	diffMinables.erase(std::remove_if(diffMinables.begin(), diffMinables.end(), [](const System::Asteroid &a) { return !a.Type(); }), diffMinables.end());
+	WriteDiff(writer, "asteroids", asteroids, diff ? &diffAsteroids : nullptr);
+	WriteDiff(writer, "minables", minables, diff ? &diffMinables : nullptr);
+
+	if(!diff || system->haze != diff->haze)
+	{
+		if(system->haze)
+			writer.Write("haze", system->haze->Name());
+		else if(diff)
+			writer.Write("remove", "haze");
+	}
+	WriteDiff(writer, "fleet", system->fleets, diff ? &diff->fleets : nullptr);
+	WriteDiff(writer, "hazard", system->hazards, diff ? &diff->hazards : nullptr);
+	if((!diff && system->habitable != 1000.) || (diff && system->habitable != diff->habitable))
+		writer.Write("habitable", system->habitable);
+	if((!diff && system->asteroidBelt != 1500.) || (diff && system->asteroidBelt != diff->asteroidBelt))
+		writer.Write("belt", system->asteroidBelt);
+	if((!diff && system->jumpRange)|| (diff && system->jumpRange != diff->jumpRange))
+		writer.Write("jump range", system->jumpRange);
+	if(!diff || system->extraHyperArrivalDistance != diff->extraHyperArrivalDistance
+			|| system->extraJumpArrivalDistance != diff->extraJumpArrivalDistance)
+	{
+		if(system->extraHyperArrivalDistance == system->extraJumpArrivalDistance
+				&& (diff || system->extraHyperArrivalDistance))
+			writer.Write("arrival", system->extraHyperArrivalDistance);
+		else if(system->extraHyperArrivalDistance != system->extraJumpArrivalDistance)
+		{
+			writer.Write("arrival");
+			writer.BeginChild();
+			if((!diff && system->extraHyperArrivalDistance) || system->extraHyperArrivalDistance != diff->extraHyperArrivalDistance)
+				writer.Write("link", system->extraHyperArrivalDistance);
+			if((!diff && system->extraJumpArrivalDistance) || system->extraJumpArrivalDistance != diff->extraJumpArrivalDistance)
+				writer.Write("jump", system->extraJumpArrivalDistance);
+			writer.EndChild();
+		}
+	}
+	if(!diff || system->trade != diff->trade)
+	{
+		if(!system->trade.empty())
+			for(auto &&trade : system->trade)
+				writer.Write("trade", trade.first, trade.second.base);
+		else if(diff)
+			writer.Write("remove", "trade");
+	}
+
+	auto systemAttributes = system->attributes;
+	auto diffAttributes = diff ? diff->attributes : system->attributes;
+	systemAttributes.erase("uninhabited");
+	diffAttributes.erase("uninhabited");
+	WriteDiff(writer, "attributes", systemAttributes, diff ? &diffAttributes : nullptr, true);
+
+	if(!diff || system->objects != diff->objects)
+	{
+		std::vector<const StellarObject *> toAdd;
+		if(diff && system->objects.size() > diff->objects.size())
+		{
+			std::transform(system->objects.begin() + diff->objects.size(), system->objects.end(),
+					back_inserter(toAdd), [](const StellarObject &obj) { return &obj; });
+
+			for(int i = 0; i < static_cast<int>(diff->objects.size()); ++i)
+				if(system->objects[i] != diff->objects[i])
+				{
+					toAdd.clear();
+					break;
+				}
+		}
+
+		if(!toAdd.empty())
+			for(auto &&object : toAdd)
+				WriteObject(writer, system, object, true);
+		else if(!system->objects.empty())
+			for(auto &&object : system->objects)
+				WriteObject(writer, system, &object);
+		else if(diff)
+			writer.Write("remove object");
 	}
 
 	writer.EndChild();

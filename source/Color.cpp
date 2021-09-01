@@ -12,6 +12,10 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 #include "Color.h"
 
+#include <cstring>
+
+using namespace std;
+
 
 
 // Greyscale color constructor.
@@ -79,4 +83,18 @@ Color Color::Additive(float alpha) const
 	result.color[3] = 0.f;
 	
 	return result;
+}
+
+
+
+bool operator==(const Color &lhs, const Color &rhs)
+{
+	return memcmp(lhs.color, rhs.color, sizeof(float) * 4);
+}
+
+
+
+bool operator!=(const Color &lhs, const Color &rhs)
+{
+	return !(lhs == rhs);
 }

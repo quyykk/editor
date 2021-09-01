@@ -139,6 +139,14 @@ void Armament::ReloadAll()
 
 
 
+void Armament::UninstallAll()
+{
+	for(auto &hardpoint : hardpoints)
+		hardpoint.Uninstall();
+}
+
+
+
 // Swap the weapons in the given two hardpoints.
 void Armament::Swap(int first, int second)
 {

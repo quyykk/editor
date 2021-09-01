@@ -144,7 +144,16 @@ void ShipyardEditor::Render()
 
 	if(reset)
 	{
-		*object = *GameData::defaultShipSales.Get(object->name);
+		bool found = false;
+		for(auto &&change : Changes())
+			if(change.Name() == object->Name())
+			{
+				*object = change;
+				found = true;
+				break;
+			}
+		if(!found)
+			*object = *GameData::baseShipSales.Get(object->name);
 		SetClean();
 	}
 	if(clone)
@@ -214,9 +223,24 @@ void ShipyardEditor::RenderShipyard()
 
 void ShipyardEditor::WriteToFile(DataWriter &writer, const Sale<Ship> *shipyard)
 {
+	const auto *diff = GameData::baseShipSales.Has(shipyard->name)
+		? GameData::baseShipSales.Get(shipyard->name)
+		: nullptr;
+
 	writer.Write("shipyard", shipyard->name);
 	writer.BeginChild();
-	for(auto it = object->begin(); it != object->end(); ++it)
-		writer.Write((*it)->ModelName());
+	if(diff)
+		WriteSorted(diff->AsBase(), [](const Ship *lhs, const Ship *rhs) { return lhs->TrueName() < rhs->TrueName(); },
+				[&writer, &shipyard](const Ship &ship)
+				{
+					if(!shipyard->Has(&ship))
+						writer.Write("remove", ship.TrueName());
+				});
+	WriteSorted(shipyard->AsBase(), [](const Ship *lhs, const Ship *rhs) { return lhs->TrueName() < rhs->TrueName(); },
+			[&writer, &diff](const Ship &ship)
+			{
+				if(!diff || !diff->Has(&ship))
+					writer.Write(ship.TrueName());
+			});
 	writer.EndChild();
 }

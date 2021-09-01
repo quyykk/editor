@@ -144,7 +144,16 @@ void OutfitterEditor::Render()
 
 	if(reset)
 	{
-		*object = *GameData::defaultOutfitSales.Get(object->name);
+		bool found = false;
+		for(auto &&change : Changes())
+			if(change.Name() == object->Name())
+			{
+				*object = change;
+				found = true;
+				break;
+			}
+		if(!found)
+			*object = *GameData::baseOutfitSales.Get(object->name);
 		SetClean();
 	}
 	if(clone)
@@ -214,9 +223,24 @@ void OutfitterEditor::RenderOutfitter()
 
 void OutfitterEditor::WriteToFile(DataWriter &writer, const Sale<Outfit> *outfitter)
 {
+	const auto *diff = GameData::baseOutfitSales.Has(outfitter->name)
+		? GameData::baseOutfitSales.Get(outfitter->name)
+		: nullptr;
+
 	writer.Write("outfitter", outfitter->name);
 	writer.BeginChild();
-	for(auto it = object->begin(); it != object->end(); ++it)
-		writer.Write((*it)->Name());
+	if(diff)
+		WriteSorted(diff->AsBase(), [](const Outfit *lhs, const Outfit *rhs) { return lhs->Name() < rhs->Name(); },
+				[&writer, &outfitter](const Outfit &outfit)
+				{
+					if(!outfitter->Has(&outfit))
+						writer.Write("remove", outfit.Name());
+				});
+	WriteSorted(outfitter->AsBase(), [](const Outfit *lhs, const Outfit *rhs) { return lhs->Name() < rhs->Name(); },
+			[&writer, &diff](const Outfit &outfit)
+			{
+				if(!diff || !diff->Has(&outfit))
+					writer.Write(outfit.Name());
+			});
 	writer.EndChild();
 }

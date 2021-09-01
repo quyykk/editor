@@ -124,6 +124,18 @@ void WriteSorted(const C<T, Args...> &container, A sortFn, B writeFn)
 	for(const auto &sit : sorted)
 		writeFn(*sit);
 }
+template <class T, template<class, class...> class C, class... Args, typename A, typename B>
+void WriteSorted(const C<const T *, Args...> &container, A sortFn, B writeFn)
+{
+	std::vector<const T *> sorted;
+	sorted.reserve(container.size());
+	for(const auto &it : container)
+		sorted.emplace_back(it);
+	std::sort(sorted.begin(), sorted.end(), sortFn);
+	
+	for(const auto &sit : sorted)
+		writeFn(*sit);
+}
 template <class K, class V, class... Args, typename A, typename B>
 void WriteSorted(const std::map<const K *, V, Args...> &container, A sortFn, B writeFn)
 {

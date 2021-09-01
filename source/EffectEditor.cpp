@@ -131,7 +131,16 @@ void EffectEditor::Render()
 
 	if(reset)
 	{
-		*object = *GameData::defaultEffects.Get(object->name);
+		bool found = false;
+		for(auto &&change : Changes())
+			if(change.Name() == object->Name())
+			{
+				*object = change;
+				found = true;
+				break;
+			}
+		if(!found)
+			*object = *GameData::baseEffects.Get(object->name);
 		SetClean();
 	}
 	if(clone)
@@ -184,39 +193,54 @@ void EffectEditor::RenderEffect()
 
 void EffectEditor::WriteToFile(DataWriter &writer, const Effect *effect)
 {
+	const auto *diff = GameData::baseEffects.Has(effect->name)
+		? GameData::baseEffects.Get(effect->name)
+		: nullptr;
+
 	writer.Write("effect", effect->name);
 	writer.BeginChild();
 
-	if(effect->HasSprite())
-	{
-		writer.Write("sprite", effect->GetSprite()->Name());
-		writer.BeginChild();
-		if(effect->frameRate != 2.f / 60.f)
-			writer.Write("frame rate", effect->frameRate * 60.f);
-		if(effect->delay)
-			writer.Write("delay", effect->delay);
-		if(effect->randomize)
-			writer.Write("random start frame");
-		if(!effect->repeat)
-			writer.Write("no repeat");
-		if(effect->rewind)
-			writer.Write("rewind");
-		writer.EndChild();
-	}
+	if(!diff || effect->sprite != diff->sprite)
+		if(effect->HasSprite())
+		{
+			writer.Write("sprite", effect->GetSprite()->Name());
+			writer.BeginChild();
+			if(effect->frameRate != 2.f / 60.f)
+				writer.Write("frame rate", effect->frameRate * 60.f);
+			if(effect->delay)
+				writer.Write("delay", effect->delay);
+			if(effect->randomize)
+				writer.Write("random start frame");
+			if(!effect->repeat)
+				writer.Write("no repeat");
+			if(effect->rewind)
+				writer.Write("rewind");
+			writer.EndChild();
+		}
 
-	if(effect->sound)
-		writer.Write("sound", effect->sound->Name());
-	if(effect->lifetime)
-		writer.Write("lifetime", effect->lifetime);
-	if(effect->randomLifetime)
-		writer.Write("random lifetime", effect->randomLifetime);
-	if(effect->velocityScale != 1.)
-		writer.Write("velocity scale", effect->velocityScale);
-	if(effect->randomAngle)
-		writer.Write("random angle", effect->randomAngle);
-	if(effect->randomSpin)
-		writer.Write("random spin", effect->randomSpin);
-	if(effect->randomFrameRate)
-		writer.Write("random framerate", effect->randomFrameRate);
+	if(!diff || effect->sound != diff->sound)
+		if(effect->sound)
+			writer.Write("sound", effect->sound->Name());
+	if(!diff || effect->lifetime != diff->lifetime)
+		if(effect->lifetime || diff)
+			writer.Write("lifetime", effect->lifetime);
+	if(!diff || effect->randomLifetime != diff->randomLifetime)
+		if(effect->randomLifetime || diff)
+			writer.Write("random lifetime", effect->randomLifetime);
+	if(!diff || effect->velocityScale != diff->velocityScale)
+		if(effect->velocityScale != 1. || diff)
+			writer.Write("velocity scale", effect->velocityScale);
+	if(!diff || effect->randomAngle != diff->randomAngle)
+		if(effect->randomAngle || diff)
+			writer.Write("random angle", effect->randomAngle);
+	if(!diff || effect->randomVelocity != diff->randomVelocity)
+		if(effect->randomVelocity || diff)
+			writer.Write("random velocity", effect->randomVelocity);
+	if(!diff || effect->randomSpin != diff->randomSpin)
+		if(effect->randomSpin || diff)
+			writer.Write("random spin", effect->randomSpin);
+	if(!diff || effect->randomFrameRate != diff->randomFrameRate)
+		if(effect->randomFrameRate || diff)
+			writer.Write("random frame rate", effect->randomFrameRate);
 	writer.EndChild();
 }

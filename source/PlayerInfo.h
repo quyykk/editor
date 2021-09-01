@@ -73,13 +73,14 @@ public:
 	bool LoadRecent();
 	// Save this player (using the Identifier() as the file name).
 	void Save() const;
+	void PartialLoad();
 	
 	// Get the root filename used for this player's saved game files. (If there
 	// are multiple pilots with the same name it may have a digit appended.)
 	std::string Identifier() const;
 	
 	// Apply the given changes and store them in the player's saved game file.
-	void AddChanges(std::list<DataNode> &changes);
+	void AddChanges(std::list<DataNode> &changes, bool initialLoad = true);
 	// Add an event that will happen at the given date.
 	void AddEvent(const GameEvent &event, const Date &date);
 	
@@ -298,6 +299,7 @@ private:
 	std::string firstName;
 	std::string lastName;
 	std::string filePath;
+	std::string fullFilePath;
 	
 	Date date;
 	const System *system = nullptr;

@@ -155,7 +155,6 @@ void Ship::Load(const DataNode &node)
 	isDefined = true;
 	
 	government = GameData::PlayerGovernment();
-	equipped.clear();
 	
 	// Note: I do not clear the attributes list here so that it is permissible
 	// to override one ship definition with another.
@@ -243,6 +242,7 @@ void Ship::Load(const DataNode &node)
 		{
 			if(!hasArmament)
 			{
+				equipped.clear();
 				armament = Armament();
 				hasArmament = true;
 			}
@@ -393,6 +393,11 @@ void Ship::Load(const DataNode &node)
 		{
 			if(!hasOutfits)
 			{
+				if(!hasArmament)
+				{
+					armament.UninstallAll();
+					equipped.clear();
+				}
 				outfits.clear();
 				hasOutfits = true;
 			}
@@ -447,15 +452,20 @@ void Ship::Load(const DataNode &node)
 
 // When loading a ship, some of the outfits it lists may not have been
 // loaded yet. So, wait until everything has been loaded, then call this.
-void Ship::FinishLoading(bool isNewInstance)
+void Ship::FinishLoading(bool isNewInstance, const Set<Ship> *ships, const Set<Effect> *effects)
 {
+	if(!ships)
+		ships = &GameData::Ships();
+	if(!effects)
+		effects = &GameData::Effects();
+
 	// All copies of this ship should save pointers to the "explosion" weapon
 	// definition stored safely in the ship model, which will not be destroyed
 	// until GameData is when the program quits. Also copy other attributes of
 	// the base model if no overrides were given.
-	if(GameData::Ships().Has(modelName))
+	if(ships->Has(modelName))
 	{
-		const Ship *model = GameData::Ships().Get(modelName);
+		const Ship *model = ships->Get(modelName);
 		explosionWeapon = &model->BaseAttributes();
 		if(pluralModelName.empty())
 			pluralModelName = model->pluralModelName;
@@ -557,7 +567,7 @@ void Ship::FinishLoading(bool isNewInstance)
 			armament.Add(it.first, -excess);
 			it.second -= excess;
 			
-			string warning = modelName;
+			string warning = TrueName();
 			if(!name.empty())
 				warning += " \"" + name + "\"";
 			warning += ": outfit \"" + it.first->Name() + "\" equipped but not included in outfit list.";
@@ -568,7 +578,7 @@ void Ship::FinishLoading(bool isNewInstance)
 			// This ship was specified with a non-weapon outfit in a
 			// hardpoint. Hardpoint::Install removes it, but issue a
 			// warning so the definition can be fixed.
-			string warning = modelName;
+			string warning = TrueName();
 			if(!name.empty())
 				warning += " \"" + name + "\"";
 			warning += ": outfit \"" + it.first->Name() + "\" is not a weapon, but is installed as one.";
@@ -689,7 +699,7 @@ void Ship::FinishLoading(bool isNewInstance)
 		else
 			++it;
 		if(bay.side == Bay::INSIDE && bay.launchEffects.empty() && Crew())
-			bay.launchEffects.emplace_back(GameData::Effects().Get("basic launch"));
+			bay.launchEffects.emplace_back(effects->Get("basic launch"));
 	}
 	
 	canBeCarried = find(bayCategories.begin(), bayCategories.end(), attributes.Category()) != bayCategories.end();

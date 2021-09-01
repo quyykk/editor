@@ -34,6 +34,8 @@ public:
 
 	const std::string &Name() const { return name; }
 
+	const std::set<const Item *> &AsBase() const { return *this; }
+
 
 public:
 	std::string name;

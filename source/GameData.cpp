@@ -94,6 +94,14 @@ namespace {
 	Set<Sale<Outfit>> outfitSales;
 	
 	Set<Galaxy> defaultGalaxies;
+	Set<Fleet> defaultFleets;
+	Set<Hazard> defaultHazards;
+	Set<Government> defaultGovernments;
+	Set<Outfit> defaultOutfits;
+	Set<Sale<Outfit>> defaultOutfitSales;
+	Set<Sale<Ship>> defaultShipSales;
+	Set<System> defaultSystems;
+	Set<Planet> defaultPlanets;
 	
 	Politics politics;
 	vector<StartConditions> startConditions;
@@ -152,16 +160,16 @@ namespace {
 
 
 
-Set<Effect> GameData::defaultEffects;
-Set<Fleet> GameData::defaultFleets;
-Set<Hazard> GameData::defaultHazards;
-Set<Government> GameData::defaultGovernments;
-Set<Outfit> GameData::defaultOutfits;
-Set<Sale<Outfit>> GameData::defaultOutfitSales;
-Set<Ship> GameData::defaultShips;
-Set<Sale<Ship>> GameData::defaultShipSales;
-Set<System> GameData::defaultSystems;
-Set<Planet> GameData::defaultPlanets;
+Set<Effect> GameData::baseEffects;
+Set<Fleet> GameData::baseFleets;
+Set<Hazard> GameData::baseHazards;
+Set<Government> GameData::baseGovernments;
+Set<Outfit> GameData::baseOutfits;
+Set<Sale<Outfit>> GameData::baseOutfitSales;
+Set<Ship> GameData::baseShips;
+Set<Sale<Ship>> GameData::baseShipSales;
+Set<System> GameData::baseSystems;
+Set<Planet> GameData::basePlanets;
 
 SpriteQueue GameData::spriteQueue;
 
@@ -217,26 +225,9 @@ bool GameData::BeginLoad(const char * const *argv)
 	
 	// Generate a catalog of music files.
 	Music::Init(sources);
+
+	LoadData(nullptr, debugMode);
 	
-	for(const string &source : sources)
-	{
-		// Iterate through the paths starting with the last directory given. That
-		// is, things in folders near the start of the path have the ability to
-		// override things in folders later in the path.
-		vector<string> dataFiles = Files::RecursiveList(source + "data/");
-		for(const string &path : dataFiles)
-			LoadFile(path, debugMode);
-	}
-	
-	// Now that all data is loaded, update the neighbor lists and other
-	// system information. Make sure that the default jump range is among the
-	// neighbor distances to be updated.
-	AddJumpRange(System::DEFAULT_NEIGHBOR_DISTANCE);
-	UpdateSystems();
-	
-	// And, update the ships with the outfits we've now finished loading.
-	for(auto &&it : ships)
-		it.second.FinishLoading(true);
 	for(auto &&it : persons)
 		it.second.FinishLoading();
 	
@@ -249,14 +240,12 @@ bool GameData::BeginLoad(const char * const *argv)
 	);
 	
 	// Store the current state, to revert back to later.
-	defaultEffects = effects;
 	defaultFleets = fleets;
 	defaultGovernments = governments;
 	defaultHazards = hazards;
 	defaultPlanets = planets;
 	defaultSystems = systems;
 	defaultGalaxies = galaxies;
-	defaultShips = ships;
 	defaultShipSales = shipSales;
 	defaultOutfits = outfits;
 	defaultOutfitSales = outfitSales;
@@ -271,6 +260,56 @@ bool GameData::BeginLoad(const char * const *argv)
 	if(printWeapons)
 		PrintWeaponTable();
 	return !(printShips || printWeapons || printTests);
+}
+
+
+
+void GameData::LoadData(const string *ignore, bool debugMode)
+{
+	auto &effects = ignore ? baseEffects : ::effects; 
+	auto &fleets = ignore ? baseFleets : ::fleets;
+	auto &hazards = ignore ? baseHazards : ::hazards; 
+	auto &governments = ignore ? baseGovernments : ::governments;
+	auto &outfits = ignore ? baseOutfits : ::outfits;
+	auto &outfitSales = ignore ? baseOutfitSales : ::outfitSales;
+	auto &ships = ignore ? baseShips : ::ships;
+	auto &shipSales = ignore ? baseShipSales : ::shipSales;
+	auto &systems = ignore ? baseSystems : ::systems;
+	auto &planets = ignore ? basePlanets : ::planets;
+
+	for(const string &source : sources)
+	{
+		if(ignore && source == *ignore)
+			continue;
+
+		// Iterate through the paths starting with the last directory given. That
+		// is, things in folders near the start of the path have the ability to
+		// override things in folders later in the path.
+		vector<string> dataFiles = Files::RecursiveList(source + "data/");
+		for(const string &path : dataFiles)
+			LoadFile(path,
+					debugMode,
+					effects,
+					fleets,
+					hazards,
+					governments,
+					outfits,
+					outfitSales,
+					ships,
+					shipSales,
+					systems,
+					planets);
+	}
+	
+	// Now that all data is loaded, update the neighbor lists and other
+	// system information. Make sure that the default jump range is among the
+	// neighbor distances to be updated.
+	AddJumpRange(System::DEFAULT_NEIGHBOR_DISTANCE);
+	UpdateSystems(!ignore);
+	
+	// And, update the ships with the outfits we've now finished loading.
+	for(auto &&it : ships)
+		it.second.FinishLoading(true, &ships, &effects);
 }
 
 
@@ -337,9 +376,12 @@ void GameData::CheckReferences()
 		if(it.second.Name().empty())
 			NameAndWarn("outfit", it);
 	// Outfitters are never serialized.
-	for(const auto &it : outfitSales)
+	for(auto &&it : outfitSales)
 		if(it.second.empty() && !deferred["outfitter"].count(it.first))
+		{
 			Files::LogError("Warning: outfitter \"" + it.first + "\" is referred to, but has no outfits.");
+			it.second.name = it.first;
+		}
 	// Phrases are never serialized.
 	for(const auto &it : phrases)
 		if(it.second.Name().empty())
@@ -356,9 +398,12 @@ void GameData::CheckReferences()
 			Warn("ship", it.first);
 		}
 	// Shipyards are never serialized.
-	for(const auto &it : shipSales)
+	for(auto &&it : shipSales)
 		if(it.second.empty() && !deferred["shipyard"].count(it.first))
+		{
 			Files::LogError("Warning: shipyard \"" + it.first + "\" is referred to, but has no ships.");
+			it.second.name = it.first;
+		}
 	// System names are used by a number of classes.
 	for(auto &&it : systems)
 		if(it.second.Name().empty() && !NameIfDeferred(deferred["system"], it))
@@ -490,7 +535,6 @@ void GameData::Revert()
 	galaxies.Revert(defaultGalaxies);
 	shipSales.Revert(defaultShipSales);
 	outfitSales.Revert(defaultOutfitSales);
-	ships.Revert(defaultShips);
 	for(auto &it : persons)
 		it.second.Restore();
 	
@@ -635,29 +679,52 @@ void GameData::AddPurchase(const System &system, const string &commodity, int to
 
 
 // Apply the given change to the universe.
-void GameData::Change(const DataNode &node)
+void GameData::Change(const DataNode &node, bool initialLoad)
 {
+	auto &fleets = initialLoad ? ::fleets : baseFleets;
+	auto &governments = initialLoad ?  ::governments : baseGovernments;
+	auto &outfitSales = initialLoad ? ::outfitSales : baseOutfitSales;
+	auto &shipSales = initialLoad ? ::shipSales : baseShipSales;
+	auto &systems = initialLoad ? ::systems : baseSystems;
+	auto &planets = initialLoad ? ::planets : basePlanets;
+
 	if(node.Token(0) == "fleet" && node.Size() >= 2)
 		fleets.Get(node.Token(1))->Load(node);
-	else if(node.Token(0) == "galaxy" && node.Size() >= 2)
+	else if(node.Token(0) == "galaxy" && node.Size() >= 2 && initialLoad)
 		galaxies.Get(node.Token(1))->Load(node);
 	else if(node.Token(0) == "government" && node.Size() >= 2)
 		governments.Get(node.Token(1))->Load(node);
 	else if(node.Token(0) == "outfitter" && node.Size() >= 2)
-		outfitSales.Get(node.Token(1))->Load(node, outfits);
+		outfitSales.Get(node.Token(1))->Load(node, ::outfits);
 	else if(node.Token(0) == "planet" && node.Size() >= 2)
 		planets.Get(node.Token(1))->Load(node);
 	else if(node.Token(0) == "shipyard" && node.Size() >= 2)
 		shipSales.Get(node.Token(1))->Load(node, ships);
 	else if(node.Token(0) == "system" && node.Size() >= 2)
-		systems.Get(node.Token(1))->Load(node, planets);
-	else if(node.Token(0) == "news" && node.Size() >= 2)
+		systems.Get(node.Token(1))->Load(node, ::planets);
+	else if(node.Token(0) == "news" && node.Size() >= 2 && initialLoad)
 		news.Get(node.Token(1))->Load(node);
 	else if(node.Token(0) == "link" && node.Size() >= 3)
-		systems.Get(node.Token(1))->Link(systems.Get(node.Token(2)));
+	{
+		if(initialLoad)
+			systems.Get(node.Token(1))->Link(systems.Get(node.Token(2)));
+		else
+		{
+			systems.Get(node.Token(1))->UniLink(::systems.Get(node.Token(2)));
+			systems.Get(node.Token(2))->UniLink(::systems.Get(node.Token(1)));
+		}
+	}
 	else if(node.Token(0) == "unlink" && node.Size() >= 3)
-		systems.Get(node.Token(1))->Unlink(systems.Get(node.Token(2)));
-	else
+	{
+		if(initialLoad)
+			::systems.Get(node.Token(1))->Unlink(systems.Get(node.Token(2)));
+		else
+		{
+			systems.Get(node.Token(1))->UniUnlink(::systems.Get(node.Token(2)));
+			systems.Get(node.Token(2))->UniUnlink(::systems.Get(node.Token(1)));
+		}
+	}
+	else if(initialLoad)
 		node.PrintTrace("Invalid \"event\" data:");
 }
 
@@ -665,14 +732,16 @@ void GameData::Change(const DataNode &node)
 
 // Update the neighbor lists and other information for all the systems.
 // This must be done any time that a change creates or moves a system.
-void GameData::UpdateSystems()
+void GameData::UpdateSystems(bool initialLoad)
 {
+	auto &systems = initialLoad ? ::systems : baseSystems;
+
 	for(auto &it : systems)
 	{
 		// Skip systems that have no name.
 		if(it.first.empty() || it.second.Name().empty())
 			continue;
-		it.second.UpdateSystem(systems, neighborDistances);
+		it.second.UpdateSystem(::systems, neighborDistances);
 	}
 }
 
@@ -1053,12 +1122,25 @@ void GameData::LoadSources()
 
 
 
-void GameData::LoadFile(const string &path, bool debugMode)
+void GameData::LoadFile(
+		const string &path,
+		bool debugMode,
+		Set<Effect> &effects,
+		Set<Fleet> &fleets,
+		Set<Hazard> &hazards,
+		Set<Government> &governments,
+		Set<Outfit> &outfits,
+		Set<Sale<Outfit>> &outfitSales,
+		Set<Ship> &ships,
+		Set<Sale<Ship>> &shipSales,
+		Set<System> &systems,
+		Set<Planet> &planets)
 {
 	// This is an ordinary file. Check to see if it is an image.
 	if(path.length() < 4 || path.compare(path.length() - 4, 4, ".txt"))
 		return;
 	
+	const bool initialLoad = &effects == &::effects;
 	DataFile data(path);
 	if(debugMode)
 		Files::LogError("Parsing: " + path);
@@ -1066,36 +1148,36 @@ void GameData::LoadFile(const string &path, bool debugMode)
 	for(const DataNode &node : data)
 	{
 		const string &key = node.Token(0);
-		if(key == "color" && node.Size() >= 6)
+		if(key == "color" && node.Size() >= 6 && initialLoad)
 			colors.Get(node.Token(1))->Load(
 				node.Value(2), node.Value(3), node.Value(4), node.Value(5));
-		else if(key == "conversation" && node.Size() >= 2)
+		else if(key == "conversation" && node.Size() >= 2 && initialLoad)
 			conversations.Get(node.Token(1))->Load(node);
 		else if(key == "effect" && node.Size() >= 2)
 			effects.Get(node.Token(1))->Load(node);
-		else if(key == "event" && node.Size() >= 2)
+		else if(key == "event" && node.Size() >= 2 && initialLoad)
 			events.Get(node.Token(1))->Load(node);
 		else if(key == "fleet" && node.Size() >= 2)
 			fleets.Get(node.Token(1))->Load(node);
-		else if(key == "galaxy" && node.Size() >= 2)
+		else if(key == "galaxy" && node.Size() >= 2 && initialLoad)
 			galaxies.Get(node.Token(1))->Load(node);
 		else if(key == "government" && node.Size() >= 2)
 			governments.Get(node.Token(1))->Load(node);
 		else if(key == "hazard" && node.Size() >= 2)
 			hazards.Get(node.Token(1))->Load(node);
-		else if(key == "interface" && node.Size() >= 2)
+		else if(key == "interface" && node.Size() >= 2 && initialLoad)
 			interfaces.Get(node.Token(1))->Load(node);
-		else if(key == "minable" && node.Size() >= 2)
+		else if(key == "minable" && node.Size() >= 2 && initialLoad)
 			minables.Get(node.Token(1))->Load(node);
-		else if(key == "mission" && node.Size() >= 2)
+		else if(key == "mission" && node.Size() >= 2 && initialLoad)
 			missions.Get(node.Token(1))->Load(node);
 		else if(key == "outfit" && node.Size() >= 2)
 			outfits.Get(node.Token(1))->Load(node);
 		else if(key == "outfitter" && node.Size() >= 2)
-			outfitSales.Get(node.Token(1))->Load(node, outfits);
-		else if(key == "person" && node.Size() >= 2)
+			outfitSales.Get(node.Token(1))->Load(node, ::outfits);
+		else if(key == "person" && node.Size() >= 2 && initialLoad)
 			persons.Get(node.Token(1))->Load(node);
-		else if(key == "phrase" && node.Size() >= 2)
+		else if(key == "phrase" && node.Size() >= 2 && initialLoad)
 			phrases.Get(node.Token(1))->Load(node);
 		else if(key == "planet" && node.Size() >= 2)
 			planets.Get(node.Token(1))->Load(node);
@@ -1106,8 +1188,8 @@ void GameData::LoadFile(const string &path, bool debugMode)
 			ships.Get(name)->Load(node);
 		}
 		else if(key == "shipyard" && node.Size() >= 2)
-			shipSales.Get(node.Token(1))->Load(node, ships);
-		else if(key == "start" && node.HasChildren())
+			shipSales.Get(node.Token(1))->Load(node, ::ships);
+		else if(key == "start" && node.HasChildren() && initialLoad)
 		{
 			// This node may either declare an immutable starting scenario, or one that is open to extension
 			// by other nodes (e.g. plugins may customize the basic start, rather than provide a unique start).
@@ -1125,19 +1207,19 @@ void GameData::LoadFile(const string &path, bool debugMode)
 			}
 		}
 		else if(key == "system" && node.Size() >= 2)
-			systems.Get(node.Token(1))->Load(node, planets);
-		else if((key == "test") && node.Size() >= 2)
+			systems.Get(node.Token(1))->Load(node, ::planets);
+		else if((key == "test") && node.Size() >= 2 && initialLoad)
 			tests.Get(node.Token(1))->Load(node);
-		else if((key == "test-data") && node.Size() >= 2)
+		else if((key == "test-data") && node.Size() >= 2 && initialLoad)
 			testDataSets.Get(node.Token(1))->Load(node, path);
-		else if(key == "trade")
+		else if(key == "trade" && initialLoad)
 			trade.Load(node);
-		else if(key == "landing message" && node.Size() >= 2)
+		else if(key == "landing message" && node.Size() >= 2 && initialLoad)
 		{
 			for(const DataNode &child : node)
 				landingMessages[SpriteSet::Get(child.Token(0))] = node.Token(1);
 		}
-		else if(key == "star" && node.Size() >= 2)
+		else if(key == "star" && node.Size() >= 2 && initialLoad)
 		{
 			const Sprite *sprite = SpriteSet::Get(node.Token(1));
 			for(const DataNode &child : node)
@@ -1150,16 +1232,16 @@ void GameData::LoadFile(const string &path, bool debugMode)
 					child.PrintTrace("Unrecognized star attribute:");
 			}
 		}
-		else if(key == "news" && node.Size() >= 2)
+		else if(key == "news" && node.Size() >= 2 && initialLoad)
 			news.Get(node.Token(1))->Load(node);
-		else if(key == "rating" && node.Size() >= 2)
+		else if(key == "rating" && node.Size() >= 2 && initialLoad)
 		{
 			vector<string> &list = ratings[node.Token(1)];
 			list.clear();
 			for(const DataNode &child : node)
 				list.push_back(child.Token(0));
 		}
-		else if(key == "category" && node.Size() >= 2)
+		else if(key == "category" && node.Size() >= 2 && initialLoad)
 		{
 			static const map<string, CategoryType> category = {
 				{"ship", CategoryType::SHIP},
@@ -1184,7 +1266,7 @@ void GameData::LoadFile(const string &path, bool debugMode)
 				categoryList.push_back(child.Token(0));
 			}
 		}
-		else if((key == "tip" || key == "help") && node.Size() >= 2)
+		else if((key == "tip" || key == "help") && node.Size() >= 2 && initialLoad)
 		{
 			string &text = (key == "tip" ? tooltips : helpMessages)[node.Token(1)];
 			text.clear();
@@ -1199,7 +1281,7 @@ void GameData::LoadFile(const string &path, bool debugMode)
 				text += child.Token(0);
 			}
 		}
-		else
+		else if(initialLoad)
 			node.PrintTrace("Skipping unrecognized root object:");
 	}
 }

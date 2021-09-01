@@ -76,6 +76,13 @@ private:
 	public:
 		Variant() = default;
 		explicit Variant(const DataNode &node);
+
+		bool operator==(const Variant &rhs) const
+		{
+			return ships.size() == rhs.ships.size()
+				&& std::is_permutation(ships.begin(), ships.end(), rhs.ships.begin());
+		}
+		bool operator!=(const Variant &rhs) const { return !(*this == rhs); }
 		
 		int weight;
 		std::vector<const Ship *> ships;

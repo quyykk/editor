@@ -41,6 +41,9 @@ public:
 	// Assuming that this is an opaque color, get its additive equivalent with
 	// the given fraction of its full brightness.
 	Color Additive(float alpha) const;
+
+	friend bool operator==(const Color &lhs, const Color &rhs);
+	friend bool operator!=(const Color &lhs, const Color &rhs);
 	
 	
 private:

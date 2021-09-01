@@ -13,6 +13,8 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #ifndef POINT_H_
 #define POINT_H_
 
+#include <cmath>
+
 #ifdef __SSE3__
 #include <pmmintrin.h>
 #endif
@@ -78,6 +80,9 @@ public:
 	friend Point min(const Point &p, const Point &q);
 	// Use the max of each x and each y coordinates.
 	friend Point max(const Point &p, const Point &q);
+
+	friend bool operator==(const Point &lhs, const Point &rhs);
+	friend bool operator!=(const Point &lhs, const Point &rhs);
 	
 	
 private:
@@ -131,4 +136,16 @@ inline const double &Point::Y() const noexcept
 
 
 
+inline bool operator==(const Point &lhs, const Point &rhs)
+{
+	constexpr double eps = .000001;
+	return std::abs(lhs.x - rhs.x) < eps && std::abs(lhs.y - rhs.y) < eps;
+}
+
+
+
+inline bool operator!=(const Point &lhs, const Point &rhs)
+{
+	return !(lhs == rhs);
+}
 #endif

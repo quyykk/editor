@@ -24,6 +24,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "ShipyardEditor.h"
 #include "SystemEditor.h"
 
+#include <cstdint>
 #include <memory>
 #include <set>
 #include <string>
@@ -36,6 +37,17 @@ class PlayerInfo;
 class Sprite;
 class StellarObject;
 class UI;
+
+
+
+class HashPairOfStrings
+{
+public:
+	std::size_t operator()(const std::pair<std::string, std::string> &pair) const noexcept
+	{
+		return std::hash<std::string>()(pair.first) * 3 + std::hash<std::string>()(pair.second);
+	}
+};
 
 
 
@@ -104,7 +116,10 @@ private:
 	bool showSystemMenu = false;
 	bool showPlanetMenu = false;
 
-	std::unordered_map<std::string, std::vector<std::string>> pluginPaths;
+	std::unordered_map<std::string, std::vector<std::pair<std::string, std::string>>> pluginPaths;
+	std::unordered_map<std::pair<std::string, std::string>, DataNode, HashPairOfStrings> unimplementedNodes;
+
+	friend void AddNode(Editor &editor, const std::string &file, const std::string &key, const std::string &name);
 };
 
 

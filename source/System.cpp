@@ -107,6 +107,13 @@ int System::FleetProbability::Period() const
 
 
 
+const string &System::FleetProbability::Name() const
+{
+	return fleet->Name();
+}
+
+
+
 System::HazardProbability::HazardProbability(const Hazard *hazard, int period)
 	: hazard(hazard), period(period > 0 ? period : 200)
 {
@@ -124,6 +131,13 @@ const Hazard *System::HazardProbability::Get() const
 int System::HazardProbability::Period() const
 {
 	return period;
+}
+
+
+
+const string &System::HazardProbability::Name() const
+{
+	return hazard->Name();
 }
 
 
@@ -444,6 +458,20 @@ void System::Unlink(System *other)
 {
 	links.erase(other);
 	other->links.erase(this);
+}
+
+
+
+void System::UniLink(const System *other)
+{
+	links.insert(other);
+}
+
+
+
+void System::UniUnlink(const System *other)
+{
+	links.erase(other);
 }
 
 

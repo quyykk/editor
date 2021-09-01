@@ -162,7 +162,16 @@ void OutfitEditor::Render()
 
 	if(reset)
 	{
-		*object = *GameData::defaultOutfits.Get(object->name);
+		bool found = false;
+		for(auto &&change : Changes())
+			if(change.Name() == object->Name())
+			{
+				*object = change;
+				found = true;
+				break;
+			}
+		if(!found)
+			*object = *GameData::baseOutfits.Get(object->name);
 		SetClean();
 	}
 	if(clone)
@@ -218,10 +227,10 @@ void OutfitEditor::RenderOutfit()
 	str.clear();
 	if(object->flotsamSprite)
 		str = object->flotsamSprite->Name();
-	static Sprite *floatsamSprite = nullptr;
-	if(ImGui::InputCombo("floatsam sprite", &str, &floatsamSprite, SpriteSet::GetSprites()))
+	static Sprite *flotsamSprite = nullptr;
+	if(ImGui::InputCombo("flotsam sprite", &str, &flotsamSprite, SpriteSet::GetSprites()))
 	{
-		object->flotsamSprite = floatsamSprite;
+		object->flotsamSprite = flotsamSprite;
 		SetDirty();
 	}
 
@@ -650,253 +659,624 @@ void OutfitEditor::RenderOutfit()
 
 void OutfitEditor::WriteToFile(DataWriter &writer, const Outfit *outfit)
 {
+	const auto *diff = GameData::baseOutfits.Has(outfit->name)
+		? GameData::baseOutfits.Get(outfit->name)
+		: nullptr;
+
 	writer.Write("outfit", outfit->Name());
 	writer.BeginChild();
-	writer.Write("category", outfit->Category().c_str());
-	if(outfit->pluralName != outfit->name + "s")
-		writer.Write("plural", outfit->pluralName);
-	writer.Write("cost", outfit->cost);
-	writer.Write("mass", outfit->mass);
-	if(outfit->flotsamSprite)
-		writer.Write("floatsam sprite", outfit->flotsamSprite->Name());
-	if(outfit->thumbnail)
-		writer.Write("thumbnail", outfit->thumbnail->Name());
-	if(!outfit->licenses.empty())
-	{
-		writer.WriteToken("licenses");
-		for(auto &&license : outfit->licenses)
-			writer.WriteToken(license);
-		writer.Write();
-	}
-	for(auto &&attribute : outfit->attributes)
-		writer.Write(attribute.first, attribute.second);
-	for(auto &&flareSprite : outfit->flareSprites)
-		for(int i = 0; i < flareSprite.second; ++i)
-			flareSprite.first.SaveSprite(writer, "flare sprite");
-	for(auto &&reverseFlareSprite : outfit->reverseFlareSprites)
-		for(int i = 0; i < reverseFlareSprite.second; ++i)
-			reverseFlareSprite.first.SaveSprite(writer, "reverse flare sprite");
-	for(auto &&steeringFlareSprite : outfit->steeringFlareSprites)
-		for(int i = 0; i < steeringFlareSprite.second; ++i)
-			steeringFlareSprite.first.SaveSprite(writer, "steering flare sprite");
-	for(auto &&flareSound : outfit->flareSounds)
-		for(int i = 0; i < flareSound.second; ++i)
-			writer.Write("flare sound", flareSound.first->Name());
-	for(auto &&reverseFlareSound : outfit->reverseFlareSounds)
-		for(int i = 0; i < reverseFlareSound.second; ++i)
-			writer.Write("reverse flare sound", reverseFlareSound.first->Name());
-	for(auto &&steeringFlareSound : outfit->steeringFlareSounds)
-		for(int i = 0; i < steeringFlareSound.second; ++i)
-			writer.Write("steering flare sound", steeringFlareSound.first->Name());
-	for(auto &&hyperdriveSound : outfit->hyperSounds)
-		for(int i = 0; i < hyperdriveSound.second; ++i)
-			writer.Write("hyperdrive sound", hyperdriveSound.first->Name());
-	for(auto &&hyperdriveInSound : outfit->hyperInSounds)
-		for(int i = 0; i < hyperdriveInSound.second; ++i)
-			writer.Write("hyperdrive in sound", hyperdriveInSound.first->Name());
-	for(auto &&hyperdriveOutSound : outfit->hyperInSounds)
-		for(int i = 0; i < hyperdriveOutSound.second; ++i)
-			writer.Write("hyperdrive out sound", hyperdriveOutSound.first->Name());
-	for(auto &&jumpSound : outfit->jumpSounds)
-		for(int i = 0; i < jumpSound.second; ++i)
-			writer.Write("jump sound", jumpSound.first->Name());
-	for(auto &&jumpInSound : outfit->jumpInSounds)
-		for(int i = 0; i < jumpInSound.second; ++i)
-			writer.Write("jump in sound", jumpInSound.first->Name());
-	for(auto &&jumpOutSound : outfit->jumpOutSounds)
-		for(int i = 0; i < jumpOutSound.second; ++i)
-			writer.Write("jump out sound", jumpOutSound.first->Name());
-	for(auto &&afterburnerEffect : outfit->afterburnerEffects)
-		for(int i = 0; i < afterburnerEffect.second; ++i)
-			writer.Write("afterburner effect", afterburnerEffect.first->Name());
-	for(auto &&jumpEffect : outfit->jumpEffects)
-		for(int i = 0; i < jumpEffect.second; ++i)
-			writer.Write("jump effect", jumpEffect.first->Name());
 
-	if(outfit->IsWeapon())
-	{
-		writer.Write("weapon");
-		writer.BeginChild();
-		if((outfit->MissileStrength() || outfit->AntiMissile()) && outfit->isStreamed)
-			writer.Write("stream");
-		if(!outfit->MissileStrength() && !outfit->AntiMissile() && !outfit->isStreamed)
-			writer.Write("clustered");
-		if(outfit->isSafe)
-			writer.Write("safe");
-		if(outfit->isPhasing)
-			writer.Write("phasing");
-		if(!outfit->isDamageScaled)
-			writer.Write("no damage scaling");
-		if(outfit->isParallel)
-			writer.Write("parallel");
-		if(outfit->isGravitational)
-			writer.Write("gravitational");
-		if(outfit->sprite.HasSprite())
-			outfit->sprite.SaveSprite(writer);
-		if(outfit->hardpointSprite.HasSprite())
-			outfit->hardpointSprite.SaveSprite(writer, "hardpoint sprite");
-		if(outfit->sound)
-			writer.Write("sound", outfit->sound->Name());
-		if(outfit->ammo.first)
+	if(!diff || outfit->category != diff->category)
+		if(!outfit->category.empty() || diff)
+			writer.Write("category", outfit->Category().c_str());
+	if(!diff || outfit->pluralName != diff->category)
+		if(outfit->pluralName != outfit->name + "s" || diff)
+			writer.Write("plural", outfit->pluralName);
+	if(!diff || outfit->cost != diff->cost)
+		if(outfit->cost || diff)
+			writer.Write("cost", outfit->cost);
+	if(!diff || outfit->mass != diff->mass)
+		if(outfit->mass || diff)
+			writer.Write("mass", outfit->mass);
+	if(!diff || outfit->flotsamSprite != diff->flotsamSprite)
+		if(outfit->flotsamSprite || diff)
+			writer.Write("flotsam sprite", outfit->flotsamSprite->Name());
+
+	if(!diff || outfit->thumbnail != diff->thumbnail)
+		if(outfit->thumbnail || diff)
+			writer.Write("thumbnail", outfit->thumbnail->Name());
+	if(!diff || outfit->licenses != diff->licenses) 
+		if(!outfit->licenses.empty())
 		{
+			writer.WriteToken("licenses");
+			for(auto &&license : outfit->licenses)
+				writer.WriteToken(license);
+			writer.Write();
+		}
+
+	if(!diff || outfit->attributes.AsBase() != diff->attributes.AsBase())
+		for(auto it = outfit->attributes.begin(); it != outfit->attributes.end(); ++it)
+			if(!diff || !Count(diff->attributes.AsBase(), *it))
+				writer.Write(it->first, it->second);
+
+	if(!diff || outfit->flareSprites != diff->flareSprites)
+		for(auto &&flareSprite : outfit->flareSprites)
+			for(int i = 0; i < flareSprite.second; ++i)
+				flareSprite.first.SaveSprite(writer, "flare sprite");
+	if(!diff || outfit->reverseFlareSprites != diff->reverseFlareSprites)
+		for(auto &&reverseFlareSprite : outfit->reverseFlareSprites)
+			for(int i = 0; i < reverseFlareSprite.second; ++i)
+				reverseFlareSprite.first.SaveSprite(writer, "reverse flare sprite");
+	if(!diff || outfit->steeringFlareSprites != diff->steeringFlareSprites)
+		for(auto &&steeringFlareSprite : outfit->steeringFlareSprites)
+			for(int i = 0; i < steeringFlareSprite.second; ++i)
+				steeringFlareSprite.first.SaveSprite(writer, "steering flare sprite");
+	if(!diff || outfit->flareSounds != diff->flareSounds)
+		for(auto &&flareSound : outfit->flareSounds)
+			for(int i = 0; i < flareSound.second; ++i)
+				writer.Write("flare sound", flareSound.first->Name());
+	if(!diff || outfit->reverseFlareSounds != diff->reverseFlareSounds)
+		for(auto &&reverseFlareSound : outfit->reverseFlareSounds)
+			for(int i = 0; i < reverseFlareSound.second; ++i)
+				writer.Write("reverse flare sound", reverseFlareSound.first->Name());
+	if(!diff || outfit->steeringFlareSounds != diff->steeringFlareSounds)
+		for(auto &&steeringFlareSound : outfit->steeringFlareSounds)
+			for(int i = 0; i < steeringFlareSound.second; ++i)
+				writer.Write("steering flare sound", steeringFlareSound.first->Name());
+	if(!diff || outfit->hyperSounds != diff->hyperSounds)
+		for(auto &&hyperdriveSound : outfit->hyperSounds)
+			for(int i = 0; i < hyperdriveSound.second; ++i)
+				writer.Write("hyperdrive sound", hyperdriveSound.first->Name());
+	if(!diff || outfit->hyperInSounds != diff->hyperInSounds)
+		for(auto &&hyperdriveInSound : outfit->hyperInSounds)
+			for(int i = 0; i < hyperdriveInSound.second; ++i)
+				writer.Write("hyperdrive in sound", hyperdriveInSound.first->Name());
+	if(!diff || outfit->hyperOutSounds != diff->hyperOutSounds)
+		for(auto &&hyperdriveOutSound : outfit->hyperOutSounds)
+			for(int i = 0; i < hyperdriveOutSound.second; ++i)
+				writer.Write("hyperdrive out sound", hyperdriveOutSound.first->Name());
+	if(!diff || outfit->jumpSounds != diff->jumpSounds)
+		for(auto &&jumpSound : outfit->jumpSounds)
+			for(int i = 0; i < jumpSound.second; ++i)
+				writer.Write("jump sound", jumpSound.first->Name());
+	if(!diff || outfit->jumpInSounds != diff->jumpInSounds)
+		for(auto &&jumpInSound : outfit->jumpInSounds)
+			for(int i = 0; i < jumpInSound.second; ++i)
+				writer.Write("jump in sound", jumpInSound.first->Name());
+	if(!diff || outfit->jumpOutSounds != diff->jumpOutSounds)
+		for(auto &&jumpOutSound : outfit->jumpOutSounds)
+			for(int i = 0; i < jumpOutSound.second; ++i)
+				writer.Write("jump out sound", jumpOutSound.first->Name());
+	if(!diff || outfit->afterburnerEffects != diff->afterburnerEffects)
+		for(auto &&afterburnerEffect : outfit->afterburnerEffects)
+			for(int i = 0; i < afterburnerEffect.second; ++i)
+				writer.Write("afterburner effect", afterburnerEffect.first->Name());
+	if(!diff || outfit->jumpEffects != diff->jumpEffects)
+		for(auto &&jumpEffect : outfit->jumpEffects)
+			for(int i = 0; i < jumpEffect.second; ++i)
+				writer.Write("jump effect", jumpEffect.first->Name());
+
+	bool hasWrittenWeapon = false;
+	auto writeWeapon = [&hasWrittenWeapon, &writer]()
+	{
+		if(!hasWrittenWeapon)
+		{
+			writer.Write("weapon");
+			writer.BeginChild();
+			hasWrittenWeapon = true; 
+		}
+	};
+
+	if(!diff || outfit->isSafe != diff->isSafe)
+		if(outfit->isSafe)
+		{
+			writeWeapon();
+			writer.Write("safe");
+		}
+	if(!diff || outfit->isPhasing != diff->isPhasing)
+		if(outfit->isPhasing)
+		{
+			writeWeapon();
+			writer.Write("phasing");
+		}
+	if(!diff || outfit->isDamageScaled != diff->isDamageScaled)
+		if(!outfit->isDamageScaled)
+		{
+			writeWeapon();
+			writer.Write("no damage scaling");
+		}
+	if(!diff || outfit->isParallel != diff->isParallel)
+		if(outfit->isParallel)
+		{
+			writeWeapon();
+			writer.Write("parallel");
+		}
+	if(!diff || outfit->isGravitational != diff->isGravitational)
+		if(outfit->isGravitational)
+		{
+			writeWeapon();
+			writer.Write("gravitational");
+		}
+	if(!diff || outfit->sprite != outfit->sprite)
+		if(outfit->sprite.HasSprite())
+		{
+			writeWeapon();
+			outfit->sprite.SaveSprite(writer);
+		}
+	if(!diff || outfit->hardpointSprite != diff->hardpointSprite)
+		if(outfit->hardpointSprite.HasSprite())
+		{
+			writeWeapon();
+			outfit->hardpointSprite.SaveSprite(writer, "hardpoint sprite");
+		}
+	if(!diff || outfit->sound != diff->sound)
+		if(outfit->sound)
+		{
+			writeWeapon();
+			writer.Write("sound", outfit->sound->Name());
+		}
+	if(!diff || outfit->ammo != diff->ammo)
+		if(outfit->ammo.first || diff)
+		{
+			writeWeapon();
 			writer.WriteToken("ammo");
 			writer.WriteToken(outfit->ammo.first->Name());
 			if(outfit->ammo.second != 1)
 				writer.WriteToken(outfit->ammo.second);
 			writer.Write();
 		}
+	if(!diff || outfit->icon != diff->icon)
 		if(outfit->icon)
-			writer.Write("icon", outfit->icon->Name());
-
-		for(auto &&fireEffect : outfit->fireEffects)
-			writer.Write("fire effect", fireEffect.first->Name(), fireEffect.second);
-		for(auto &&liveEffect : outfit->liveEffects)
-			writer.Write("live effect", liveEffect.first->Name(), liveEffect.second);
-		for(auto &&hitEffect : outfit->hitEffects)
-			writer.Write("hit effect", hitEffect.first->Name(), hitEffect.second);
-		for(auto &&targetEffect : outfit->targetEffects)
-			writer.Write("target effect", targetEffect.first->Name(), targetEffect.second);
-		for(auto &&dieEffect : outfit->dieEffects)
-			writer.Write("die effect", dieEffect.first->Name(), dieEffect.second);
-
-		for(auto &&submunition : outfit->submunitions)
 		{
-			writer.WriteToken("submunition");
-			writer.WriteToken(submunition.weapon->Name());
-			if(submunition.count > 1)
-				writer.WriteToken(submunition.count);
-			writer.Write();
-			writer.BeginChild();
-			if(submunition.facing.Degrees())
-				writer.Write("facing", submunition.facing.Degrees());
-			if(submunition.offset)
-				writer.Write("offset", submunition.offset.X(), submunition.offset.Y());
-			writer.EndChild();
+			writeWeapon();
+			writer.Write("icon", outfit->icon->Name());
 		}
 
-		if(outfit->lifetime)
+	if(!diff || outfit->fireEffects != diff->fireEffects)
+		if(!outfit->fireEffects.empty())
+		{
+			writeWeapon();
+			for(auto &&fireEffect : outfit->fireEffects)
+				if(fireEffect.second == 1)
+					writer.Write("fire effect", fireEffect.first->Name());
+				else
+					writer.Write("fire effect", fireEffect.first->Name(), fireEffect.second);
+		}
+	if(!diff || outfit->liveEffects != diff->liveEffects)
+		if(!outfit->liveEffects.empty())
+		{
+			writeWeapon();
+			for(auto &&liveEffect : outfit->liveEffects)
+				if(liveEffect.second == 1)
+					writer.Write("live effect", liveEffect.first->Name());
+				else
+					writer.Write("live effect", liveEffect.first->Name(), liveEffect.second);
+		}
+	if(!diff || outfit->hitEffects != diff->hitEffects)
+		if(!outfit->hitEffects.empty())
+		{
+			writeWeapon();
+			for(auto &&hitEffect : outfit->hitEffects)
+				if(hitEffect.second == 1)
+					writer.Write("hit effect", hitEffect.first->Name());
+				else
+					writer.Write("hit effect", hitEffect.first->Name(), hitEffect.second);
+		}
+	if(!diff || outfit->targetEffects != diff->targetEffects)
+		if(!outfit->targetEffects.empty())
+		{
+			writeWeapon();
+			for(auto &&targetEffect : outfit->targetEffects)
+				if(targetEffect.second == 1)
+					writer.Write("target effect", targetEffect.first->Name());
+				else
+					writer.Write("target effect", targetEffect.first->Name(), targetEffect.second);
+		}
+	if(!diff || outfit->dieEffects != diff->dieEffects)
+		if(!outfit->dieEffects.empty())
+		{
+			writeWeapon();
+			for(auto &&dieEffect : outfit->dieEffects)
+				if(dieEffect.second == 1)
+					writer.Write("die effect", dieEffect.first->Name());
+				else
+					writer.Write("die effect", dieEffect.first->Name(), dieEffect.second);
+		}
+
+	if(!diff || outfit->submunitions != diff->submunitions)
+		if(!outfit->submunitions.empty())
+		{
+			writeWeapon();
+			for(auto &&submunition : outfit->submunitions)
+			{
+				writer.WriteToken("submunition");
+				writer.WriteToken(submunition.weapon->Name());
+				if(submunition.count > 1)
+					writer.WriteToken(submunition.count);
+				writer.Write();
+				writer.BeginChild();
+				if(submunition.facing.Degrees())
+					writer.Write("facing", submunition.facing.Degrees());
+				if(submunition.offset)
+					writer.Write("offset", submunition.offset.X(), submunition.offset.Y());
+				writer.EndChild();
+			}
+		}
+
+	if(!diff || outfit->lifetime != diff->lifetime)
+		if(outfit->lifetime || diff)
+		{
+			writeWeapon();
 			writer.Write("lifetime", outfit->lifetime);
-		if(outfit->randomLifetime)
+		}
+	if(!diff || outfit->randomLifetime != diff->randomLifetime)
+		if(outfit->randomLifetime || diff)
+		{
+			writeWeapon();
 			writer.Write("random lifetime", outfit->randomLifetime);
-		if(outfit->reload)
+		}
+	if(!diff || outfit->reload != diff->reload)
+		if(outfit->reload != 1. || diff)
+		{
+			writeWeapon();
 			writer.Write("reload", outfit->reload);
-		if(outfit->burstReload > 1.)
+		}
+	if(!diff || outfit->burstReload != diff->burstReload)
+		if(outfit->burstReload != 1. || diff)
+		{
+			writeWeapon();
 			writer.Write("burst reload", outfit->burstReload);
-		if(outfit->burstCount > 1)
+		}
+	if(!diff || outfit->burstCount != diff->burstCount)
+		if(outfit->burstCount != 1 || diff)
+		{
+			writeWeapon();
 			writer.Write("burst count", outfit->burstCount);
-		if(outfit->homing)
+		}
+	if(!diff || outfit->homing != diff->homing)
+		if(outfit->homing || diff)
+		{
+			writeWeapon();
 			writer.Write("homing", outfit->homing);
-		if(outfit->missileStrength)
+		}
+	if(!diff || outfit->missileStrength != diff->missileStrength)
+		if(outfit->missileStrength || diff)
+		{
+			writeWeapon();
 			writer.Write("missile strength", outfit->missileStrength);
-		if(outfit->antiMissile)
+		}
+	if(!diff || outfit->antiMissile != diff->antiMissile)
+		if(outfit->antiMissile || diff)
+		{
+			writeWeapon();
 			writer.Write("anti-missile", outfit->antiMissile);
-		if(outfit->velocity)
+		}
+	if(!diff || outfit->velocity != diff->velocity)
+		if(outfit->velocity || diff)
+		{
+			writeWeapon();
 			writer.Write("velocity", outfit->velocity);
-		if(outfit->randomVelocity)
+		}
+	if(!diff || outfit->randomVelocity != diff->randomVelocity)
+		if(outfit->randomVelocity || diff)
+		{
+			writeWeapon();
 			writer.Write("random velocity", outfit->randomVelocity);
-		if(outfit->acceleration)
+		}
+	if(!diff || outfit->acceleration != diff->acceleration)
+		if(outfit->acceleration || diff)
+		{
+			writeWeapon();
 			writer.Write("acceleration", outfit->acceleration);
-		if(outfit->drag)
+		}
+	if(!diff || outfit->drag != diff->drag)
+		if(outfit->drag || diff)
+		{
+			writeWeapon();
 			writer.Write("drag", outfit->drag);
-		if(outfit->hardpointOffset)
-			writer.Write("hardpoint offset", outfit->hardpointOffset.X(), outfit->hardpointOffset.Y());
-		if(outfit->turn)
+		}
+	if(!diff || outfit->hardpointOffset != diff->hardpointOffset)
+		if(outfit->hardpointOffset || diff)
+		{
+			writeWeapon();
+			if(!outfit->hardpointOffset.X())
+				writer.Write("hardpoint offset", -outfit->hardpointOffset.Y());
+			else
+				writer.Write("hardpoint offset", outfit->hardpointOffset.X(), -outfit->hardpointOffset.Y());
+		}
+	if(!diff || outfit->turn != diff->turn)
+		if(outfit->turn || diff)
+		{
+			writeWeapon();
 			writer.Write("turn", outfit->turn);
-		if(outfit->inaccuracy)
+		}
+	if(!diff || outfit->inaccuracy != diff->inaccuracy)
+		if(outfit->inaccuracy || diff)
+		{
+			writeWeapon();
 			writer.Write("inaccuracy", outfit->inaccuracy);
-		if(outfit->turretTurn)
+		}
+	if(!diff || outfit->turretTurn != diff->turretTurn)
+		if(outfit->turretTurn || diff)
+		{
+			writeWeapon();
 			writer.Write("turret turn", outfit->turretTurn);
-		if(outfit->tracking)
+		}
+	if(!diff || outfit->tracking != diff->tracking)
+		if(outfit->tracking || diff)
+		{
+			writeWeapon();
 			writer.Write("tracking", outfit->tracking);
-		if(outfit->opticalTracking)
+		}
+	if(!diff || outfit->opticalTracking != diff->opticalTracking)
+		if(outfit->opticalTracking || diff)
+		{
+			writeWeapon();
 			writer.Write("optical tracking", outfit->opticalTracking);
-		if(outfit->infraredTracking)
+		}
+	if(!diff || outfit->infraredTracking != diff->infraredTracking)
+		if(outfit->infraredTracking || diff)
+		{
+			writeWeapon();
 			writer.Write("infrared tracking", outfit->infraredTracking);
-		if(outfit->radarTracking)
+		}
+	if(!diff || outfit->radarTracking != diff->radarTracking)
+		if(outfit->radarTracking || diff)
+		{
+			writeWeapon();
 			writer.Write("radar tracking", outfit->radarTracking);
-		if(outfit->firingEnergy)
+		}
+	if(!diff || outfit->firingEnergy != diff->firingEnergy)
+		if(outfit->firingEnergy || diff)
+		{
+			writeWeapon();
 			writer.Write("firing energy", outfit->firingEnergy);
-		if(outfit->firingForce)
+		}
+	if(!diff || outfit->firingForce != diff->firingForce)
+		if(outfit->firingForce || diff)
+		{
+			writeWeapon();
 			writer.Write("firing force", outfit->firingForce);
-		if(outfit->firingFuel)
+		}
+	if(!diff || outfit->firingFuel != diff->firingFuel)
+		if(outfit->firingFuel || diff)
+		{
+			writeWeapon();
 			writer.Write("firing fuel", outfit->firingFuel);
-		if(outfit->firingHeat)
+		}
+	if(!diff || outfit->firingHeat != diff->firingHeat)
+		if(outfit->firingHeat || diff)
+		{
+			writeWeapon();
 			writer.Write("firing heat", outfit->firingHeat);
-		if(outfit->firingHull)
+		}
+	if(!diff || outfit->firingHull != diff->firingHull)
+		if(outfit->firingHull || diff)
+		{
+			writeWeapon();
 			writer.Write("firing hull", outfit->firingHull);
-		if(outfit->firingShields)
+		}
+	if(!diff || outfit->firingShields != diff->firingShields)
+		if(outfit->firingShields || diff)
+		{
+			writeWeapon();
 			writer.Write("firing shields", outfit->firingShields);
-		if(outfit->firingIon)
+		}
+	if(!diff || outfit->firingIon != diff->firingIon)
+		if(outfit->firingIon || diff)
+		{
+			writeWeapon();
 			writer.Write("firing ion", outfit->firingIon);
+		}
+	if(!diff || outfit->firingSlowing != diff->firingSlowing)
 		if(outfit->firingSlowing)
+		{
+			writeWeapon();
 			writer.Write("firing slowing", outfit->firingSlowing);
-		if(outfit->firingDisruption)
+		}
+	if(!diff || outfit->firingDisruption != diff->firingDisruption)
+		if(outfit->firingDisruption || diff)
+		{
+			writeWeapon();
 			writer.Write("firing disruption", outfit->firingDisruption);
-		if(outfit->relativeFiringEnergy)
+		}
+	if(!diff || outfit->relativeFiringEnergy != diff->relativeFiringEnergy)
+		if(outfit->relativeFiringEnergy || diff)
+		{
+			writeWeapon();
 			writer.Write("relative firing energy", outfit->relativeFiringEnergy);
-		if(outfit->relativeFiringHeat)
+		}
+	if(!diff || outfit->relativeFiringHeat != diff->relativeFiringHeat)
+		if(outfit->relativeFiringHeat || diff)
+		{
+			writeWeapon();
 			writer.Write("relative firing heat", outfit->relativeFiringHeat);
-		if(outfit->relativeFiringFuel)
+		}
+	if(!diff || outfit->relativeFiringFuel != diff->relativeFiringFuel)
+		if(outfit->relativeFiringFuel || diff)
+		{
+			writeWeapon();
 			writer.Write("relative firing fuel", outfit->relativeFiringFuel);
-		if(outfit->relativeFiringHull)
+		}
+	if(!diff || outfit->relativeFiringHull != diff->relativeFiringHull)
+		if(outfit->relativeFiringHull || diff)
+		{
+			writeWeapon();
 			writer.Write("relative firing hull", outfit->relativeFiringHull);
-		if(outfit->relativeFiringShields)
+		}
+	if(!diff || outfit->relativeFiringShields != diff->relativeFiringShields)
+		if(outfit->relativeFiringShields || diff)
+		{
+			writeWeapon();
 			writer.Write("relative firing shields", outfit->relativeFiringShields);
-		if(outfit->splitRange)
+		}
+	if(!diff || outfit->splitRange != diff->splitRange)
+		if(outfit->splitRange || diff)
+		{
+			writeWeapon();
 			writer.Write("split range", outfit->splitRange);
-		if(outfit->triggerRadius)
+		}
+	if(!diff || outfit->triggerRadius != diff->triggerRadius)
+		if(outfit->triggerRadius || diff)
+		{
+			writeWeapon();
 			writer.Write("trigger radius", outfit->triggerRadius);
-		if(outfit->blastRadius)
+		}
+	if(!diff || outfit->blastRadius != diff->blastRadius)
+		if(outfit->blastRadius || diff)
+		{
+			writeWeapon();
 			writer.Write("blast radius", outfit->blastRadius);
-		if(outfit->damage[Weapon::SHIELD_DAMAGE])
+		}
+	if(!diff || outfit->damage[Weapon::SHIELD_DAMAGE] != diff->damage[Weapon::SHIELD_DAMAGE])
+		if(outfit->damage[Weapon::SHIELD_DAMAGE] || diff)
+		{
+			writeWeapon();
 			writer.Write("shield damage", outfit->damage[Weapon::SHIELD_DAMAGE]);
-		if(outfit->damage[Weapon::HULL_DAMAGE])
+		}
+	if(!diff || outfit->damage[Weapon::HULL_DAMAGE] != diff->damage[Weapon::HULL_DAMAGE])
+		if(outfit->damage[Weapon::HULL_DAMAGE] || diff)
+		{
+			writeWeapon();
 			writer.Write("hull damage", outfit->damage[Weapon::HULL_DAMAGE]);
-		if(outfit->damage[Weapon::FUEL_DAMAGE])
+		}
+	if(!diff || outfit->damage[Weapon::FUEL_DAMAGE] != diff->damage[Weapon::FUEL_DAMAGE])
+		if(outfit->damage[Weapon::FUEL_DAMAGE] || diff)
+		{
+			writeWeapon();
 			writer.Write("fuel damage", outfit->damage[Weapon::FUEL_DAMAGE]);
-		if(outfit->damage[Weapon::HEAT_DAMAGE])
+		}
+	if(!diff || outfit->damage[Weapon::HEAT_DAMAGE] != diff->damage[Weapon::HEAT_DAMAGE])
+		if(outfit->damage[Weapon::HEAT_DAMAGE] || diff)
+		{
+			writeWeapon();
 			writer.Write("heat damage", outfit->damage[Weapon::HEAT_DAMAGE]);
-		if(outfit->damage[Weapon::ENERGY_DAMAGE])
+		}
+	if(!diff || outfit->damage[Weapon::ENERGY_DAMAGE] != diff->damage[Weapon::ENERGY_DAMAGE])
+		if(outfit->damage[Weapon::ENERGY_DAMAGE] || diff)
+		{
+			writeWeapon();
 			writer.Write("energy damage", outfit->damage[Weapon::ENERGY_DAMAGE]);
-		if(outfit->damage[Weapon::ION_DAMAGE])
+		}
+	if(!diff || outfit->damage[Weapon::ION_DAMAGE] != diff->damage[Weapon::ION_DAMAGE])
+		if(outfit->damage[Weapon::ION_DAMAGE] || diff)
+		{
+			writeWeapon();
 			writer.Write("ion damage", outfit->damage[Weapon::ION_DAMAGE]);
-		if(outfit->damage[Weapon::DISRUPTION_DAMAGE])
+		}
+	if(!diff || outfit->damage[Weapon::DISRUPTION_DAMAGE] != diff->damage[Weapon::DISRUPTION_DAMAGE])
+		if(outfit->damage[Weapon::DISRUPTION_DAMAGE] || diff)
+		{
+			writeWeapon();
 			writer.Write("disruption damage", outfit->damage[Weapon::DISRUPTION_DAMAGE]);
-		if(outfit->damage[Weapon::SLOWING_DAMAGE])
+		}
+	if(!diff || outfit->damage[Weapon::SLOWING_DAMAGE] != diff->damage[Weapon::SLOWING_DAMAGE])
+		if(outfit->damage[Weapon::SLOWING_DAMAGE] || diff)
+		{
+			writeWeapon();
 			writer.Write("slowing damage", outfit->damage[Weapon::SLOWING_DAMAGE]);
-		if(outfit->damage[Weapon::RELATIVE_SHIELD_DAMAGE])
+		}
+	if(!diff || outfit->damage[Weapon::RELATIVE_SHIELD_DAMAGE] != diff->damage[Weapon::RELATIVE_SHIELD_DAMAGE])
+		if(outfit->damage[Weapon::RELATIVE_SHIELD_DAMAGE] || diff)
+		{
+			writeWeapon();
 			writer.Write("relative shield damage", outfit->damage[Weapon::RELATIVE_SHIELD_DAMAGE]);
-		if(outfit->damage[Weapon::RELATIVE_HULL_DAMAGE])
+		}
+	if(!diff || outfit->damage[Weapon::RELATIVE_HULL_DAMAGE] != diff->damage[Weapon::RELATIVE_HULL_DAMAGE])
+		if(outfit->damage[Weapon::RELATIVE_HULL_DAMAGE] || diff)
+		{
+			writeWeapon();
 			writer.Write("relative hull damage", outfit->damage[Weapon::RELATIVE_HULL_DAMAGE]);
-		if(outfit->damage[Weapon::RELATIVE_FUEL_DAMAGE])
+		}
+	if(!diff || outfit->damage[Weapon::RELATIVE_FUEL_DAMAGE] != diff->damage[Weapon::RELATIVE_FUEL_DAMAGE])
+		if(outfit->damage[Weapon::RELATIVE_FUEL_DAMAGE] || diff)
+		{
+			writeWeapon();
 			writer.Write("relative fuel damage", outfit->damage[Weapon::RELATIVE_FUEL_DAMAGE]);
-		if(outfit->damage[Weapon::RELATIVE_HEAT_DAMAGE])
+		}
+	if(!diff || outfit->damage[Weapon::RELATIVE_HEAT_DAMAGE] != diff->damage[Weapon::RELATIVE_HEAT_DAMAGE])
+		if(outfit->damage[Weapon::RELATIVE_HEAT_DAMAGE] || diff)
+		{
+			writeWeapon();
 			writer.Write("relative heat damage", outfit->damage[Weapon::RELATIVE_HEAT_DAMAGE]);
-		if(outfit->damage[Weapon::RELATIVE_ENERGY_DAMAGE])
+		}
+	if(!diff || outfit->damage[Weapon::RELATIVE_ENERGY_DAMAGE] != diff->damage[Weapon::RELATIVE_ENERGY_DAMAGE])
+		if(outfit->damage[Weapon::RELATIVE_ENERGY_DAMAGE] || diff)
+		{
+			writeWeapon();
 			writer.Write("relative energy damage", outfit->damage[Weapon::RELATIVE_ENERGY_DAMAGE]);
-		if(outfit->damage[Weapon::HIT_FORCE])
+		}
+	if(!diff || outfit->damage[Weapon::HIT_FORCE] != diff->damage[Weapon::HIT_FORCE])
+		if(outfit->damage[Weapon::HIT_FORCE] || diff)
+		{
+			writeWeapon();
 			writer.Write("hit force", outfit->damage[Weapon::HIT_FORCE]);
-		if(outfit->piercing)
+		}
+	if(!diff || outfit->piercing != diff->piercing)
+		if(outfit->piercing || diff)
+		{
+			writeWeapon();
 			writer.Write("piercing", outfit->piercing);
-		if(outfit->rangeOverride)
+		}
+	if(!diff || outfit->rangeOverride != diff->rangeOverride)
+		if(outfit->rangeOverride || diff)
+		{
+			writeWeapon();
 			writer.Write("range override", outfit->rangeOverride);
-		if(outfit->velocityOverride)
+		}
+	if(!diff || outfit->velocityOverride != diff->velocityOverride)
+		if(outfit->velocityOverride || diff)
+		{
+			writeWeapon();
 			writer.Write("velocity override", outfit->velocityOverride);
-		if(outfit->hasDamageDropoff)
-			writer.Write("damage dropoff", outfit->damageDropoffRange.first, outfit->damageDropoffRange.second);
-		if(outfit->damageDropoffModifier)
+		}
+	if(!diff || outfit->damageDropoffRange != diff->damageDropoffRange)
+		if(outfit->hasDamageDropoff || diff)
+		{
+			writeWeapon();
+			writer.WriteToken("damage dropoff");
+			writer.WriteToken(outfit->damageDropoffRange.first);
+			if(outfit->damageDropoffRange.second != outfit->Range())
+				writer.WriteToken(outfit->damageDropoffRange.second);
+			writer.Write();
+		}
+	if(!diff || outfit->damageDropoffModifier != diff->damageDropoffModifier)
+		if(outfit->damageDropoffModifier || diff)
+		{
+			writeWeapon();
 			writer.Write("dropoff modifier", outfit->damageDropoffModifier);
-		writer.EndChild();
-	}
-	if(!outfit->description.empty())
+		}
+
+	if((!diff || outfit->isStreamed != diff->isStreamed) && hasWrittenWeapon)
 	{
-		size_t newline = outfit->description.find('\n');
-		size_t start = 0;
-		do {
-			writer.Write("description", outfit->description.substr(start, newline - start));
-			start = newline + 1;
-			newline = outfit->description.find('\n', start);
-		} while(newline != string::npos);
+		if((outfit->MissileStrength() || outfit->AntiMissile()) && outfit->isStreamed)
+		{
+			writeWeapon();
+			writer.Write("stream");
+		}
+		if(!outfit->MissileStrength() && !outfit->AntiMissile() && !outfit->isStreamed)
+		{
+			writeWeapon();
+			writer.Write("cluster");
+		}
 	}
+	if(hasWrittenWeapon)
+		writer.EndChild();
+
+	if(!diff || outfit->description != diff->description)
+		if(!outfit->description.empty())
+		{
+			size_t newline = outfit->description.find('\n');
+			size_t start = 0;
+			do {
+				string toWrite = outfit->description.substr(start, newline - start);
+				if(toWrite.empty())
+					break;
+				writer.Write("description", toWrite);
+
+				start = newline + 1;
+				newline = outfit->description.find('\n', start);
+			} while(newline != string::npos);
+		}
 	writer.EndChild();
 }

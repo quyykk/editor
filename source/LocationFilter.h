@@ -61,6 +61,9 @@ public:
 	// system (e.g. the player's current system) and ability to land.
 	const System *PickSystem(const System *origin) const;
 	const Planet *PickPlanet(const System *origin, bool hasClearance = false, bool requireSpaceport = true) const;
+
+	friend bool operator==(const LocationFilter &lhs, const LocationFilter &rhs);
+	friend bool operator!=(const LocationFilter &lhs, const LocationFilter &rhs);
 	
 	
 private:

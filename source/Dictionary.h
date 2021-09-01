@@ -23,14 +23,20 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 // that prioritizes fast lookup time at the expense of longer construction time
 // compared to an STL map. That makes it suitable for ship attributes, which are
 // changed much less frequently than they are queried.
-class Dictionary : private std::vector<std::pair<const char *, double>> {
+using DictionaryBase = std::vector<std::pair<const char *, double>>;
+class Dictionary : private DictionaryBase {
 public:
+	Dictionary() noexcept = default;
+	Dictionary(const DictionaryBase &base) noexcept : DictionaryBase(base) {}
+
 	// Access a key for modifying it:
 	double &operator[](const char *key);
 	double &operator[](const std::string &key);
 	// Get the value of a key, or 0 if it does not exist:
 	double Get(const char *key) const;
 	double Get(const std::string &key) const;
+
+	const DictionaryBase &AsBase() const { return *this; }
 	
 	// Expose certain functions from the underlying vector:
 	using std::vector<std::pair<const char *, double>>::empty;

@@ -132,6 +132,9 @@ private:
 	mutable int currentStep = -1;
 	mutable float frame = 0.f;
 
+	friend bool operator==(const Body &lhs, const Body &rhs);
+	friend bool operator!=(const Body &lhs, const Body &rhs);
+
 	friend class EffectEditor;
 	friend class OutfitEditor;
 	friend class ShipEditor;
@@ -140,6 +143,25 @@ private:
 	friend class TemplateEditor<Outfit>;
 	friend class TemplateEditor<Ship>;
 };
+
+
+
+inline bool operator==(const Body &lhs, const Body &rhs)
+{
+	return
+		lhs.sprite == rhs.sprite &&
+		lhs.position == rhs.position &&
+		lhs.velocity == rhs.velocity &&
+		lhs.angle.Degrees() == rhs.angle.Degrees() &&
+		lhs.zoom == rhs.zoom;
+}
+
+
+
+inline bool operator!=(const Body &lhs, const Body &rhs)
+{
+	return !(lhs == rhs);
+}
 
 
 

@@ -45,6 +45,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Visual.h"
 
 #include <cassert>
+#include <cstdint>
 #include <map>
 
 using namespace std;
@@ -108,263 +109,97 @@ void Editor::WriteAll()
 	const auto &shipyards = shipyardEditor.Changes();
 	const auto &systems = systemEditor.Changes();
 
-	// Which object we have saved to file.
-	set<string> effectsSaved;
-	set<string> fleetsSaved;
-	set<string> hazardsSaved;
-	set<string> governmentsSaved;
-	set<string> outfitsSaved;
-	set<string> outfittersSaved;
-	set<string> planetsSaved;
-	set<string> shipsSaved;
-	set<string> shipyardsSaved;
-	set<string> systemsSaved;
-
 	// Save every change made to this plugin.
 	for(auto &&file : pluginPaths)
 	{
-		// Special case: default paths are saved later.
-		const auto &fileName = Files::Name(file.first);
-		if(fileName == "map.txt" || fileName == "ships.txt" || fileName == "outfits.txt"
-				|| fileName == "hazards.txt" || fileName == "governments.txt"
-				|| fileName == "fleets.txt" || fileName == "outfitters.txt"
-				|| fileName == "shipyards.txt" || fileName == "effects.txt")
-			continue;
-
 		DataWriter writer(file.first);
 
-		for(auto &&objects : file.second)
+		for(auto &&pair : file.second)
 		{
-			string toSearch = objects.substr(1);
-			if(objects[0] == '0')
+			const string &type = pair.first;
+			const string &toSearch = pair.second;
+			if(type == "planet")
 			{
 				auto it = find_if(planets.begin(), planets.end(),
-						[&toSearch](const Planet &p) { return p.Name() == toSearch; });
+						[&toSearch](const Planet &p) { return p.TrueName() == toSearch; });
 				if(it != planets.end())
-				{
 					planetEditor.WriteToFile(writer, &*it);
-					writer.Write();
-					planetsSaved.insert(it->TrueName());
-					continue;
-				}
 			}
-			else if(objects[0] == '1')
+			else if(type == "ship")
 			{
 				auto it = find_if(ships.begin(), ships.end(),
-						[&toSearch](const Ship &s) { return s.Name() == toSearch; });
+						[&toSearch](const Ship &s) { return s.TrueName() == toSearch; });
 				if(it != ships.end())
-				{
 					shipEditor.WriteToFile(writer, &*it);
-					writer.Write();
-					shipsSaved.insert(it->Name());
-					continue;
-				}
 			}
-			else if(objects[0] == '2')
+			else if(type == "system")
 			{
 				auto it = find_if(systems.begin(), systems.end(),
 						[&toSearch](const System &sys) { return sys.Name() == toSearch; });
 				if(it != systems.end())
-				{
 					systemEditor.WriteToFile(writer, &*it);
-					writer.Write();
-					systemsSaved.insert(it->Name());
-					continue;
-				}
 			}
-			else if(objects[0] == '3')
+			else if(type == "outfit")
 			{
 				auto it = find_if(outfits.begin(), outfits.end(),
 						[&toSearch](const Outfit &o) { return o.Name() == toSearch; });
 				if(it != outfits.end())
-				{
 					outfitEditor.WriteToFile(writer, &*it);
-					writer.Write();
-					outfitsSaved.insert(it->Name());
-					continue;
-				}
 			}
-			else if(objects[0] == '4')
+			else if(type == "hazard")
 			{
 				auto it = find_if(hazards.begin(), hazards.end(),
 						[&toSearch](const Hazard &h) { return h.Name() == toSearch; });
 				if(it != hazards.end())
-				{
 					hazardEditor.WriteToFile(writer, &*it);
-					writer.Write();
-					hazardsSaved.insert(it->Name());
-					continue;
-				}
 			}
-			else if(objects[0] == '5')
+			else if(type == "government")
 			{
 				auto it = find_if(governments.begin(), governments.end(),
-						[&toSearch](const Government &g) { return g.Name() == toSearch; });
+						[&toSearch](const Government &g) { return g.TrueName() == toSearch; });
 				if(it != governments.end())
-				{
 					governmentEditor.WriteToFile(writer, &*it);
-					writer.Write();
-					governmentsSaved.insert(it->TrueName());
-					continue;
-				}
 			}
-			else if(objects[0] == '6')
+			else if(type == "fleet")
 			{
 				auto it = find_if(fleets.begin(), fleets.end(),
 						[&toSearch](const Fleet &f) { return f.Name() == toSearch; });
 				if(it != fleets.end())
-				{
 					fleetEditor.WriteToFile(writer, &*it);
-					writer.Write();
-					fleetsSaved.insert(it->Name());
-					continue;
-				}
 			}
-			else if(objects[0] == '7')
+			else if(type == "outfitter")
 			{
 				auto it = find_if(outfitters.begin(), outfitters.end(),
 						[&toSearch](const Sale<Outfit> &o) { return o.Name() == toSearch; });
 				if(it != outfitters.end())
-				{
 					outfitterEditor.WriteToFile(writer, &*it);
-					writer.Write();
-					outfittersSaved.insert(it->Name());
-					continue;
-				}
 			}
-			else if(objects[0] == '8')
+			else if(type == "shipyard")
 			{
 				auto it = find_if(shipyards.begin(), shipyards.end(),
 						[&toSearch](const Sale<Ship> &s) { return s.Name() == toSearch; });
 				if(it != shipyards.end())
-				{
 					shipyardEditor.WriteToFile(writer, &*it);
-					writer.Write();
-					shipyardsSaved.insert(it->Name());
-					continue;
-				}
 			}
-			else if(objects[0] == '9')
+			else if(type == "effect")
 			{
 				auto it = find_if(effects.begin(), effects.end(),
 						[&toSearch](const Effect &e) { return e.Name() == toSearch; });
 				if(it != effects.end())
-				{
 					effectEditor.WriteToFile(writer, &*it);
-					writer.Write();
-					effectsSaved.insert(it->Name());
-					continue;
-				}
 			}
 			else
-				assert(!"Invalid object type to write to file! Please report this.");
-		}
-	}
+			{
+				// If we are here then we encountered an object to save that we don't support yet.
+				// In that case, we save the version in the game memory.
+				auto it= unimplementedNodes.find(pair);
+				assert(it != unimplementedNodes.end());
+				writer.Write(it->second);
+			}
 
-	// Save any new object to a default path.
-	const bool planetSave = planetsSaved.size() < planets.size();
-	const bool systemSave = systemsSaved.size() < systems.size();
-	if(planetSave || systemSave)
-	{
-		DataWriter mapTxt(currentPlugin + "data/map.txt");
-		if(planetSave)
-		{
-			for(auto &&planet : planets)
-				if(!planetsSaved.count(planet.TrueName()))
-				{
-					planetEditor.WriteToFile(mapTxt, &planet);
-					mapTxt.Write();
-				}
+			// Add an empty newline between nodes.
+			writer.Write();
 		}
-		if(systemSave)
-		{
-			for(auto &&system : systems)
-				if(!systemsSaved.count(system.Name()))
-				{
-					systemEditor.WriteToFile(mapTxt, &system);
-					mapTxt.Write();
-				}
-		}
-	}
-	if(shipsSaved.size() < ships.size())
-	{
-		DataWriter shipsTxt(currentPlugin + "data/ships.txt");
-		for(auto &&ship : ships)
-			if(!shipsSaved.count(ship.Name()))
-			{
-				shipEditor.WriteToFile(shipsTxt, &ship);
-				shipsTxt.Write();
-			}
-	}
-	if(outfitsSaved.size() < outfits.size())
-	{
-		DataWriter outfitsTxt(currentPlugin + "data/outfits.txt");
-		for(auto &&outfit : outfits)
-			if(!shipsSaved.count(outfit.Name()))
-			{
-				outfitEditor.WriteToFile(outfitsTxt, &outfit);
-				outfitsTxt.Write();
-			}
-	}
-	if(hazardsSaved.size() < hazards.size())
-	{
-		DataWriter hazardsTxt(currentPlugin + "data/hazards.txt");
-		for(auto &&hazard : hazards)
-			if(!hazardsSaved.count(hazard.Name()))
-			{
-				hazardEditor.WriteToFile(hazardsTxt, &hazard);
-				hazardsTxt.Write();
-			}
-	}
-	if(governmentsSaved.size() < governments.size())
-	{
-		DataWriter governmentsTxt(currentPlugin + "data/governments.txt");
-		for(auto &&gov : governments)
-			if(!governmentsSaved.count(gov.TrueName()))
-			{
-				governmentEditor.WriteToFile(governmentsTxt, &gov);
-				governmentsTxt.Write();
-			}
-	}
-	if(fleetsSaved.size() < fleets.size())
-	{
-		DataWriter fleetsTxt(currentPlugin + "data/fleets.txt");
-		for(auto &&fleet : fleets)
-			if(!fleetsSaved.count(fleet.Name()))
-			{
-				fleetEditor.WriteToFile(fleetsTxt, &fleet);
-				fleetsTxt.Write();
-			}
-	}
-	if(outfittersSaved.size() < outfitters.size())
-	{
-		DataWriter outfittersTxt(currentPlugin + "data/outfitters.txt");
-		for(auto &&outfitter : outfitters)
-			if(!outfittersSaved.count(outfitter.Name()))
-			{
-				outfitterEditor.WriteToFile(outfittersTxt, &outfitter);
-				outfittersTxt.Write();
-			}
-	}
-	if(shipyardsSaved.size() < shipyards.size())
-	{
-		DataWriter shipyardsTxt(currentPlugin + "data/shipyards.txt");
-		for(auto &&shipyard : shipyards)
-			if(!shipyardsSaved.count(shipyard.Name()))
-			{
-				shipyardEditor.WriteToFile(shipyardsTxt, &shipyard);
-				shipyardsTxt.Write();
-			}
-	}
-	if(effectsSaved.size() < effects.size())
-	{
-		DataWriter effectsTxt(currentPlugin + "data/effects.txt");
-		for(auto &&effect : effects)
-			if(!effectsSaved.count(effect.Name()))
-			{
-				effectEditor.WriteToFile(effectsTxt, &effect);
-				effectsTxt.Write();
-			}
 	}
 }
 
@@ -759,6 +594,13 @@ void Editor::ReloadPluginResources()
 
 
 
+void AddNode(Editor &editor, const std::string &file, const std::string &key, const std::string &name)
+{
+	editor.pluginPaths[editor.currentPlugin + "data/" + file].emplace_back(std::make_pair(key, name));
+}
+
+
+
 void Editor::NewPlugin(const string &plugin)
 {
 	// Don't create a new plugin it if already exists.
@@ -784,6 +626,9 @@ void Editor::OpenPlugin(const string &plugin)
 	currentPlugin = path;
 	currentPluginName = plugin;
 
+	GameData::LoadData(&currentPlugin);
+	player.PartialLoad();
+
 	// We need to save everything the specified plugin loads.
 	auto files = Files::RecursiveList(path + "data/");
 	for(const auto &file : files)
@@ -796,63 +641,55 @@ void Editor::OpenPlugin(const string &plugin)
 				continue;
 			const string &value = node.Token(1);
 
-			char num;
 			if(key == "planet")
-			{
-				num = '0';
-				planetEditor.WriteToPlugin(GameData::Planets().Get(value));
-			}
+				planetEditor.WriteToPlugin(GameData::Planets().Get(value), false);
 			else if(key == "ship")
 			{
-				num = '1';
-				shipEditor.WriteToPlugin(GameData::Ships().Get(value));
+				// We might have a variant instead of a normal ship definition.
+				if(node.Size() >= 3)
+				{
+					shipEditor.WriteToPlugin(GameData::Ships().Get(node.Token(2)), false);
+					pluginPaths[file].emplace_back(key, node.Token(2));
+					continue;
+				}
+				else
+					shipEditor.WriteToPlugin(GameData::Ships().Get(value), false);
 			}
 			else if(key == "system")
-			{
-				num = '2';
-				systemEditor.WriteToPlugin(GameData::Systems().Get(value));
-			}
+				systemEditor.WriteToPlugin(GameData::Systems().Get(value), false);
 			else if(key == "outfit")
-			{
-				num = '3';
-				outfitEditor.WriteToPlugin(GameData::Outfits().Get(value));
-			}
+				outfitEditor.WriteToPlugin(GameData::Outfits().Get(value), false);
 			else if(key == "hazard")
-			{
-				num = '4';
-				hazardEditor.WriteToPlugin(GameData::Hazards().Get(value));
-			}
+				hazardEditor.WriteToPlugin(GameData::Hazards().Get(value), false);
 			else if(key == "government")
-			{
-				num = '5';
-				governmentEditor.WriteToPlugin(GameData::Governments().Get(value));
-			}
+				governmentEditor.WriteToPlugin(GameData::Governments().Get(value), false);
 			else if(key == "fleet")
-			{
-				num = '6';
-				fleetEditor.WriteToPlugin(GameData::Fleets().Get(value));
-			}
+				fleetEditor.WriteToPlugin(GameData::Fleets().Get(value), false);
 			else if(key == "outfitter")
-			{
-				num = '7';
-				outfitterEditor.WriteToPlugin(GameData::Outfitters().Get(value));
-			}
+				outfitterEditor.WriteToPlugin(GameData::Outfitters().Get(value), false);
 			else if(key == "shipyard")
-			{
-				num = '8';
-				shipyardEditor.WriteToPlugin(GameData::Shipyards().Get(value));
-			}
+				shipyardEditor.WriteToPlugin(GameData::Shipyards().Get(value), false);
 			else if(key == "effect")
-			{
-				num = '9';
-				effectEditor.WriteToPlugin(GameData::Effects().Get(value));
-			}
+				effectEditor.WriteToPlugin(GameData::Effects().Get(value), false);
 			else
+				unimplementedNodes.emplace(std::make_pair(key, value), node);
+
+			bool alreadyExists = false;
+			for(const auto &file : pluginPaths)
 			{
-				node.PrintTrace("node will get pruned when saving!");
-				continue;
+				for(const auto &pair : file.second)
+					if(key != "phrase" && pair.first == key && pair.second == value)
+					{
+						alreadyExists = true;
+						break;
+					}
+				if(alreadyExists)
+					break;
 			}
-			pluginPaths[file].emplace_back(num + value);
+			if(alreadyExists)
+				node.PrintTrace("Duplicate node found. This is only partially supported by the game (and by this editor) so it is recommended to avoid duplicating nodes.");
+			else
+				pluginPaths[file].emplace_back(key, value);
 		}
 	}
 }

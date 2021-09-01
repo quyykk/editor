@@ -121,6 +121,8 @@ void PlayerInfo::Load(const string &path)
 	Clear();
 	
 	filePath = path;
+	fullFilePath = path;
+
 	// Strip anything after the "~" from snapshots, so that the file we save
 	// will be the auto-save, not the snapshot.
 	size_t pos = filePath.find('~');
@@ -363,6 +365,20 @@ void PlayerInfo::Save() const
 
 
 
+void PlayerInfo::PartialLoad()
+{
+	DataFile file(fullFilePath);
+	list<DataNode> changes;
+
+	for(const auto &node : file)
+		if(node.Token(0) == "changes")
+			for(const DataNode &grand : node)
+				changes.push_back(grand);
+	AddChanges(changes, false);
+}
+
+
+
 // Get the base file name for the player, without the ".txt" extension. This
 // will usually be "<first> <last>", but may be different if multiple players
 // exist with the same name, in which case a number is appended.
@@ -375,7 +391,7 @@ string PlayerInfo::Identifier() const
 
 
 // Apply the given set of changes to the game data.
-void PlayerInfo::AddChanges(list<DataNode> &changes)
+void PlayerInfo::AddChanges(list<DataNode> &changes, bool initialLoad)
 {
 	bool changedSystems = false;
 	for(const DataNode &change : changes)
@@ -383,12 +399,12 @@ void PlayerInfo::AddChanges(list<DataNode> &changes)
 		changedSystems |= (change.Token(0) == "system");
 		changedSystems |= (change.Token(0) == "link");
 		changedSystems |= (change.Token(0) == "unlink");
-		GameData::Change(change);
+		GameData::Change(change, initialLoad);
 	}
 	if(changedSystems)
 	{
 		// Recalculate what systems have been seen.
-		GameData::UpdateSystems();
+		GameData::UpdateSystems(initialLoad);
 		seen.clear();
 		for(const System *system : visitedSystems)
 		{
@@ -400,7 +416,7 @@ void PlayerInfo::AddChanges(list<DataNode> &changes)
 	}
 	
 	// Only move the changes into my list if they are not already there.
-	if(&changes != &dataChanges)
+	if(initialLoad && &changes != &dataChanges)
 		dataChanges.splice(dataChanges.end(), changes);
 }
 
@@ -2949,20 +2965,20 @@ void PlayerInfo::Save(const string &path) const
 	
 	// Save a list of systems the player has visited.
 	WriteSorted(visitedSystems,
-		[](const System *const *lhs, const System *const *rhs)
-			{ return (*lhs)->Name() < (*rhs)->Name(); },
-		[&out](const System *system)
+		[](const System *lhs, const System *rhs)
+			{ return lhs->Name() < rhs->Name(); },
+		[&out](const System &system)
 		{
-			out.Write("visited", system->Name());
+			out.Write("visited", system.Name());
 		});
 	
 	// Save a list of planets the player has visited.
 	WriteSorted(visitedPlanets,
-		[](const Planet *const *lhs, const Planet *const *rhs)
-			{ return (*lhs)->TrueName() < (*rhs)->TrueName(); },
-		[&out](const Planet *planet)
+		[](const Planet *lhs, const Planet *rhs)
+			{ return lhs->TrueName() < rhs->TrueName(); },
+		[&out](const Planet &planet)
 		{
-			out.Write("visited planet", planet->TrueName());
+			out.Write("visited planet", planet.TrueName());
 		});
 	
 	if(!harvested.empty())

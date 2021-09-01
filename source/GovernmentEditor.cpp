@@ -144,7 +144,16 @@ void GovernmentEditor::Render()
 
 	if(reset)
 	{
-		*object = *GameData::defaultGovernments.Get(object->name);
+		bool found = false;
+		for(auto &&change : Changes())
+			if(change.TrueName() == object->TrueName())
+			{
+				*object = change;
+				found = true;
+				break;
+			}
+		if(!found)
+			*object = *GameData::baseGovernments.Get(object->TrueName());
 		SetClean();
 	}
 	if(clone)
@@ -321,76 +330,123 @@ void GovernmentEditor::RenderGovernment()
 
 void GovernmentEditor::WriteToFile(DataWriter &writer, const Government *government)
 {
+	const auto *diff = GameData::baseGovernments.Has(government->TrueName())
+		? GameData::baseGovernments.Get(government->TrueName())
+		: nullptr;
+
 	writer.Write("government", government->TrueName());
 	writer.BeginChild();
-	if(government->displayName != government->name)
-		writer.Write("display name", government->displayName);
-	if(government->swizzle)
-		writer.Write("swizzle", government->swizzle);
-	writer.Write("color", government->color.Get()[0], government->color.Get()[1], government->color.Get()[2]);
-	if(government->initialPlayerReputation)
-		writer.Write("player reputation", government->initialPlayerReputation);
-	if(government->crewAttack != 1.)
-		writer.Write("crew attack", government->crewAttack);
-	if(government->crewDefense != 1.)
-		writer.Write("crew defense", government->crewDefense);
-	if(!government->attitudeToward.empty())
-	{
-		writer.Write("attitude toward");
-		writer.BeginChild();
-		for(auto &&pair : government->attitudeToward)
-			if(pair.second)
-				writer.Write(pair.first->TrueName(), pair.second);
-		writer.EndChild();
-	}
+	if(!diff || government->displayName != diff->displayName)
+		if(government->displayName != government->name || diff)
+			writer.Write("display name", government->displayName);
+	if(!diff || government->swizzle != diff->swizzle)
+		if(government->swizzle || diff)
+			writer.Write("swizzle", government->swizzle);
+	if(!diff || government->color != diff->color)
+		writer.Write("color", government->color.Get()[0], government->color.Get()[1], government->color.Get()[2]);
+	if(!diff || government->initialPlayerReputation != diff->initialPlayerReputation)
+		if(government->initialPlayerReputation || diff)
+			writer.Write("player reputation", government->initialPlayerReputation);
+	if(!diff || government->crewAttack != diff->crewAttack)
+		if(government->crewAttack != 1. || diff)
+			writer.Write("crew attack", government->crewAttack);
+	if(!diff || government->crewDefense != diff->crewDefense)
+		if(government->crewDefense != 2. || diff)
+			writer.Write("crew defense", government->crewDefense);
+	if(!diff || government->attitudeToward != diff->attitudeToward)
+		if(!government->attitudeToward.empty())
+		{
+			writer.Write("attitude toward");
+			writer.BeginChild();
+			for(auto &&pair : government->attitudeToward)
+				if(pair.second)
+					writer.Write(pair.first->TrueName(), pair.second);
+			writer.EndChild();
+		}
 
-	if(government->penaltyFor.at(ShipEvent::ASSIST) != -.1
-			|| government->penaltyFor.at(ShipEvent::DISABLE) != .5
-			|| government->penaltyFor.at(ShipEvent::BOARD) != .3
-			|| government->penaltyFor.at(ShipEvent::CAPTURE) != 1.
-			|| government->penaltyFor.at(ShipEvent::DESTROY) != 1.
-			|| government->penaltyFor.at(ShipEvent::ATROCITY) != 10.)
+	bool hasWrittenPenalty = false;
+	auto writePenalty = [&hasWrittenPenalty, &writer]()
 	{
-		writer.Write("penalty for");
-		writer.BeginChild();
-		if(government->penaltyFor.at(ShipEvent::ASSIST) != -.1)
+		if(!hasWrittenPenalty)
+		{
+			writer.Write("penalty for");
+			writer.BeginChild();
+			hasWrittenPenalty = true;
+		}
+	};
+
+	if(!diff || government->penaltyFor.at(ShipEvent::ASSIST) != diff->penaltyFor.at(ShipEvent::ASSIST))
+		if(government->penaltyFor.at(ShipEvent::ASSIST) != -.1 || diff)
+		{
+			writePenalty();
 			writer.Write("assist", government->penaltyFor.at(ShipEvent::ASSIST));
-		if(government->penaltyFor.at(ShipEvent::DISABLE) != .5)
+		}
+	if(!diff || government->penaltyFor.at(ShipEvent::DISABLE) != diff->penaltyFor.at(ShipEvent::DISABLE))
+		if(government->penaltyFor.at(ShipEvent::DISABLE) != .5 || diff)
+		{
+			writePenalty();
 			writer.Write("disable", government->penaltyFor.at(ShipEvent::DISABLE));
-		if(government->penaltyFor.at(ShipEvent::BOARD) != .3)
+		}
+	if(!diff || government->penaltyFor.at(ShipEvent::BOARD) != diff->penaltyFor.at(ShipEvent::BOARD))
+		if(government->penaltyFor.at(ShipEvent::BOARD) != .3 || diff)
+		{
+			writePenalty();
 			writer.Write("board", government->penaltyFor.at(ShipEvent::BOARD));
-		if(government->penaltyFor.at(ShipEvent::CAPTURE) != 1.)
+		}
+	if(!diff || government->penaltyFor.at(ShipEvent::CAPTURE) != diff->penaltyFor.at(ShipEvent::CAPTURE))
+		if(government->penaltyFor.at(ShipEvent::CAPTURE) != 1. || diff)
+		{
+			writePenalty();
 			writer.Write("capture", government->penaltyFor.at(ShipEvent::CAPTURE));
-		if(government->penaltyFor.at(ShipEvent::DESTROY) != 1.)
+		}
+	if(!diff || government->penaltyFor.at(ShipEvent::DESTROY) != diff->penaltyFor.at(ShipEvent::DESTROY))
+		if(government->penaltyFor.at(ShipEvent::DESTROY) != 1. || diff)
+		{
+			writePenalty();
 			writer.Write("destroy", government->penaltyFor.at(ShipEvent::DESTROY));
-		if(government->penaltyFor.at(ShipEvent::ATROCITY) != 10.)
+		}
+	if(!diff || government->penaltyFor.at(ShipEvent::ATROCITY) != diff->penaltyFor.at(ShipEvent::ATROCITY))
+		if(government->penaltyFor.at(ShipEvent::ATROCITY) != 10. || diff)
+		{
+			writePenalty();
 			writer.Write("atrocity", government->penaltyFor.at(ShipEvent::ATROCITY));
+		}
+	if(hasWrittenPenalty)
 		writer.EndChild();
-	}
 
-	if(government->bribe)
-		writer.Write("bribe", government->bribe);
-	if(government->fine != 1.)
-		writer.Write("fine", government->fine);
-	if(government->deathSentence)
-		writer.Write("death sentence", government->deathSentence->Name());
-	if(government->friendlyHail)
-		writer.Write("friendly hail", government->friendlyHail->Name());
-	if(government->friendlyDisabledHail && government->friendlyDisabledHail->Name() != "friendly disabled")
+	if(!diff || government->bribe != diff->bribe)
+		if(government->bribe || diff)
+			writer.Write("bribe", government->bribe);
+	if(!diff || government->fine != diff->fine)
+		if(government->fine != 1. || diff)
+			writer.Write("fine", government->fine);
+	if(!diff || government->deathSentence != diff->deathSentence)
+		if(government->deathSentence)
+			writer.Write("death sentence", government->deathSentence->Name());
+	if(!diff || government->friendlyHail != diff->friendlyHail)
+		if(government->friendlyHail || diff)
+			writer.Write("friendly hail", government->friendlyHail->Name());
+	if(!diff || government->friendlyDisabledHail != diff->friendlyDisabledHail)
+		if((government->friendlyDisabledHail && government->friendlyDisabledHail->Name() != "friendly disabled") || diff)
 		writer.Write("friendly disabled hail", government->friendlyDisabledHail->Name());
-	if(government->hostileHail)
-		writer.Write("hostile hail", government->hostileHail->Name());
-	if(government->hostileDisabledHail && government->hostileDisabledHail->Name() != "hostile disabled")
-		writer.Write("hostile disabled hail", government->hostileDisabledHail->Name());
-	if(!government->language.empty())
-		writer.Write("language", government->language);
-	if(government->raidFleet)
-		writer.Write("raid", government->raidFleet->Name());
-	if(!government->enforcementZones.empty())
-	{
-		writer.Write("enforces");
-		for(auto &&filter : government->enforcementZones)
-			filter.Save(writer);
-	}
+	if(!diff || government->hostileHail != diff->hostileHail)
+		if(government->hostileHail || diff)
+			writer.Write("hostile hail", government->hostileHail->Name());
+	if(!diff || government->hostileDisabledHail != diff->hostileDisabledHail)
+		if((government->hostileDisabledHail && government->hostileDisabledHail->Name() != "hostile disabled") || diff)
+			writer.Write("hostile disabled hail", government->hostileDisabledHail->Name());
+	if(!diff || government->language != diff->language)
+		if(!government->language.empty() || diff)
+			writer.Write("language", government->language);
+	if(!diff || government->raidFleet != diff->raidFleet)
+		if(government->raidFleet || diff)
+			writer.Write("raid", government->raidFleet->Name());
+	if(!diff || government->enforcementZones != diff->enforcementZones)
+		if(!government->enforcementZones.empty() || diff)
+		{
+			writer.Write("enforces");
+			for(auto &&filter : government->enforcementZones)
+				filter.Save(writer);
+		}
 	writer.EndChild();
 }

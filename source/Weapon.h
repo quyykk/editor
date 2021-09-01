@@ -41,6 +41,13 @@ public:
 		Submunition() noexcept = default;
 		explicit Submunition(const Outfit *weapon, std::size_t count) noexcept
 			: weapon(weapon), count(count) {};
+
+		bool operator==(const Submunition &rhs) const
+		{
+			return weapon == rhs.weapon
+				&& count == rhs.count;
+		}
+		bool operator!=(const Submunition &rhs) const { return !(*this == rhs); }
 		
 		const Outfit *weapon = nullptr;
 		std::size_t count = 0;

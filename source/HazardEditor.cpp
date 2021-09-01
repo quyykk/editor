@@ -143,7 +143,16 @@ void HazardEditor::Render()
 
 	if(reset)
 	{
-		*object = *GameData::defaultHazards.Get(object->name);
+		bool found = false;
+		for(auto &&change : Changes())
+			if(change.Name() == object->Name())
+			{
+				*object = change;
+				found = true;
+				break;
+			}
+		if(!found)
+			*object = *GameData::baseHazards.Get(object->name);
 		SetClean();
 	}
 	if(clone)
@@ -330,80 +339,176 @@ void HazardEditor::RenderHazard()
 
 void HazardEditor::WriteToFile(DataWriter &writer, const Hazard *hazard)
 {
+	const auto *diff = GameData::baseHazards.Has(hazard->name)
+		? GameData::baseHazards.Get(hazard->name)
+		: nullptr;
+
 	writer.Write("hazard", hazard->Name());
 	writer.BeginChild();
 
-	if(!hazard->deviates)
-		writer.Write("constant strength");
-	if(hazard->period > 1)
-		writer.Write("period", hazard->period);
-	if(hazard->minDuration > 1 || hazard->maxDuration > 1)
-	{
-		writer.WriteToken("duration");
-		writer.WriteToken(hazard->minDuration);
-		if(hazard->maxDuration > 1)
-			writer.WriteToken(hazard->maxDuration);
-		writer.Write();
-	}
-	if(hazard->minStrength > 1. || hazard->maxStrength > 1.)
-	{
-		writer.WriteToken("strength");
-		writer.WriteToken(hazard->minStrength);
-		if(hazard->maxStrength > 1.)
-			writer.WriteToken(hazard->maxStrength);
-		writer.Write();
-	}
-	if(hazard->minRange > 0. || hazard->maxRange < 10000.)
-	{
-		writer.WriteToken("range");
-		if(hazard->minRange > 0.)
-			writer.WriteToken(hazard->minRange);
-		writer.WriteToken(hazard->maxRange);
-		writer.Write();
-	}
-	for(const auto &pair : hazard->environmentalEffects)
-		writer.Write("environmental effect", pair.first->Name(), pair.second);
+	if(!diff || hazard->deviates != diff->deviates)
+		if(!hazard->deviates)
+			writer.Write("constant strength");
+	if(!diff || hazard->period != diff->period)
+		if(hazard->period > 1 || diff)
+			writer.Write("period", hazard->period);
+	if(!diff || hazard->minDuration != diff->minDuration || hazard->maxDuration != diff->maxDuration)
+		if(hazard->minDuration > 1 || hazard->maxDuration > 1 || diff)
+		{
+			writer.WriteToken("duration");
+			writer.WriteToken(hazard->minDuration);
+			if(hazard->maxDuration > 1 || (diff && hazard->maxDuration != diff->maxDuration))
+				writer.WriteToken(hazard->maxDuration);
+			writer.Write();
+		}
+	if(!diff || hazard->minStrength != diff->minStrength || hazard->maxStrength != diff->maxStrength)
+		if(hazard->minStrength > 1. || hazard->maxStrength > 1. || diff)
+		{
+			writer.WriteToken("strength");
+			writer.WriteToken(hazard->minStrength);
+			if(hazard->maxStrength > 1. || (diff && hazard->maxStrength != diff->maxStrength))
+				writer.WriteToken(hazard->maxStrength);
+			writer.Write();
+		}
+	if(!diff || hazard->minRange != diff->minRange || hazard->maxRange != diff->maxRange)
+		if(hazard->minRange > 0. || hazard->maxRange < 10000. || diff)
+		{
+			writer.WriteToken("range");
+			if(hazard->minRange > 0. || (diff && hazard->minRange != diff->minRange))
+				writer.WriteToken(hazard->minRange);
+			writer.WriteToken(hazard->maxRange);
+			writer.Write();
+		}
+	if(!diff || hazard->environmentalEffects != diff->environmentalEffects)
+		for(const auto &pair : hazard->environmentalEffects)
+			writer.Write("environmental effect", pair.first->Name(), pair.second);
 
-	writer.Write("weapon");
-	writer.BeginChild();
-	if(hazard->damage[Weapon::SHIELD_DAMAGE])
-		writer.Write("shield damage", hazard->damage[Weapon::SHIELD_DAMAGE]);
-	if(hazard->damage[Weapon::HULL_DAMAGE])
-		writer.Write("hull damage", hazard->damage[Weapon::HULL_DAMAGE]);
-	if(hazard->damage[Weapon::FUEL_DAMAGE])
-		writer.Write("fuel damage", hazard->damage[Weapon::FUEL_DAMAGE]);
-	if(hazard->damage[Weapon::HEAT_DAMAGE])
-		writer.Write("heat damage", hazard->damage[Weapon::HEAT_DAMAGE]);
-	if(hazard->damage[Weapon::ENERGY_DAMAGE])
-		writer.Write("energy damage", hazard->damage[Weapon::ENERGY_DAMAGE]);
-	if(hazard->damage[Weapon::ION_DAMAGE])
-		writer.Write("ion damage", hazard->damage[Weapon::ION_DAMAGE]);
-	if(hazard->damage[Weapon::DISRUPTION_DAMAGE])
-		writer.Write("disruption damage", hazard->damage[Weapon::DISRUPTION_DAMAGE]);
-	if(hazard->damage[Weapon::SLOWING_DAMAGE])
-		writer.Write("slowing damage", hazard->damage[Weapon::SLOWING_DAMAGE]);
-	if(hazard->damage[Weapon::RELATIVE_SHIELD_DAMAGE])
-		writer.Write("relative shield damage", hazard->damage[Weapon::RELATIVE_SHIELD_DAMAGE]);
-	if(hazard->damage[Weapon::RELATIVE_HULL_DAMAGE])
-		writer.Write("relative hull damage", hazard->damage[Weapon::RELATIVE_HULL_DAMAGE]);
-	if(hazard->damage[Weapon::RELATIVE_FUEL_DAMAGE])
-		writer.Write("relative fuel damage", hazard->damage[Weapon::RELATIVE_FUEL_DAMAGE]);
-	if(hazard->damage[Weapon::RELATIVE_HEAT_DAMAGE])
-		writer.Write("relative heat damage", hazard->damage[Weapon::RELATIVE_HEAT_DAMAGE]);
-	if(hazard->piercing)
-		writer.Write("piercing", hazard->piercing);
-	if(hazard->damage[Weapon::HIT_FORCE])
-		writer.Write("hit force", hazard->damage[Weapon::HIT_FORCE]);
-	if(hazard->isGravitational)
-		writer.Write("gravitational");
-	if(hazard->blastRadius)
-		writer.Write("blast radius", hazard->blastRadius);
-	if(hazard->hasDamageDropoff)
-		writer.Write("damage dropoff", hazard->damageDropoffRange.first, hazard->damageDropoffRange.second);
-	if(hazard->damageDropoffModifier)
-		writer.Write("dropoff modifier", hazard->damageDropoffModifier);
-	for(auto &&targetEffect : hazard->targetEffects)
-		writer.Write("target effect", targetEffect.first->Name(), targetEffect.second);
-	writer.EndChild();
+	bool hasWrittenRoot = false;
+	auto writeRoot = [&hasWrittenRoot, &writer]
+	{
+		if(!hasWrittenRoot)
+		{
+			writer.Write("weapon");
+			writer.BeginChild();
+			hasWrittenRoot = true;
+		}
+	};
+	if(!diff || hazard->damage[Weapon::SHIELD_DAMAGE] != diff->damage[Weapon::SHIELD_DAMAGE])
+		if(hazard->damage[Weapon::SHIELD_DAMAGE] || diff)
+		{
+			writeRoot();
+			writer.Write("shield damage", hazard->damage[Weapon::SHIELD_DAMAGE]);
+		}
+	if(!diff || hazard->damage[Weapon::HULL_DAMAGE] != diff->damage[Weapon::HULL_DAMAGE])
+		if(hazard->damage[Weapon::HULL_DAMAGE] || diff)
+		{
+			writeRoot();
+			writer.Write("hull damage", hazard->damage[Weapon::HULL_DAMAGE]);
+		}
+	if(!diff || hazard->damage[Weapon::FUEL_DAMAGE] != diff->damage[Weapon::FUEL_DAMAGE])
+		if(hazard->damage[Weapon::FUEL_DAMAGE] || diff)
+		{
+			writeRoot();
+			writer.Write("fuel damage", hazard->damage[Weapon::FUEL_DAMAGE]);
+		}
+	if(!diff || hazard->damage[Weapon::HEAT_DAMAGE] != diff->damage[Weapon::HEAT_DAMAGE])
+		if(hazard->damage[Weapon::HEAT_DAMAGE] || diff)
+		{
+			writeRoot();
+			writer.Write("heat damage", hazard->damage[Weapon::HEAT_DAMAGE]);
+		}
+	if(!diff || hazard->damage[Weapon::ENERGY_DAMAGE] != diff->damage[Weapon::ENERGY_DAMAGE])
+		if(hazard->damage[Weapon::ENERGY_DAMAGE] || diff)
+		{
+			writeRoot();
+			writer.Write("energy damage", hazard->damage[Weapon::ENERGY_DAMAGE]);
+		}
+	if(!diff || hazard->damage[Weapon::ION_DAMAGE] != diff->damage[Weapon::ION_DAMAGE])
+		if(hazard->damage[Weapon::ION_DAMAGE] || diff)
+		{
+			writeRoot();
+			writer.Write("ion damage", hazard->damage[Weapon::ION_DAMAGE]);
+		}
+	if(!diff || hazard->damage[Weapon::DISRUPTION_DAMAGE] != diff->damage[Weapon::DISRUPTION_DAMAGE])
+		if(hazard->damage[Weapon::DISRUPTION_DAMAGE] || diff)
+		{
+			writeRoot();
+			writer.Write("disruption damage", hazard->damage[Weapon::DISRUPTION_DAMAGE]);
+		}
+	if(!diff || hazard->damage[Weapon::SLOWING_DAMAGE] != diff->damage[Weapon::SLOWING_DAMAGE])
+		if(hazard->damage[Weapon::SLOWING_DAMAGE] || diff)
+		{
+			writeRoot();
+			writer.Write("slowing damage", hazard->damage[Weapon::SLOWING_DAMAGE]);
+		}
+	if(!diff || hazard->damage[Weapon::RELATIVE_SHIELD_DAMAGE] != diff->damage[Weapon::RELATIVE_SHIELD_DAMAGE])
+		if(hazard->damage[Weapon::RELATIVE_SHIELD_DAMAGE] || diff)
+		{
+			writeRoot();
+			writer.Write("relative shield damage", hazard->damage[Weapon::RELATIVE_SHIELD_DAMAGE]);
+		}
+	if(!diff || hazard->damage[Weapon::RELATIVE_HULL_DAMAGE] != diff->damage[Weapon::RELATIVE_HULL_DAMAGE])
+		if(hazard->damage[Weapon::RELATIVE_HULL_DAMAGE] || diff)
+		{
+			writeRoot();
+			writer.Write("relative hull damage", hazard->damage[Weapon::RELATIVE_HULL_DAMAGE]);
+		}
+	if(!diff || hazard->damage[Weapon::RELATIVE_FUEL_DAMAGE] != diff->damage[Weapon::RELATIVE_FUEL_DAMAGE])
+		if(hazard->damage[Weapon::RELATIVE_FUEL_DAMAGE] || diff)
+		{
+			writeRoot();
+			writer.Write("relative fuel damage", hazard->damage[Weapon::RELATIVE_FUEL_DAMAGE]);
+		}
+	if(!diff || hazard->damage[Weapon::RELATIVE_HEAT_DAMAGE] != diff->damage[Weapon::RELATIVE_HEAT_DAMAGE])
+		if(hazard->damage[Weapon::RELATIVE_HEAT_DAMAGE] || diff)
+		{
+			writeRoot();
+			writer.Write("relative heat damage", hazard->damage[Weapon::RELATIVE_HEAT_DAMAGE]);
+		}
+	if(!diff || hazard->piercing != diff->piercing)
+		if(hazard->piercing || diff)
+		{
+			writeRoot();
+			writer.Write("piercing", hazard->piercing);
+		}
+	if(!diff || hazard->damage[Weapon::HIT_FORCE] != diff->damage[Weapon::HIT_FORCE])
+		if(hazard->damage[Weapon::HIT_FORCE] || diff)
+		{
+			writeRoot();
+			writer.Write("hit force", hazard->damage[Weapon::HIT_FORCE]);
+		}
+	if(!diff || hazard->isGravitational != diff->isGravitational)
+		if(hazard->isGravitational || diff)
+		{
+			writeRoot();
+			writer.Write("gravitational");
+		}
+	if(!diff || hazard->blastRadius != diff->blastRadius)
+		if(hazard->blastRadius || diff)
+		{
+			writeRoot();
+			writer.Write("blast radius", hazard->blastRadius);
+		}
+	if(!diff || hazard->damageDropoffRange != diff->damageDropoffRange)
+		if(hazard->damageDropoffRange.first || hazard->damageDropoffRange.second || diff)
+		{
+			writeRoot();
+			writer.Write("damage dropoff", hazard->damageDropoffRange.first, hazard->damageDropoffRange.second);
+		}
+	if(!diff || hazard->damageDropoffModifier != diff->damageDropoffModifier)
+		if(hazard->damageDropoffModifier || diff)
+		{
+			writeRoot();
+			writer.Write("dropoff modifier", hazard->damageDropoffModifier);
+		}
+	if(!diff || hazard->targetEffects != diff->targetEffects)
+		if(!hazard->targetEffects.empty())
+		{
+			writeRoot();
+			for(auto &&targetEffect : hazard->targetEffects)
+				writer.Write("target effect", targetEffect.first->Name(), targetEffect.second);
+		}
+	if(hasWrittenRoot)
+		writer.EndChild();
 	writer.EndChild();
 }

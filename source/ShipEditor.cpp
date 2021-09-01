@@ -151,7 +151,16 @@ void ShipEditor::Render()
 
 	if(reset)
 	{
-		*object = *GameData::defaultShips.Get(object->name);
+		bool found = false;
+		for(auto &&change : Changes())
+			if(change.TrueName() == object->TrueName())
+			{
+				*object = change;
+				found = true;
+				break;
+			}
+		if(!found)
+			*object = *GameData::baseShips.Get(object->TrueName());
 		SetClean();
 	} 
 	if(clone)
@@ -789,231 +798,438 @@ void ShipEditor::RenderShip()
 
 void ShipEditor::WriteToFile(DataWriter &writer, const Ship *ship)
 {
+	const auto *diff = GameData::baseShips.Has(ship->TrueName())
+		? GameData::baseShips.Get(ship->TrueName())
+		: nullptr;
+
+	// We might have a variant here so we need to select the correct base ship.
+	if(!diff && !ship->variantName.empty())
+	{
+		if(GameData::baseShips.Has(ship->ModelName()))
+			diff = GameData::baseShips.Get(ship->ModelName());
+		else if(GameData::Ships().Has(ship->ModelName()))
+			diff = GameData::Ships().Get(ship->ModelName());
+	}
+
 	if(ship->variantName.empty())
 		writer.Write("ship", ship->modelName);
 	else
 		writer.Write("ship", ship->base->ModelName(), ship->variantName);
 	writer.BeginChild();
-	if(ship->pluralModelName != ship->modelName + 's')
-		writer.Write("plural", ship->pluralModelName);
-	if(!ship->noun.empty())
-		writer.Write("noun", ship->noun);
-	ship->SaveSprite(writer);
-	if(ship->thumbnail)
-		writer.Write("thumbnail", ship->thumbnail->Name());
+	if(!diff || ship->pluralModelName != diff->pluralModelName)
+		if(ship->pluralModelName != ship->modelName + 's')
+			writer.Write("plural", ship->pluralModelName);
+	if(!diff || ship->noun != diff->noun)
+		if(!ship->noun.empty())
+			writer.Write("noun", ship->noun);
+	if(!diff || ship->sprite != diff->sprite)
+		ship->SaveSprite(writer);
+	if(!diff || ship->thumbnail != diff->thumbnail)
+		if(ship->thumbnail)
+			writer.Write("thumbnail", ship->thumbnail->Name());
 
-	if(ship->neverDisabled)
-		writer.Write("never disabled");
-	if(!ship->isCapturable)
-		writer.Write("uncapturable");
-	if(ship->customSwizzle >= 0)
-		writer.Write("swizzle", ship->customSwizzle);
+	if(!diff || ship->neverDisabled != diff->neverDisabled)
+		if(ship->neverDisabled)
+			writer.Write("never disabled");
+	if(!diff || ship->isCapturable!= diff->isCapturable)
+		if(!ship->isCapturable)
+			writer.Write("uncapturable");
+	if(!diff || ship->customSwizzle != diff->customSwizzle)
+		if(ship->customSwizzle >= 0)
+			writer.Write("swizzle", ship->customSwizzle);
 
-	writer.Write("attributes");
-	writer.BeginChild();
-	writer.Write("category", ship->baseAttributes.Category());
-	writer.Write("cost", ship->baseAttributes.Cost());
-	writer.Write("mass", ship->baseAttributes.Mass());
-
-	if(!ship->baseAttributes.Licenses().empty())
+	bool hasWrittenAttributes = false;
+	auto writeAttributes = [&hasWrittenAttributes, &writer, &diff] ()
 	{
-		writer.WriteToken("licenses");
-		for(auto &&license : ship->baseAttributes.Licenses())
-			writer.WriteToken(license);
-		writer.Write();
-	}
-
-	for(const auto &it : ship->baseAttributes.FlareSprites())
-		for(int i = 0; i < it.second; ++i)
-			it.first.SaveSprite(writer, "flare sprite");
-	for(const auto &it : ship->baseAttributes.FlareSounds())
-		for(int i = 0; i < it.second; ++i)
-			writer.Write("flare sound", it.first->Name());
-	for(const auto &it : ship->baseAttributes.ReverseFlareSprites())
-		for(int i = 0; i < it.second; ++i)
-			it.first.SaveSprite(writer, "reverse flare sprite");
-	for(const auto &it : ship->baseAttributes.ReverseFlareSounds())
-		for(int i = 0; i < it.second; ++i)
-			writer.Write("reverse flare sound", it.first->Name());
-	for(const auto &it : ship->baseAttributes.SteeringFlareSprites())
-		for(int i = 0; i < it.second; ++i)
-			it.first.SaveSprite(writer, "steering flare sprite");
-	for(const auto &it : ship->baseAttributes.SteeringFlareSounds())
-		for(int i = 0; i < it.second; ++i)
-			writer.Write("steering flare sound", it.first->Name());
-	for(const auto &it : ship->baseAttributes.AfterburnerEffects())
-		for(int i = 0; i < it.second; ++i)
-			writer.Write("afterburner effect", it.first->Name());
-	for(const auto &it : ship->baseAttributes.JumpEffects())
-		for(int i = 0; i < it.second; ++i)
-			writer.Write("jump effect", it.first->Name());
-	for(const auto &it : ship->baseAttributes.JumpSounds())
-		for(int i = 0; i < it.second; ++i)
-			writer.Write("jump sound", it.first->Name());
-	for(const auto &it : ship->baseAttributes.JumpInSounds())
-		for(int i = 0; i < it.second; ++i)
-			writer.Write("jump in sound", it.first->Name());
-	for(const auto &it : ship->baseAttributes.JumpOutSounds())
-		for(int i = 0; i < it.second; ++i)
-			writer.Write("jump writer sound", it.first->Name());
-	for(const auto &it : ship->baseAttributes.HyperSounds())
-		for(int i = 0; i < it.second; ++i)
-			writer.Write("hyperdrive sound", it.first->Name());
-	for(const auto &it : ship->baseAttributes.HyperInSounds())
-		for(int i = 0; i < it.second; ++i)
-			writer.Write("hyperdrive in sound", it.first->Name());
-	for(const auto &it : ship->baseAttributes.HyperOutSounds())
-		for(int i = 0; i < it.second; ++i)
-		writer.Write("hyperdrive writer sound", it.first->Name());
-	for(const auto &it : ship->baseAttributes.Attributes())
-	{
-		if(it.first == string("gun ports") || it.first == string("turret mounts"))
-			continue;
-		if(it.second)
-			writer.Write(it.first, it.second);
-	}
-	if(ship->baseAttributes.BlastRadius()
-			|| ship->baseAttributes.ShieldDamage()
-			|| ship->baseAttributes.HullDamage()
-			|| ship->baseAttributes.HitForce())
-	{
-		writer.Write("weapon");
-		writer.BeginChild();
-		if(ship->baseAttributes.BlastRadius())
-			writer.Write("blast radius", ship->baseAttributes.BlastRadius());
-		if(ship->baseAttributes.ShieldDamage())
-			writer.Write("shield damage", ship->baseAttributes.ShieldDamage());
-		if(ship->baseAttributes.HullDamage())
-			writer.Write("hull damage", ship->baseAttributes.HullDamage());
-		if(ship->baseAttributes.HitForce())
-			writer.Write("hit force", ship->baseAttributes.HitForce());
-		writer.EndChild();
-	}
-	writer.EndChild();
-
-	writer.Write("outfits");
-	writer.BeginChild();
-	{
-		using OutfitElement = pair<const Outfit *const, int>;
-		WriteSorted(ship->outfits,
-			[](const OutfitElement *lhs, const OutfitElement *rhs)
-				{ return lhs->first->Name() < rhs->first->Name(); },
-			[&writer](const OutfitElement &it){
-				if(it.second == 1)
-					writer.Write(it.first->Name());
-				else
-					writer.Write(it.first->Name(), it.second);
-			});
-	}
-	writer.EndChild();
-
-	for(const auto &point : ship->enginePoints)
-	{
-		writer.Write("engine", 2. * point.X(), 2. * point.Y());
-		writer.BeginChild();
-		if(point.zoom != 1.)
-			writer.Write("zoom", point.zoom);
-		if(point.facing.Degrees())
-			writer.Write("angle", point.facing.Degrees());
-		if(point.side)
-			writer.Write("over");
-		writer.EndChild();
-	}
-	for(const auto &point : ship->reverseEnginePoints)
-	{
-		writer.Write("reverse engine", 2. * point.X(), 2. * point.Y());
-		writer.BeginChild();
-		if(point.zoom != 1.)
-			writer.Write("zoom", point.zoom);
-		if(point.facing.Degrees())
-			writer.Write("angle", point.facing.Degrees() - 180.);
-		if(point.side)
-			writer.Write("over");
-		writer.EndChild();
-	}
-	for(const auto &point : ship->steeringEnginePoints)
-	{
-		writer.Write("steering engine", 2. * point.X(), 2. * point.Y());
-		writer.BeginChild();
-		if(point.zoom != 1.)
-			writer.Write("zoom", point.zoom);
-		if(point.facing.Degrees())
-			writer.Write("angle", point.facing.Degrees());
-		if(point.side)
-			writer.Write("over");
-		if(point.steering)
-			writer.Write(point.steering == 1 ? "left" : "right");
-		writer.EndChild();
-	}
-	for(const Hardpoint &hardpoint : ship->armament.Get())
-	{
-		const char *type = (hardpoint.IsTurret() ? "turret" : "gun");
-		if(hardpoint.GetOutfit())
-			writer.Write(type, 2. * hardpoint.GetPoint().X(), 2. * hardpoint.GetPoint().Y(),
-				hardpoint.GetOutfit()->Name());
-		else
-			writer.Write(type, 2. * hardpoint.GetPoint().X(), 2. * hardpoint.GetPoint().Y());
-		double hardpointAngle = hardpoint.GetBaseAngle().Degrees();
-		writer.BeginChild();
+		if(!hasWrittenAttributes)
 		{
-			if(hardpointAngle)
-				writer.Write("angle", hardpointAngle);
-			if(hardpoint.IsParallel())
-				writer.Write("parallel");
-			if(hardpoint.IsUnder() && hardpoint.IsTurret())
-				writer.Write("under");
-			else if(!hardpoint.IsUnder() && !hardpoint.IsTurret())
-				writer.Write("over");
+			if(diff)
+				writer.Write("add", "attributes");
+			else
+				writer.Write("attributes");
+			writer.BeginChild();
+			hasWrittenAttributes = true;
 		}
-		writer.EndChild();
-	}
-	for(const auto &bay : ship->bays)
-	{
-		double x = 2. * bay.point.X();
-		double y = 2. * bay.point.Y();
+	};
 
-		writer.Write("bay", bay.category, x, y);
-		if(!bay.launchEffects.empty() || bay.facing.Degrees() || bay.side)
+	if(!diff || ship->baseAttributes.Category() != diff->baseAttributes.Category())
+		if(!ship->baseAttributes.Category().empty() || diff)
 		{
+			writeAttributes();
+			writer.Write("category", ship->baseAttributes.Category());
+		}
+	if(!diff || ship->baseAttributes.Cost() != diff->baseAttributes.Cost())
+		if(ship->baseAttributes.Cost() || diff)
+		{
+			writeAttributes();
+			writer.Write("cost", ship->baseAttributes.Cost() - (diff ? diff->baseAttributes.Cost() : 0.));
+		}
+	if(!diff || ship->baseAttributes.Mass() != diff->baseAttributes.Mass())
+		if(ship->baseAttributes.Mass() || diff)
+		{
+			writeAttributes();
+			writer.Write("mass", ship->baseAttributes.Mass() - (diff ? diff->baseAttributes.Mass() : 0.));
+		}
+
+	if(!diff || ship->attributes.licenses != diff->attributes.licenses)
+		if(!ship->attributes.Licenses().empty())
+		{
+			writeAttributes();
+			writer.WriteToken("licenses");
+			for(auto &&license : ship->baseAttributes.Licenses())
+				if(!diff || !diff->attributes.Get(license))
+					writer.WriteToken(license);
+			writer.Write();
+		}
+
+	if(!diff || ship->baseAttributes.FlareSprites() != diff->baseAttributes.FlareSprites())
+		for(const auto &it : ship->baseAttributes.FlareSprites())
+			if(!diff || !Count(diff->baseAttributes.FlareSprites(), it))
+				for(int i = 0; i < it.second; ++i)
+				{
+					writeAttributes();
+					it.first.SaveSprite(writer, "flare sprite");
+				}
+	if(!diff || ship->baseAttributes.FlareSounds() != diff->baseAttributes.FlareSounds())
+		for(const auto &it : ship->baseAttributes.FlareSounds())
+			if(!diff || !diff->baseAttributes.FlareSounds().count(it.first))
+				for(int i = 0; i < it.second; ++i)
+				{
+					writeAttributes();
+					writer.Write("flare sound", it.first->Name());
+				}
+	if(!diff || ship->baseAttributes.ReverseFlareSprites() != diff->baseAttributes.ReverseFlareSprites())
+		for(const auto &it : ship->baseAttributes.ReverseFlareSprites())
+			if(!diff || !Count(diff->baseAttributes.ReverseFlareSprites(), it))
+				for(int i = 0; i < it.second; ++i)
+				{
+					writeAttributes();
+					it.first.SaveSprite(writer, "reverse flare sprite");
+				}
+	if(!diff || ship->baseAttributes.ReverseFlareSounds() != diff->baseAttributes.ReverseFlareSounds())
+		for(const auto &it : ship->baseAttributes.ReverseFlareSounds())
+			if(!diff || !diff->baseAttributes.ReverseFlareSounds().count(it.first))
+				for(int i = 0; i < it.second; ++i)
+				{
+					writeAttributes();
+					writer.Write("reverse flare sound", it.first->Name());
+				}
+	if(!diff || ship->baseAttributes.SteeringFlareSprites() != diff->baseAttributes.SteeringFlareSprites())
+		for(const auto &it : ship->baseAttributes.SteeringFlareSprites())
+			if(!diff || !Count(diff->baseAttributes.SteeringFlareSprites(), it))
+				for(int i = 0; i < it.second; ++i)
+				{
+					writeAttributes();
+					it.first.SaveSprite(writer, "steering flare sprite");
+				}
+	if(!diff || ship->baseAttributes.SteeringFlareSounds() != diff->baseAttributes.SteeringFlareSounds())
+		for(const auto &it : ship->baseAttributes.SteeringFlareSounds())
+			if(!diff || !diff->baseAttributes.SteeringFlareSounds().count(it.first))
+				for(int i = 0; i < it.second; ++i)
+				{
+					writeAttributes();
+					writer.Write("steering flare sound", it.first->Name());
+				}
+	if(!diff || ship->baseAttributes.AfterburnerEffects() != diff->baseAttributes.AfterburnerEffects())
+		for(const auto &it : ship->baseAttributes.AfterburnerEffects())
+			if(!diff || !diff->baseAttributes.AfterburnerEffects().count(it.first))
+				for(int i = 0; i < it.second; ++i)
+				{
+					writeAttributes();
+					writer.Write("afterburner effect", it.first->Name());
+				}
+	if(!diff || ship->baseAttributes.JumpEffects() != diff->baseAttributes.JumpEffects())
+		for(const auto &it : ship->baseAttributes.JumpEffects())
+			if(!diff || !diff->baseAttributes.JumpEffects().count(it.first))
+				for(int i = 0; i < it.second; ++i)
+				{
+					writeAttributes();
+					writer.Write("jump effect", it.first->Name());
+				}
+	if(!diff || ship->baseAttributes.JumpSounds() != diff->baseAttributes.JumpSounds())
+		for(const auto &it : ship->baseAttributes.JumpSounds())
+			if(!diff || !diff->baseAttributes.JumpSounds().count(it.first))
+				for(int i = 0; i < it.second; ++i)
+				{
+					writeAttributes();
+					writer.Write("jump sound", it.first->Name());
+				}
+	if(!diff || ship->baseAttributes.JumpInSounds() != diff->baseAttributes.JumpInSounds())
+		for(const auto &it : ship->baseAttributes.JumpInSounds())
+			if(!diff || !diff->baseAttributes.JumpInSounds().count(it.first))
+				for(int i = 0; i < it.second; ++i)
+				{
+					writeAttributes();
+					writer.Write("jump in sound", it.first->Name());
+				}
+	if(!diff || ship->baseAttributes.JumpOutSounds() != diff->baseAttributes.JumpOutSounds())
+		for(const auto &it : ship->baseAttributes.JumpOutSounds())
+			if(!diff || !diff->baseAttributes.JumpOutSounds().count(it.first))
+				for(int i = 0; i < it.second; ++i)
+				{
+					writeAttributes();
+					writer.Write("jump out sound", it.first->Name());
+				}
+	if(!diff || ship->baseAttributes.HyperSounds() != diff->baseAttributes.HyperSounds())
+		for(const auto &it : ship->baseAttributes.HyperSounds())
+			if(!diff || !diff->baseAttributes.HyperSounds().count(it.first))
+				for(int i = 0; i < it.second; ++i)
+				{
+					writeAttributes();
+					writer.Write("hyperdrive sound", it.first->Name());
+				}
+	if(!diff || ship->baseAttributes.HyperInSounds() != diff->baseAttributes.HyperInSounds())
+		for(const auto &it : ship->baseAttributes.HyperInSounds())
+			if(!diff || !diff->baseAttributes.HyperInSounds().count(it.first))
+				for(int i = 0; i < it.second; ++i)
+				{
+					writeAttributes();
+					writer.Write("hyperdrive in sound", it.first->Name());
+				}
+	if(!diff || ship->baseAttributes.HyperOutSounds() != diff->baseAttributes.HyperOutSounds())
+		for(const auto &it : ship->baseAttributes.HyperOutSounds())
+			if(!diff || !diff->baseAttributes.HyperOutSounds().count(it.first))
+				for(int i = 0; i < it.second; ++i)
+				{
+					writeAttributes();
+					writer.Write("hyperdrive out sound", it.first->Name());
+				}
+
+	auto shipAttributes = ship->baseAttributes.Attributes().AsBase();
+	auto diffAttributes = diff ? diff->baseAttributes.Attributes().AsBase() : shipAttributes;
+	auto it = find_if(shipAttributes.begin(), shipAttributes.end(), [](const std::pair<const char *, double> &pair) { return string(pair.first) == "gun ports"; });
+	if(it != shipAttributes.end())
+		shipAttributes.erase(it);
+	it = find_if(shipAttributes.begin(), shipAttributes.end(), [](const std::pair<const char *, double> &pair) { return string(pair.first) == "turret mounts"; });
+	if(it != shipAttributes.end())
+		shipAttributes.erase(it);
+
+	it = find_if(diffAttributes.begin(), diffAttributes.end(), [](const std::pair<const char *, double> &pair) { return string(pair.first) == "gun ports"; });
+	if(it != diffAttributes.end())
+		diffAttributes.erase(it);
+	it = find_if(diffAttributes.begin(), diffAttributes.end(), [](const std::pair<const char *, double> &pair) { return string(pair.first) == "turret mounts"; });
+	if(it != diffAttributes.end())
+		diffAttributes.erase(it);
+
+	Dictionary diffDict(diffAttributes);
+	if(!diff || shipAttributes != diffAttributes)
+		for(auto it = shipAttributes.begin(); it != shipAttributes.end(); ++it)
+			if(!diff || !Count(diffAttributes, *it))
+			{
+				writeAttributes();
+				writer.Write(it->first, it->second - (diff ? diffDict.Get(it->first) : 0.));
+			}
+
+	bool hasWrittenWeapon = false;
+	auto writeWeapon = [&hasWrittenWeapon, &writer]()
+	{
+		if(!hasWrittenWeapon)
+		{
+			writer.Write("weapon");
+			writer.BeginChild();
+			hasWrittenWeapon = true;
+		}
+	};
+	if(!diff || ship->explosionWeapon->BlastRadius() != diff->explosionWeapon->BlastRadius())
+		if(ship->explosionWeapon->BlastRadius() || diff)
+		{
+			writeAttributes();
+			writeWeapon();
+			writer.Write("blast radius", ship->explosionWeapon->BlastRadius());
+		}
+	if(!diff || ship->explosionWeapon->ShieldDamage() != diff->explosionWeapon->ShieldDamage())
+		if(ship->explosionWeapon->ShieldDamage() || diff)
+		{
+			writeAttributes();
+			writeWeapon();
+			writer.Write("shield damage", ship->explosionWeapon->ShieldDamage());
+		}
+	if(!diff || ship->explosionWeapon->HullDamage() != diff->explosionWeapon->HullDamage())
+		if(ship->explosionWeapon->HullDamage() || diff)
+		{
+			writeAttributes();
+			writeWeapon();
+			writer.Write("hull damage", ship->explosionWeapon->HullDamage());
+		}
+	if(!diff || ship->explosionWeapon->HitForce() != diff->explosionWeapon->HitForce())
+		if(ship->explosionWeapon->HitForce() || diff)
+		{
+			writeAttributes();
+			writeWeapon();
+			writer.Write("hit force", ship->explosionWeapon->HitForce());
+		}
+
+	if(hasWrittenWeapon)
+		writer.EndChild();
+	if(hasWrittenAttributes)
+		writer.EndChild();
+
+	if(!diff || ship->outfits != diff->outfits)
+		if(!ship->outfits.empty() || diff)
+		{
+			writer.Write("outfits");
 			writer.BeginChild();
 			{
-				if(bay.facing.Degrees())
-					writer.Write("angle", bay.facing.Degrees());
-				if(bay.side)
-					writer.Write(!bay.side ? "inside" : bay.side == 1 ? "over" : "under");
-				for(const Effect *effect : bay.launchEffects)
-					if(effect->Name() != "basic launch")
-						writer.Write("launch effect", effect->Name());
+				using OutfitElement = pair<const Outfit *const, int>;
+				WriteSorted(ship->outfits,
+					[](const OutfitElement *lhs, const OutfitElement *rhs)
+						{ return lhs->first->Name() < rhs->first->Name(); },
+					[&writer](const OutfitElement &it){
+						if(it.second == 1)
+							writer.Write(it.first->Name());
+						else
+							writer.Write(it.first->Name(), it.second);
+					});
 			}
 			writer.EndChild();
 		}
+
+	if(!diff || ship->enginePoints != diff->enginePoints
+			|| ship->reverseEnginePoints != diff->reverseEnginePoints
+			|| ship->steeringEnginePoints != diff->steeringEnginePoints)
+	{
+		for(const auto &point : ship->enginePoints)
+		{
+			writer.Write("engine", 2. * point.X(), 2. * point.Y());
+			writer.BeginChild();
+			if(point.zoom != 1.)
+				writer.Write("zoom", point.zoom);
+			if(point.facing.Degrees())
+				writer.Write("angle", point.facing.Degrees());
+			if(point.side)
+				writer.Write("over");
+			writer.EndChild();
+		}
+		for(const auto &point : ship->reverseEnginePoints)
+		{
+			writer.Write("reverse engine", 2. * point.X(), 2. * point.Y());
+			writer.BeginChild();
+			if(point.zoom != 1.)
+				writer.Write("zoom", point.zoom);
+			if(point.facing.Degrees())
+				writer.Write("angle", point.facing.Degrees() - 180.);
+			if(point.side)
+				writer.Write("over");
+			writer.EndChild();
+		}
+		for(const auto &point : ship->steeringEnginePoints)
+		{
+			writer.Write("steering engine", 2. * point.X(), 2. * point.Y());
+			writer.BeginChild();
+			if(point.zoom != 1.)
+				writer.Write("zoom", point.zoom);
+			if(point.facing.Degrees())
+				writer.Write("angle", point.facing.Degrees());
+			if(point.side)
+				writer.Write("over");
+			if(point.steering)
+				writer.Write(point.steering == 1 ? "left" : "right");
+			writer.EndChild();
+		}
 	}
-	for(const auto &leak : ship->leaks)
-		writer.Write("leak", leak.effect->Name(), leak.openPeriod, leak.closePeriod);
+	if(!diff || ship->armament != diff->armament)
+	{
+		auto shipArmament = ship->armament;
+		shipArmament.UninstallAll();
+		for(const auto &outfit : ship->outfits)
+			if(outfit.first->IsWeapon())
+				shipArmament.Add(outfit.first, outfit.second);
+
+		auto emptyShip = ship->armament;
+		emptyShip.UninstallAll();
+		auto emptyDiff = diff ? diff->armament : emptyShip;
+		emptyDiff.UninstallAll();
+		if(!diff || shipArmament != ship->armament || emptyShip != emptyDiff)
+			for(const Hardpoint &hardpoint : ship->armament.Get())
+			{
+				const char *type = (hardpoint.IsTurret() ? "turret" : "gun");
+				if(hardpoint.GetOutfit())
+					writer.Write(type, 2. * hardpoint.GetPoint().X(), 2. * hardpoint.GetPoint().Y(),
+						hardpoint.GetOutfit()->Name());
+				else
+					writer.Write(type, 2. * hardpoint.GetPoint().X(), 2. * hardpoint.GetPoint().Y());
+				double hardpointAngle = hardpoint.GetBaseAngle().Degrees();
+				writer.BeginChild();
+				{
+					if(hardpointAngle)
+						writer.Write("angle", hardpointAngle);
+					if(hardpoint.IsParallel())
+						writer.Write("parallel");
+					if(hardpoint.IsUnder() && hardpoint.IsTurret())
+						writer.Write("under");
+					else if(!hardpoint.IsUnder() && !hardpoint.IsTurret())
+						writer.Write("over");
+				}
+				writer.EndChild();
+			}
+	}
+	if(!diff || ship->bays != diff->bays)
+		for(const auto &bay : ship->bays)
+		{
+			double x = 2. * bay.point.X();
+			double y = 2. * bay.point.Y();
+
+			writer.Write("bay", bay.category, x, y);
+			if(!bay.launchEffects.empty() || bay.facing.Degrees() || bay.side)
+			{
+				writer.BeginChild();
+				{
+					if(bay.facing.Degrees() == -90.)
+						writer.Write("left");
+					else if(bay.facing.Degrees() == 90.)
+						writer.Write("right");
+					else if(bay.facing.Degrees() == 180.)
+						writer.Write("back");
+					else if(bay.facing.Degrees())
+						writer.Write("angle", bay.facing.Degrees());
+
+					if(bay.side)
+						writer.Write(!bay.side ? "inside" : bay.side == 1 ? "over" : "under");
+					for(const Effect *effect : bay.launchEffects)
+						if(effect->Name() != "basic launch")
+							writer.Write("launch effect", effect->Name());
+				}
+				writer.EndChild();
+			}
+		}
+	if(!diff || ship->leaks != diff->leaks)
+		for(const auto &leak : ship->leaks)
+			writer.Write("leak", leak.effect->Name(), leak.openPeriod, leak.closePeriod);
 
 	using EffectElement = pair<const Effect *const, int>;
 	auto effectSort = [](const EffectElement *lhs, const EffectElement *rhs)
 		{ return lhs->first->Name() < rhs->first->Name(); };
-	WriteSorted(ship->explosionEffects, effectSort, [&writer](const EffectElement &it)
-	{
-		if(it.second)
-			writer.Write("explode", it.first->Name(), it.second);
-	});
-	WriteSorted(ship->finalExplosions, effectSort, [&writer](const EffectElement &it)
-	{
-		if(it.second)
-			writer.Write("final explode", it.first->Name(), it.second);
-	});
-	if(!ship->description.empty())
-	{
-		size_t newline = ship->description.find('\n');
-		size_t start = 0;
-		do {
-			writer.Write("description", ship->description.substr(start, newline - start));
-			start = newline + 1;
-			newline = ship->description.find('\n', start);
-		} while(newline != string::npos);
-	}
+	if(!diff || ship->explosionEffects != diff->explosionEffects)
+		WriteSorted(ship->explosionEffects, effectSort, [&writer](const EffectElement &it)
+		{
+			if(it.second == 1)
+				writer.Write("explode", it.first->Name());
+			else if(it.second)
+				writer.Write("explode", it.first->Name(), it.second);
+		});
+	if(!diff || ship->finalExplosions != diff->finalExplosions)
+		WriteSorted(ship->finalExplosions, effectSort, [&writer](const EffectElement &it)
+		{
+			if(it.second == 1)
+				writer.Write("final explode", it.first->Name());
+			else if(it.second)
+				writer.Write("final explode", it.first->Name(), it.second);
+		});
+	if(!diff || ship->description != diff->description)
+		if(!ship->description.empty())
+		{
+			size_t newline = ship->description.find('\n');
+			size_t start = 0;
+			do {
+				string toWrite = ship->description.substr(start, newline - start);
+				if(toWrite.empty())
+					break;
+				writer.Write("description", toWrite);
+
+				start = newline + 1;
+				newline = ship->description.find('\n', start);
+			} while(newline != string::npos);
+		}
 
 	writer.EndChild();
 }

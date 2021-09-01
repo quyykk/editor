@@ -131,7 +131,16 @@ void PlanetEditor::Render()
 
 	if(reset)
 	{
-		*object = *GameData::defaultPlanets.Get(object->name);
+		bool found = false;
+		for(auto &&change : Changes())
+			if(change.TrueName() == object->TrueName())
+			{
+				*object = change;
+				found = true;
+				break;
+			}
+		if(!found)
+			*object = *GameData::basePlanets.Get(object->TrueName());
 		SetClean();
 	} 
 	if(clone)
@@ -458,72 +467,114 @@ void PlanetEditor::RenderPlanet()
 
 void PlanetEditor::WriteToFile(DataWriter &writer, const Planet *planet)
 {
-	writer.Write("planet", planet->name);
+	const auto *diff = GameData::basePlanets.Has(planet->TrueName())
+		? GameData::basePlanets.Get(planet->TrueName())
+		: nullptr;
+
+	writer.Write("planet", planet->TrueName());
 	writer.BeginChild();
 
-	if(!planet->attributes.empty() &&
-			any_of(planet->attributes.begin(), planet->attributes.end(),
-				[](const string &a) { return a != "spaceport" && a != "shipyard" && a != "outfitter"; }))
-	{
-		writer.WriteToken("attributes");
-		for(auto &&attribute : planet->attributes)
-			if(attribute != "spaceport" && attribute != "shipyard" && attribute != "outfitter")
-				writer.WriteToken(attribute);
-		writer.Write();
-	}
+	auto planetAttributes = planet->attributes;
+	auto diffAttributes = diff ? diff->attributes : planet->attributes;
+	planetAttributes.erase("spaceport");
+	planetAttributes.erase("shipyard");
+	planetAttributes.erase("outfitter");
+	diffAttributes.erase("spaceport");
+	diffAttributes.erase("shipyard");
+	diffAttributes.erase("outfitter");
+	WriteDiff(writer, "attributes", planetAttributes, diff ? &diffAttributes : nullptr, true);
+	WriteDiff(writer, "shipyard", planet->shipSales, diff ? &diff->shipSales : nullptr, false, true, true, true);
+	WriteDiff(writer, "outfitter", planet->outfitSales, diff ? &diff->outfitSales : nullptr, false, true, true, true);
 
-	writer.Write("remove", "shipyard");
-	for(auto &&shipyard : planet->shipSales)
-		writer.Write("shipyard", shipyard->name);
-	writer.Write("remove", "outfitter");
-	for(auto &&outfitter : planet->outfitSales)
-		writer.Write("outfitter", outfitter->name);
-	if(planet->landscape)
+	if((!diff || planet->landscape != diff->landscape) && planet->landscape)
 		writer.Write("landscape", planet->landscape->Name());
-	if(!planet->music.empty())
-		writer.Write("music", planet->music);
-	if(!planet->description.empty())
+	if(!diff || planet->music != diff->music)
 	{
-		auto marker = planet->description.find('\n');
-		size_t start = 0;
-		do
-		{
-			writer.Write("description", planet->description.substr(start, marker - start));
-
-			start = marker + 1;
-			if(planet->description[start] == '\t')
-				++start;
-			marker = planet->description.find('\n', start);
-		} while(marker != string::npos);
+		if(!planet->music.empty())
+			writer.Write("music", planet->music);
+		else if(diff)
+			writer.Write("remove", "music");
 	}
-	if(!planet->spaceport.empty())
+	if(!diff || planet->description != diff->description)
 	{
-		auto marker = planet->spaceport.find('\n');
-		size_t start = 0;
-		do
+		if(!planet->description.empty())
 		{
-			writer.Write("spaceport", planet->spaceport.substr(start, marker - start));
+			auto marker = planet->description.find('\n');
+			size_t start = 0;
+			do
+			{
+				string toWrite = planet->description.substr(start, marker - start);
+				writer.Write("description", toWrite);
 
-			start = marker + 1;
-			if(planet->spaceport[start] == '\t')
-				++start;
-			marker = planet->spaceport.find('\n', start);
-		} while(marker != string::npos);
+				start = marker + 1;
+				if(planet->description[start] == '\t')
+					++start;
+				marker = planet->description.find('\n', start);
+			} while(marker != string::npos);
+		}
+		else if(diff)
+			writer.Write("remove", "description");
 	}
-	if(planet->government)
-		writer.Write("government", planet->government->TrueName());
-	if(planet->requiredReputation)
-		writer.Write("required reputation", planet->requiredReputation);
-	if(planet->bribe)
-		writer.Write("bribe", planet->bribe);
-	if(planet->customSecurity)
-		writer.Write("security", planet->security);
-	if(planet->tribute)
+	if(!diff || planet->spaceport != diff->spaceport)
 	{
-		writer.Write("tribute", planet->tribute);
-		writer.BeginChild();
-		if(planet->defenseThreshold != 4000.)
+		if(!planet->spaceport.empty())
+		{
+			auto marker = planet->spaceport.find('\n');
+			size_t start = 0;
+			do
+			{
+				string toWrite = planet->spaceport.substr(start, marker - start);
+				writer.Write("spaceport", toWrite);
+
+				start = marker + 1;
+				if(planet->spaceport[start] == '\t')
+					++start;
+				marker = planet->spaceport.find('\n', start);
+			} while(marker != string::npos);
+		}
+		else if(diff)
+			writer.Write("remove", "spaceport");
+	}
+	if(!diff || planet->government != diff->government)
+	{
+		if(planet->government)
+			writer.Write("government", planet->government->TrueName());
+		else if(diff)
+			writer.Write("remove", "government");
+	}
+	if(!diff || planet->requiredReputation != diff->requiredReputation)
+	{
+		if(planet->requiredReputation)
+			writer.Write("required reputation", planet->requiredReputation);
+		else if(diff)
+			writer.Write("remove", "required reputation");
+	}
+	if(!diff || planet->bribe != diff->bribe)
+	{
+		if((diff && planet->bribe) || (!diff && planet->bribe != .01))
+			writer.Write("bribe", planet->bribe);
+		else if(diff)
+			writer.Write("remove", "bribe");
+	}
+	if(!diff || planet->security != diff->security)
+	{
+		if((diff && planet->security) || (!diff && planet->security != .25))
+			writer.Write("security", planet->security);
+		else if(diff)
+			writer.Write("remove", "security");
+	}
+	if(!diff || planet->tribute != diff->tribute)
+	{
+		if(planet->tribute)
+			writer.Write("tribute", planet->tribute);
+		else if(diff)
+			writer.Write("remove", "tribute");
+	}
+	writer.BeginChild();
+	if(!diff || planet->defenseThreshold != diff->defenseThreshold)
+		if(planet->defenseThreshold != 4000. || diff)
 			writer.Write("threshold", planet->defenseThreshold);
+	if(!diff || planet->defenseFleets != diff->defenseFleets)
 		for(size_t i = 0; i < planet->defenseFleets.size(); ++i)
 		{
 			size_t count = 1;
@@ -533,10 +584,12 @@ void PlanetEditor::WriteToFile(DataWriter &writer, const Planet *planet)
 				++i;
 				++count;
 			}
-			writer.Write("fleet", planet->defenseFleets[i]->Name(), count);
+			if(count == 1)
+				writer.Write("fleet", planet->defenseFleets[i]->Name());
+			else
+				writer.Write("fleet", planet->defenseFleets[i]->Name(), count);
 		}
-		writer.EndChild();
-	}
+	writer.EndChild();
 
 	writer.EndChild();
 }

@@ -64,6 +64,7 @@ class TestData;
 class GameData {
 public:
 	static bool BeginLoad(const char * const *argv);
+	static void LoadData(const std::string *ignore = nullptr, bool debugMode = false);
 	// Check for objects that are referred to but never defined.
 	static void CheckReferences();
 	static void LoadShaders(bool useShaderSwizzle);
@@ -88,10 +89,10 @@ public:
 	static void StepEconomy();
 	static void AddPurchase(const System &system, const std::string &commodity, int tons);
 	// Apply the given change to the universe.
-	static void Change(const DataNode &node);
+	static void Change(const DataNode &node, bool initialLoad = true);
 	// Update the neighbor lists and other information for all the systems.
 	// This must be done any time that a change creates or moves a system.
-	static void UpdateSystems();
+	static void UpdateSystems(bool initialLoad = false);
 	static void AddJumpRange(double neighborDistance);
 	
 	// Re-activate any special persons that were created previously but that are
@@ -154,23 +155,35 @@ public:
 	
 private:
 	static void LoadSources();
-	static void LoadFile(const std::string &path, bool debugMode);
+	static void LoadFile(
+			const std::string &path,
+			bool debugMode,
+			Set<Effect> &effects,
+			Set<Fleet> &fleets,
+			Set<Hazard> &hazards,
+			Set<Government> &governments,
+			Set<Outfit> &outfits,
+			Set<Sale<Outfit>> &outfitSales,
+			Set<Ship> &ships,
+			Set<Sale<Ship>> &shipSales,
+			Set<System> &systems,
+			Set<Planet> &planets);
 	static std::map<std::string, std::shared_ptr<ImageSet>> FindImages();
 	
 	static void PrintShipTable();
 	static void PrintTestsTable();
 	static void PrintWeaponTable();
 
-	static Set<Effect> defaultEffects;
-	static Set<Fleet> defaultFleets;
-	static Set<Hazard> defaultHazards;
-	static Set<Government> defaultGovernments;
-	static Set<Outfit> defaultOutfits;
-	static Set<Sale<Outfit>> defaultOutfitSales;
-	static Set<Ship> defaultShips;
-	static Set<Sale<Ship>> defaultShipSales;
-	static Set<System> defaultSystems;
-	static Set<Planet> defaultPlanets;
+	static Set<Effect> baseEffects;
+	static Set<Fleet> baseFleets;
+	static Set<Hazard> baseHazards;
+	static Set<Government> baseGovernments;
+	static Set<Outfit> baseOutfits;
+	static Set<Sale<Outfit>> baseOutfitSales;
+	static Set<Ship> baseShips;
+	static Set<Sale<Ship>> baseShipSales;
+	static Set<System> baseSystems;
+	static Set<Planet> basePlanets;
 
 	static SpriteQueue spriteQueue;
 

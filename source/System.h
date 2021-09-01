@@ -79,6 +79,7 @@ public:
 		
 		const Fleet *Get() const;
 		int Period() const;
+		const std::string &Name() const;
 
 		bool operator==(const FleetProbability &rhs) const
 		{
@@ -103,6 +104,7 @@ public:
 		
 		const Hazard *Get() const;
 		int Period() const;
+		const std::string &Name() const;
 
 		bool operator==(const HazardProbability &rhs) const
 		{
@@ -132,6 +134,8 @@ public:
 	// Modify a system's links.
 	void Link(System *other);
 	void Unlink(System *other);
+	void UniLink(const System *other);
+	void UniUnlink(const System *other);
 	
 	bool IsValid() const;
 	// Get this system's name and position (in the star map).
@@ -228,6 +232,9 @@ private:
 		int price = 0;
 		double supply = 0.;
 		double exports = 0.;
+
+		bool operator==(const Price &rhs) const { return base == rhs.base; }
+		bool operator!=(const Price &rhs) const { return !(*this == rhs); }
 	};
 	
 	

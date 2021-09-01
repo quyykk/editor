@@ -47,6 +47,42 @@ using namespace std;
 
 
 
+namespace
+{
+	std::unordered_map<int, const char *> PersonalityToString = {
+		{ Personality::PACIFIST, "pacifist" },
+		{ Personality::FORBEARING, "forebearing" },
+		{ Personality::TIMID, "timid" },
+		{ Personality::DISABLES, "disables" },
+		{ Personality::PLUNDERS, "plunders" },
+		{ Personality::HEROIC, "heroic" },
+		{ Personality::STAYING, "staying" },
+		{ Personality::ENTERING, "entering" },
+		{ Personality::NEMESIS, "nemesis" },
+		{ Personality::SURVEILLANCE, "surveillance" },
+		{ Personality::UNINTERESTED, "uninterested" },
+		{ Personality::WAITING, "waiting" },
+		{ Personality::DERELICT, "derelict" },
+		{ Personality::FLEEING, "fleeing" },
+		{ Personality::ESCORT, "escort" },
+		{ Personality::FRUGAL, "frugal" },
+		{ Personality::COWARD, "coward" },
+		{ Personality::VINDICTIVE, "vindictive" },
+		{ Personality::SWARMING, "swarming" },
+		{ Personality::UNCONSTRAINED, "unconstrained" },
+		{ Personality::MINING, "mining" },
+		{ Personality::HARVESTS, "harvests" },
+		{ Personality::APPEASING, "appeasing" },
+		{ Personality::MUTE, "mute" },
+		{ Personality::OPPORTUNISTIC, "opportunistic" },
+		{ Personality::TARGET, "target" },
+		{ Personality::MARKED, "marked" },
+		{ Personality::LAUNCHING, "launching" },
+	};
+}
+
+
+
 FleetEditor::FleetEditor(Editor &editor, bool &show) noexcept
 	: TemplateEditor<Fleet>(editor, show)
 {
@@ -144,7 +180,16 @@ void FleetEditor::Render()
 
 	if(reset)
 	{
-		*object = *GameData::defaultFleets.Get(object->fleetName);
+		bool found = false;
+		for(auto &&change : Changes())
+			if(change.Name() == object->Name())
+			{
+				*object = change;
+				found = true;
+				break;
+			}
+		if(!found)
+			*object = *GameData::baseFleets.Get(object->fleetName);
 		SetClean();
 	}
 	if(clone)
@@ -677,151 +722,153 @@ void FleetEditor::RenderFleet()
 
 void FleetEditor::WriteToFile(DataWriter &writer, const Fleet *fleet)
 {
+	const auto *diff = GameData::baseFleets.Has(fleet->Name())
+		? GameData::baseFleets.Get(fleet->Name())
+		: nullptr;
+
 	writer.Write("fleet", fleet->Name());
 	writer.BeginChild();
-	if(fleet->government)
-		writer.Write("government", fleet->government->TrueName());
-	if(fleet->names)
-		writer.Write("names", fleet->names->Name());
-	if(fleet->fighterNames)
-		writer.Write("fighter", fleet->fighterNames->Name());
-	if(fleet->cargo != 3)
-		writer.Write("cargo", fleet->cargo);
-	if(!fleet->commodities.empty())
-	{
-		writer.WriteToken("commodities");
-		for(const auto &commodity : fleet->commodities)
-			writer.WriteToken(commodity);
-		writer.Write();
-	}
-	if(!fleet->outfitters.empty())
-	{
-		writer.WriteToken("outfitters");
-		for(const auto &outfitter : fleet->outfitters)
-			writer.WriteToken(outfitter->name);
-		writer.Write();
-	}
-	if(fleet->personality.confusionMultiplier || fleet->personality.flags)
-	{
-		writer.Write("personality");
-		writer.BeginChild();
-		if(fleet->personality.confusionMultiplier != 10.)
-			writer.Write("confusion", fleet->personality.confusionMultiplier);
-		for(int i = 1; i <= (1 << 27); i <<= 1)
-			switch(fleet->personality.flags & i)
-			{
-			case Personality::PACIFIST:
-				writer.Write("pacifist");
-				break;
-			case Personality::FORBEARING:
-				writer.Write("forebearing");
-				break;
-			case Personality::TIMID:
-				writer.Write("timid");
-				break;
-			case Personality::DISABLES:
-				writer.Write("disables");
-				break;
-			case Personality::PLUNDERS:
-				writer.Write("plunders");
-				break;
-			case Personality::HEROIC:
-				writer.Write("heroic");
-				break;
-			case Personality::STAYING:
-				writer.Write("staying");
-				break;
-			case Personality::ENTERING:
-				writer.Write("entering");
-				break;
-			case Personality::NEMESIS:
-				writer.Write("nemesis");
-				break;
-			case Personality::SURVEILLANCE:
-				writer.Write("surveillance");
-				break;
-			case Personality::UNINTERESTED:
-				writer.Write("uninterested");
-				break;
-			case Personality::WAITING:
-				writer.Write("waiting");
-				break;
-			case Personality::DERELICT:
-				writer.Write("derelict");
-				break;
-			case Personality::FLEEING:
-				writer.Write("fleeing");
-				break;
-			case Personality::ESCORT:
-				writer.Write("escort");
-				break;
-			case Personality::FRUGAL:
-				writer.Write("frugal");
-				break;
-			case Personality::COWARD:
-				writer.Write("coward");
-				break;
-			case Personality::VINDICTIVE:
-				writer.Write("vindictive");
-				break;
-			case Personality::SWARMING:
-				writer.Write("swarming");
-				break;
-			case Personality::UNCONSTRAINED:
-				writer.Write("unconstrained");
-				break;
-			case Personality::MINING:
-				writer.Write("mining");
-				break;
-			case Personality::HARVESTS:
-				writer.Write("harvests");
-				break;
-			case Personality::APPEASING:
-				writer.Write("appeasing");
-				break;
-			case Personality::MUTE:
-				writer.Write("mute");
-				break;
-			case Personality::OPPORTUNISTIC:
-				writer.Write("opportunistic");
-				break;
-			case Personality::TARGET:
-				writer.Write("target");
-				break;
-			case Personality::MARKED:
-				writer.Write("marked");
-				break;
-			case Personality::LAUNCHING:
-				writer.Write("launching");
-				break;
-			}
-		writer.EndChild();
-	}
-
-	if(!fleet->variants.empty())
-		for(const auto &variant : fleet->variants)
+	if(!diff || fleet->government != diff->government)
+		if(fleet->government)
+			writer.Write("government", fleet->government->TrueName());
+	if(!diff || fleet->names != diff->names)
+		if(fleet->names)
+			writer.Write("names", fleet->names->Name());
+	if(!diff || fleet->fighterNames != diff->fighterNames)
+		if(fleet->fighterNames)
+			writer.Write("fighters", fleet->fighterNames->Name());
+	if(!diff || fleet->cargo != diff->cargo)
+		if(fleet->cargo != 3 || diff)
+			writer.Write("cargo", fleet->cargo);
+	if(!diff || fleet->commodities != fleet->commodities)
+		if(!fleet->commodities.empty())
 		{
-			writer.WriteToken("variant");
-			if(variant.weight > 1)
-				writer.WriteToken(variant.weight);
+			writer.WriteToken("commodities");
+			for(const auto &commodity : fleet->commodities)
+				writer.WriteToken(commodity);
 			writer.Write();
+		}
+	if(!diff || fleet->outfitters != diff->outfitters)
+		if(!fleet->outfitters.empty())
+		{
+			writer.WriteToken("outfitters");
+			for(const auto &outfitter : fleet->outfitters)
+				writer.WriteToken(outfitter->name);
+			writer.Write();
+		}
+	if(!diff || fleet->personality.confusionMultiplier != diff->personality.confusionMultiplier
+			|| fleet->personality.flags != diff->personality.flags)
+		if(fleet->personality.confusionMultiplier || fleet->personality.flags || diff)
+		{
+			bool clearPersonality = diff && ((fleet->personality.flags ^ diff->personality.flags) & fleet->personality.flags);
+			if(clearPersonality)
+				writer.Write("remove", "personality");
+			else
+				writer.Write("personality");
 			writer.BeginChild();
-			for(auto it = variant.ships.begin(); it != variant.ships.end(); )
+			if((!diff && fleet->personality.confusionMultiplier != 10.)
+					|| (diff && fleet->personality.confusionMultiplier != diff->personality.confusionMultiplier))
+				writer.Write("confusion", fleet->personality.confusionMultiplier);
+
+			auto writeAll = [&writer](int flags, const char *opt = nullptr)
 			{
-				auto copy = it;
-				int count = 1;
-				while(copy + 1 != variant.ships.end() && *(copy + 1) == *copy)
-				{
-					++copy;
-					++count;
-				}
-				writer.WriteToken((*it)->VariantName());
-				if(count > 1)
-					writer.WriteToken(count);
+				for(int i = 1; i <= (1 << 27); i <<= 1)
+					if(auto personality = PersonalityToString[flags & i])
+					{
+						if(opt)
+							writer.WriteToken(opt);
+						writer.WriteToken(personality);
+					}
 				writer.Write();
-				it += count;
+			};
+
+			if(!diff && fleet->personality.flags)
+				writeAll(fleet->personality.flags);
+			else if(diff)
+			{
+				int toAdd = (fleet->personality.flags ^ diff->personality.flags) & fleet->personality.flags;
+				int toRemove = (fleet->personality.flags ^ diff->personality.flags) & diff->personality.flags;
+				if(toRemove == diff->personality.flags && !toRemove)
+				{
+					if(!toAdd)
+						writer.Write("remove", "personality");
+					else
+						writeAll(toAdd);
+				}
+				else
+				{
+					if(toAdd)
+						writeAll(toAdd, "add");
+					if(toRemove)
+						writeAll(toRemove, "remove");
+				}
 			}
 			writer.EndChild();
 		}
+
+	if(!diff || fleet->variants != diff->variants)
+	{
+		auto writeAll = [&writer](const std::vector<Fleet::Variant> &list, const char *opt = nullptr)
+		{
+			for(const auto &variant : list)
+			{
+				if(opt)
+					writer.WriteToken(opt);
+				writer.WriteToken("variant");
+				if(variant.weight > 1)
+					writer.WriteToken(variant.weight);
+				writer.Write();
+				writer.BeginChild();
+				for(auto it = variant.ships.begin(); it != variant.ships.end(); )
+				{
+					auto copy = it;
+					int count = 1;
+					while(copy + 1 != variant.ships.end() && *(copy + 1) == *copy)
+					{
+						++copy;
+						++count;
+					}
+					writer.WriteToken((*it)->VariantName());
+					if(count > 1)
+						writer.WriteToken(count);
+					writer.Write();
+					it += count;
+				}
+				writer.EndChild();
+			}
+		};
+		if(!diff)
+			writeAll(fleet->variants);
+		else
+		{
+			std::vector<Fleet::Variant> toAdd;
+			auto toRemove = toAdd;
+
+			for(auto &&it : fleet->variants)
+				if(!Count(diff->variants, it))
+					Insert(toAdd, it);
+			for(auto &&it : diff->variants)
+				if(!Count(fleet->variants, it))
+					Insert(toRemove, it);
+
+			if(toAdd.empty() && toRemove.empty())
+				return;
+
+			if(toRemove.size() == diff->variants.size() && !diff->variants.empty())
+			{
+				if(fleet->variants.empty())
+					writeAll(diff->variants, "remove");
+				else
+					writeAll(toAdd);
+			}
+			else
+			{
+				if(!toAdd.empty())
+					writeAll(toAdd, "add");
+				if(!toRemove.empty())
+					writeAll(toRemove, "remove");
+			}
+		}
+	}
 	writer.EndChild();
 }

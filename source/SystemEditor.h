@@ -46,7 +46,7 @@ private:
 	void RenderSystem();
 	void RenderObject(StellarObject &object, int index, int &nested, bool &hovered);
 
-	void WriteObject(DataWriter &writer, const System *system, const StellarObject *object);
+	void WriteObject(DataWriter &writer, const System *system, const StellarObject *object, bool add = false);
 
 	void UpdateMap(bool updateSystem = true) const;
 };
