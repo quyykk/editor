@@ -105,8 +105,13 @@ void OutfitEditor::Render()
 		ImGui::EndMenuBar();
 	}
 
-	if(ImGui::InputCombo("outfit", &searchBox, &object, GameData::Outfits()))
-		searchBox.clear();
+	Outfit *selected = nullptr;
+	if(ImGui::InputCombo("outfit", &searchBox, &selected, GameData::Outfits()))
+		if(selected)
+		{
+			object = selected;
+			searchBox.clear();
+		}
 	if(!object || !IsDirty())
 		ImGui::PushDisabled();
 	bool reset = ImGui::Button("Reset");

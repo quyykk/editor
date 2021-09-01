@@ -74,8 +74,13 @@ void EffectEditor::Render()
 	if(IsDirty())
 		ImGui::PopStyleColor(3);
 
-	if(ImGui::InputCombo("effect", &searchBox, &object, GameData::Effects()))
-		searchBox.clear();
+	Effect *selected = nullptr;
+	if(ImGui::InputCombo("effect", &searchBox, &selected, GameData::Effects()))
+		if(selected)
+		{
+			object = selected;
+			searchBox.clear();
+		}
 	if(!object || !IsDirty())
 		ImGui::PushDisabled();
 	bool reset = ImGui::Button("Reset");

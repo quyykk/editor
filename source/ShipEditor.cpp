@@ -94,8 +94,13 @@ void ShipEditor::Render()
 		ImGui::EndMenuBar();
 	}
 
-	if(ImGui::InputCombo("ship", &searchBox, &object, GameData::Ships()))
-		searchBox.clear();
+	Ship *selected = nullptr;
+	if(ImGui::InputCombo("ship", &searchBox, &selected, GameData::Ships()))
+		if(selected)
+		{
+			object = selected;
+			searchBox.clear();
+		}
 	if(!object || !IsDirty())
 		ImGui::PushDisabled();
 	bool reset = ImGui::Button("Reset");

@@ -99,14 +99,16 @@ void SystemEditor::Render()
 	if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
 		object = const_cast<System *>(panel->Selected());
 
-	if(ImGui::InputCombo("system", &searchBox, &object, GameData::Systems()))
-	{
-		searchBox.clear();
-		if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
-			panel->Select(object);
-		if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
-			panel->Select(object);
-	}
+	System *selected = nullptr;
+	if(ImGui::InputCombo("system", &searchBox, &selected, GameData::Systems()))
+		if(selected)
+		{
+			searchBox.clear();
+			if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
+				panel->Select(object);
+			if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
+				panel->Select(object);
+		}
 	if(!object || !IsDirty())
 		ImGui::PushDisabled();
 	bool reset = ImGui::Button("Reset");
