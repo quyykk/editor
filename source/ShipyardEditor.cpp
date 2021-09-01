@@ -186,7 +186,7 @@ void ShipyardEditor::RenderShipyard()
 	for(auto it = object->begin(); it != object->end(); ++it)
 	{
 		ImGui::PushID(index++);
-		string name = (*it)->ModelName();
+		string name = (*it)->TrueName();
 		Ship *change = nullptr;
 		if(ImGui::InputCombo("ship", &name, &change, GameData::Ships()))
 		{
