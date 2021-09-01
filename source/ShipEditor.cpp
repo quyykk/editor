@@ -113,7 +113,9 @@ void ShipEditor::Render()
 	ImGui::SameLine();
 	if(!object || searchBox.empty())
 		ImGui::PushDisabled();
-	bool clone = ImGui::Button("Clone");
+	bool cloneModel = ImGui::Button("Clone as New Model");
+	ImGui::SameLine();
+	bool cloneVariant = ImGui::Button("Clone as Variant");
 	if(!object || searchBox.empty())
 	{
 		ImGui::PopDisabled();
@@ -163,13 +165,19 @@ void ShipEditor::Render()
 			*object = *GameData::baseShips.Get(object->TrueName());
 		SetClean();
 	} 
-	if(clone)
+	if(cloneModel || cloneVariant)
 	{
 		auto *clone = const_cast<Ship *>(GameData::Ships().Get(searchBox));
 		*clone = *object;
 		object = clone;
 
-		object->name = searchBox;
+		if(cloneModel)
+			object->modelName = searchBox;
+		if(cloneVariant)
+		{
+			object->variantName = searchBox;
+			object->base = GameData::Ships().Get(object->modelName);
+		}
 		searchBox.clear();
 		SetDirty();
 	}
