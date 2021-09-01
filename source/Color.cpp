@@ -87,6 +87,17 @@ Color Color::Additive(float alpha) const
 
 
 
+Color Color::Combine(float a1, Color c1, float a2, Color c2)
+{
+	return Color(
+			a1 * c1.color[0] + a2 * c2.color[0],
+			a1 * c1.color[1] + a2 * c2.color[1],
+			a1 * c1.color[2] + a2 * c2.color[2],
+			a1 * c1.color[3] + a2 * c2.color[3]);
+}
+
+
+
 bool operator==(const Color &lhs, const Color &rhs)
 {
 	return memcmp(lhs.color, rhs.color, sizeof(float) * 4);

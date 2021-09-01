@@ -13,7 +13,6 @@ You can build this editor like the game (same build instructions) or [download i
 
 ![editor-showcase](https://user-images.githubusercontent.com/85879619/131727841-bd3bdfc0-32ce-41c0-bfd2-b5223c37c806.png)
 
-
 ---------
 
 <sub><sup>1</sup>: More or less. Example: If you are flying in a system and you modify a stellar object's sprite, you'll see it change immediately. On the other hand, if you modify the system's haze, it will update when you reenter the system.</sub>

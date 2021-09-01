@@ -584,7 +584,7 @@ void Editor::ReloadPluginResources()
 			continue;
 
 		// Check that the image set is complete.
-		it.second->Check();
+		it.second->ValidateFrames();
 		// For landscapes, remember all the source files but don't load them yet.
 		GameData::spriteQueue.Add(it.second);
 	}
