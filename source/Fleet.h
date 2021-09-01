@@ -16,6 +16,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Personality.h"
 #include "Sale.h"
 
+#include <algorithm>
 #include <list>
 #include <memory>
 #include <set>
