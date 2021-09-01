@@ -233,7 +233,7 @@ bool GameWindow::Init()
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
 	ImGui_ImplSDL2_InitForOpenGL(mainWindow, context);
-	ImGui_ImplOpenGL3_Init("#version 460");
+	ImGui_ImplOpenGL3_Init(nullptr);
 	
 	return true;
 }
