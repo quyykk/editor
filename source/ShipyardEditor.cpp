@@ -212,11 +212,12 @@ void ShipyardEditor::RenderShipyard()
 	static string shipName;
 	static Ship *ship = nullptr;
 	if(ImGui::InputCombo("add ship", &shipName, &ship, GameData::Ships()))
-	{
-		object->insert(ship);
-		SetDirty();
-		shipName.clear();
-	}
+		if(!shipName.empty())
+		{
+			object->insert(ship);
+			SetDirty();
+			shipName.clear();
+		}
 }
 
 

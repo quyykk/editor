@@ -212,11 +212,12 @@ void OutfitterEditor::RenderOutfitter()
 	static string outfitName;
 	static Outfit *outfit = nullptr;
 	if(ImGui::InputCombo("add outfit", &outfitName, &outfit, GameData::Outfits()))
-	{
-		object->insert(outfit);
-		SetDirty();
-		outfitName.clear();
-	}
+		if(!outfitName.empty())
+		{
+			object->insert(outfit);
+			SetDirty();
+			outfitName.clear();
+		}
 }
 
 
