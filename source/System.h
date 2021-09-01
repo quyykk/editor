@@ -126,7 +126,7 @@ public:
 	
 public:
 	// Load a system's description.
-	void Load(const DataNode &node, Set<Planet> &planets);
+	void Load(const DataNode &node, Set<Planet> &planets, bool initialLoad);
 	// Update any information about the system that may have changed due to events,
 	// e.g. neighbors, solar wind and power, or if the system is inhabited.
 	void UpdateSystem(const Set<System> &systems, const std::set<double> &neighborDistances);
@@ -215,7 +215,7 @@ public:
 	
 	
 private:
-	void LoadObject(const DataNode &node, Set<Planet> &planets, int parent = -1);
+	void LoadObject(const DataNode &node, Set<Planet> &planets, bool initialLoad, int parent = -1);
 	// Once the star map is fully loaded or an event has changed systems
 	// or links, figure out which stars are "neighbors" of this one, i.e.
 	// close enough to see or to reach via jump drive.

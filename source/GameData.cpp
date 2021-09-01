@@ -701,7 +701,7 @@ void GameData::Change(const DataNode &node, bool initialLoad)
 	else if(node.Token(0) == "shipyard" && node.Size() >= 2)
 		shipSales.Get(node.Token(1))->Load(node, ships);
 	else if(node.Token(0) == "system" && node.Size() >= 2)
-		systems.Get(node.Token(1))->Load(node, ::planets);
+		systems.Get(node.Token(1))->Load(node, ::planets, initialLoad);
 	else if(node.Token(0) == "news" && node.Size() >= 2 && initialLoad)
 		news.Get(node.Token(1))->Load(node);
 	else if(node.Token(0) == "link" && node.Size() >= 3)
@@ -1207,7 +1207,7 @@ void GameData::LoadFile(
 			}
 		}
 		else if(key == "system" && node.Size() >= 2)
-			systems.Get(node.Token(1))->Load(node, ::planets);
+			systems.Get(node.Token(1))->Load(node, ::planets, initialLoad);
 		else if((key == "test") && node.Size() >= 2 && initialLoad)
 			tests.Get(node.Token(1))->Load(node);
 		else if((key == "test-data") && node.Size() >= 2 && initialLoad)

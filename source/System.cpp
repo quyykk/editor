@@ -143,7 +143,7 @@ const string &System::HazardProbability::Name() const
 
 
 // Load a system's description.
-void System::Load(const DataNode &node, Set<Planet> &planets)
+void System::Load(const DataNode &node, Set<Planet> &planets, bool initialLoad)
 {
 	if(node.Size() < 2)
 		return;
@@ -205,9 +205,10 @@ void System::Load(const DataNode &node, Set<Planet> &planets)
 			{
 				// Make sure any planets that were linked to this system know
 				// that they are no longer here.
-				for(StellarObject &object : objects)
-					if(object.GetPlanet())
-						planets.Get(object.GetPlanet()->TrueName())->RemoveSystem(this);
+				if(initialLoad)
+					for(StellarObject &object : objects)
+						if(object.GetPlanet())
+							planets.Get(object.GetPlanet()->TrueName())->RemoveSystem(this);
 				
 				objects.clear();
 			}
@@ -330,7 +331,7 @@ void System::Load(const DataNode &node, Set<Planet> &planets)
 		else if(key == "trade" && child.Size() >= 3)
 			trade[value].SetBase(child.Value(valueIndex + 1));
 		else if(key == "object")
-			LoadObject(child, planets);
+			LoadObject(child, planets, initialLoad);
 		else if(key == "arrival")
 		{
 			if(child.Size() >= 2)
@@ -831,7 +832,7 @@ double System::Danger() const
 
 
 
-void System::LoadObject(const DataNode &node, Set<Planet> &planets, int parent)
+void System::LoadObject(const DataNode &node, Set<Planet> &planets, bool initialLoad, int parent)
 {
 	int index = objects.size();
 	objects.push_back(StellarObject());
@@ -843,7 +844,8 @@ void System::LoadObject(const DataNode &node, Set<Planet> &planets, int parent)
 	{
 		Planet *planet = planets.Get(node.Token(1 + isAdded));
 		object.planet = planet;
-		planet->SetSystem(this);
+		if(initialLoad)
+			planet->SetSystem(this);
 	}
 	
 	for(const DataNode &child : node)
@@ -865,7 +867,7 @@ void System::LoadObject(const DataNode &node, Set<Planet> &planets, int parent)
 		else if(child.Token(0) == "offset" && child.Size() >= 2)
 			object.offset = child.Value(1);
 		else if(child.Token(0) == "object")
-			LoadObject(child, planets, index);
+			LoadObject(child, planets, initialLoad, index);
 		else
 			child.PrintTrace("Skipping unrecognized attribute:");
 	}
