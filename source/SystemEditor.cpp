@@ -646,7 +646,10 @@ void SystemEditor::RenderSystem()
 		{
 			object.sprite = sprite;
 			object.planet = planet;
-			auto stellar = this->object->objects.insert(this->object->objects.begin() + object.parent + 1, object);
+			auto it = this->object->objects.begin() + object.parent + 1;
+			if(object.parent == -1)
+				it = this->object->objects.end();
+			auto stellar = this->object->objects.insert(it, object);
 
 			this->object->SetDate(editor.Player().GetDate());
 
