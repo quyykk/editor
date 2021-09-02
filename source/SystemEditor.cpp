@@ -103,6 +103,7 @@ void SystemEditor::Render()
 	if(ImGui::InputCombo("system", &searchBox, &selected, GameData::Systems()))
 		if(selected)
 		{
+			object = selected;
 			searchBox.clear();
 			if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
 				panel->Select(object);
