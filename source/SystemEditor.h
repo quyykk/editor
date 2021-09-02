@@ -44,7 +44,7 @@ public:
 
 private:
 	void RenderSystem();
-	void RenderObject(StellarObject &object, int index, int &nested, bool &hovered);
+	void RenderObject(StellarObject &object, int index, int &nested, bool &hovered, bool &add);
 
 	void WriteObject(DataWriter &writer, const System *system, const StellarObject *object, bool add = false);
 

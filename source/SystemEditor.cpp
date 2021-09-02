@@ -615,87 +615,32 @@ void SystemEditor::RenderSystem()
 		ImGui::EndPopup();
 	}
 	if(openAddObject)
-		ImGui::OpenPopup("Add Stellar Object##popup");
-
-	if(ImGui::BeginPopupModal("Add Stellar Object##popup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
-		static StellarObject object;
-
-		static Planet *planet = nullptr;
-		static string planetName;
-		ImGui::InputCombo("object", &planetName, &planet, GameData::Planets());
-
-		static string spriteName;
-		if(object.sprite)
-			spriteName = object.sprite->Name();
-
-		static Sprite *sprite = nullptr;
-		ImGui::InputCombo("sprite", &spriteName, &sprite, SpriteSet::GetSprites());
-
-		ImGui::InputInt("parent", &object.parent);
-		ImGui::InputDoubleEx("distance", &object.distance);
-		double period = 0.;
-		if(object.speed)
-			period = 360. / object.Speed();
-		ImGui::InputDoubleEx("period", &period);
-		object.speed = 360. / period;
-		ImGui::InputDoubleEx("offset", &object.offset);
-
-
-		if(ImGui::Button("Add"))
-		{
-			object.sprite = sprite;
-			object.planet = planet;
-			auto it = this->object->objects.begin() + object.parent + 1;
-			if(object.parent == -1)
-				it = this->object->objects.end();
-			auto stellar = this->object->objects.insert(it, object);
-
-			this->object->SetDate(editor.Player().GetDate());
-
-			planetName.clear();
-			spriteName.clear();
-			sprite = nullptr;
-			planet = nullptr;
-			object = {};
-
-			if(stellar->GetPlanet())
-			{
-				const Planet &planet = *stellar->GetPlanet();
-				if(!planet.IsWormhole() && planet.IsInhabited() && planet.IsAccessible(nullptr))
-					this->object->attributes.erase("uninhabited");
-				const_cast<Planet &>(planet).SetSystem(this->object);
-			}
-			SetDirty();
-			ImGui::CloseCurrentPopup();
-		}
-		ImGui::SameLine();
-		if(ImGui::Button("Cancel"))
-		{
-			planetName.clear();
-			spriteName.clear();
-			object = {};
-
-			ImGui::CloseCurrentPopup();
-		}
-
-		ImGui::EndPopup();
+		object->objects.emplace_back();
+		SetDirty();
 	}
 
 	if(openObjects)
 	{
 		bool hovered = false;
+		bool add = false;
 		index = 0;
 		int nested = 0;
 		auto selected = object->objects.end();
+		auto selectedToAdd = object->objects.end();
 		for(auto it = object->objects.begin(); it != object->objects.end(); ++it)
 		{
 			ImGui::PushID(index);
-			RenderObject(*it, index, nested, hovered);
+			RenderObject(*it, index, nested, hovered, add);
 			if(hovered)
 			{
 				selected = it;
 				hovered = false;
+			}
+			if(add)
+			{
+				selectedToAdd = it;
+				add = false;
 			}
 			++index;
 			ImGui::PopID();
@@ -707,11 +652,11 @@ void SystemEditor::RenderSystem()
 			if(auto *planet = selected->GetPlanet())
 				const_cast<Planet *>(planet)->RemoveSystem(object);
 			SetDirty();
-			auto parent = selected->Parent();
+			auto index = selected - object->objects.begin();
 			auto next = object->objects.erase(selected);
 			size_t removed = 1;
 			// Remove any child objects too.
-			while(next != object->objects.end() && next->Parent() != parent)
+			while(next != object->objects.end() && next->Parent() == index)
 			{
 				next = object->objects.erase(next);
 				++removed;
@@ -722,12 +667,23 @@ void SystemEditor::RenderSystem()
 				if(it->Parent() != -1)
 					it->parent -= removed;
 		}
+		else if(selectedToAdd != object->objects.end())
+		{
+			SetDirty();
+			auto it = object->objects.emplace(selectedToAdd + 1);
+			it->parent = selectedToAdd - object->objects.begin();
+
+			int newParent = it->parent;
+			for(++it; it != object->objects.end(); ++it)
+				if(it->parent >= newParent)
+					++it->parent;
+		}
 	}
 }
 
 
 
-void SystemEditor::RenderObject(StellarObject &object, int index, int &nested, bool &hovered)
+void SystemEditor::RenderObject(StellarObject &object, int index, int &nested, bool &hovered, bool &add)
 {
 	if(object.parent != -1 && !nested)
 		return;
@@ -737,6 +693,8 @@ void SystemEditor::RenderObject(StellarObject &object, int index, int &nested, b
 	ImGui::PushID(index);
 	if(ImGui::BeginPopupContextItem())
 	{
+		if(ImGui::MenuItem("Add Child"))
+			add = true;
 		if(ImGui::MenuItem("Remove"))
 			hovered = true;
 		ImGui::EndPopup();
@@ -773,7 +731,9 @@ void SystemEditor::RenderObject(StellarObject &object, int index, int &nested, b
 
 		if(ImGui::InputDoubleEx("distance", &object.distance))
 			SetDirty();
-		double period = 360. / object.Speed();
+		double period = 0.;
+		if(object.Speed())
+			period = 360. / object.Speed();
 		if(ImGui::InputDoubleEx("period", &period))
 			SetDirty();
 		object.speed = 360. / period;
