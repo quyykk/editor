@@ -746,8 +746,10 @@ void SystemEditor::RenderObject(StellarObject &object, int index, int &nested, b
 		if(object.Speed())
 			period = 360. / object.Speed();
 		if(ImGui::InputDoubleEx("period", &period))
+		{
+			object.speed = 360. / period;
 			SetDirty();
-		object.speed = 360. / period;
+		}
 		if(ImGui::InputDoubleEx("offset", &object.offset))
 			SetDirty();
 
