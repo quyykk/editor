@@ -186,13 +186,11 @@ void SystemEditor::Render()
 		object = clone;
 
 		object->name = searchBox;
-		object->position += Point(100., 0.);
+		object->position += Point(25., 25.);
 		object->objects.clear();
 		object->links.clear();
 		object->attributes.insert("uninhabited");
 		GameData::UpdateSystems();
-		for(auto &&link : editor.Player().visitedSystems)
-			editor.Player().Visit(*link);
 		UpdateMap(/*updateSystem=*/false);
 		searchBox.clear();
 		SetDirty();
@@ -292,6 +290,8 @@ void SystemEditor::RenderSystem()
 		}
 		if(!toAdd.empty() || !toRemove.empty())
 		{
+			if(!toAdd.empty())
+				editor.Player().Seen(*object);
 			SetDirty();
 			UpdateMap();
 		}

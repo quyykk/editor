@@ -1966,6 +1966,13 @@ void PlayerInfo::Unvisit(const Planet &planet)
 
 
 
+void PlayerInfo::Seen(const System &system)
+{
+	seen.insert(&system);
+}
+
+
+
 // Check if the player has a hyperspace route set.
 bool PlayerInfo::HasTravelPlan() const
 {

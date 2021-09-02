@@ -219,6 +219,7 @@ public:
 	// Mark a system and its planets as unvisited, even if visited previously.
 	void Unvisit(const System &system);
 	void Unvisit(const Planet &planet);
+	void Seen(const System &system);
 	
 	// Access the player's travel plan.
 	bool HasTravelPlan() const;
