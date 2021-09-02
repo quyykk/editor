@@ -398,7 +398,7 @@ void Editor::RenderMain()
 			if(!dirtyShips.empty() && ImGui::BeginMenu("Ships"))
 			{
 				for(auto &&s : dirtyShips)
-					ImGui::MenuItem(s->Name().c_str(), nullptr, false, false);
+					ImGui::MenuItem(s->TrueName().c_str(), nullptr, false, false);
 				ImGui::EndMenu();
 			}
 
