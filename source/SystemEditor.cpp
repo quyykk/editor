@@ -600,8 +600,18 @@ void SystemEditor::RenderSystem()
 			ImGui::PushID(index++);
 			ImGui::Text("trade: %s", commodity.name.c_str());
 			ImGui::SameLine();
-			if(ImGui::InputInt("", &object->trade[commodity.name].base))
+			int value = 0;
+			auto it = object->trade.find(commodity.name);
+			if(it != object->trade.end())
+				value = it->second.base;
+			if(ImGui::InputInt("", &value))
+			{
+				if(!value && it != object->trade.end())
+					object->trade.erase(it);
+				else if(value)
+					object->trade[commodity.name].SetBase(value);
 				SetDirty();
+			}
 			ImGui::PopID();
 		}
 		ImGui::TreePop();
@@ -892,11 +902,31 @@ void SystemEditor::WriteToFile(DataWriter &writer, const System *system)
 	}
 	if(!diff || system->trade != diff->trade)
 	{
-		if(!system->trade.empty())
-			for(auto &&trade : system->trade)
+		auto trades = system->trade;
+		if(diff)
+		{
+			bool hasRemoved = false;
+			for(auto it = diff->trade.begin(); it != diff->trade.end(); ++it)
+				if(system->trade.find(it->first) == system->trade.end())
+				{
+					writer.Write("remove", "trade");
+					hasRemoved = true;
+					break;
+				}
+			if(!hasRemoved)
+				for(auto it = trades.begin(); it != trades.end();)
+				{
+					auto jt = diff->trade.find(it->first);
+					if(jt != diff->trade.end() && jt->second == it->second)
+						it = trades.erase(it);
+					else
+						++it;
+				}
+		}
+
+		if(!trades.empty())
+			for(auto &&trade : trades)
 				writer.Write("trade", trade.first, trade.second.base);
-		else if(diff)
-			writer.Write("remove", "trade");
 	}
 
 	auto systemAttributes = system->attributes;
