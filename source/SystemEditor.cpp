@@ -548,7 +548,7 @@ void SystemEditor::RenderSystem()
 	}
 
 	{
-		if(ImGui::BeginCombo("governments", object->government ? object->government->TrueName().c_str() : ""))
+		if(ImGui::BeginCombo("government", object->government ? object->government->TrueName().c_str() : ""))
 		{
 			for(const auto &government : GameData::Governments())
 			{
