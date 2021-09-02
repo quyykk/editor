@@ -93,6 +93,7 @@ void ShipEditor::Render()
 				{
 					Fleet::Place(*editor.Player().GetSystem(), *editor.Player().ships.back());
 					panel->GetEngine().Place(editor.Player().ships.back());
+					editor.Player().ships.back()->SetParent(editor.Player().FlagshipPtr());
 				}
 			}
 			ImGui::EndMenu();
