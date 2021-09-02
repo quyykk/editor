@@ -44,6 +44,8 @@ public:
 
 	// The main panel allows fast-forward.
 	virtual bool AllowFastForward() const override;
+
+	Engine &GetEngine() { return engine; }
 	
 	
 protected:

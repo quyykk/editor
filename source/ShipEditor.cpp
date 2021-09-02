@@ -82,12 +82,18 @@ void ShipEditor::Render()
 			if(ImGui::MenuItem("Add as Escort", nullptr, false, object))
 			{
 				editor.Player().ships.push_back(make_shared<Ship>(*object));
-				editor.Player().ships.back()->SetName(searchBox);
+				editor.Player().ships.back()->SetName(object->TrueName());
 				editor.Player().ships.back()->SetSystem(editor.Player().GetSystem());
 				editor.Player().ships.back()->SetPlanet(editor.Player().GetPlanet());
 				editor.Player().ships.back()->SetIsSpecial();
 				editor.Player().ships.back()->SetIsYours();
 				editor.Player().ships.back()->SetGovernment(GameData::PlayerGovernment());
+
+				if(auto *panel = dynamic_cast<MainPanel *>(editor.GetUI().Top().get()))
+				{
+					Fleet::Place(*editor.Player().GetSystem(), *editor.Player().ships.back());
+					panel->GetEngine().Place(editor.Player().ships.back());
+				}
 			}
 			ImGui::EndMenu();
 		}

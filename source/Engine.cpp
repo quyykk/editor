@@ -422,6 +422,13 @@ void Engine::Place(const list<NPC> &npcs, shared_ptr<Ship> flagship)
 
 
 
+void Engine::Place(const shared_ptr<Ship> &ship)
+{
+	newShips.emplace_back(ship);
+}
+
+
+
 // Wait for the previous calculations (if any) to be done.
 void Engine::Wait()
 {
