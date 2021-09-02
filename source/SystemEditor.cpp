@@ -854,7 +854,7 @@ void SystemEditor::WriteToFile(DataWriter &writer, const System *system)
 		if(system->hidden)
 			writer.Write("hidden");
 		else if(diff)
-			writer.Write("remove hidden");
+			writer.Write("remove", "hidden");
 	}
 
 	auto asteroids = system->asteroids;
