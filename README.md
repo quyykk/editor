@@ -3,7 +3,8 @@
 This is a proof of concept plugin editor for Endless Sky. It uses [Dear ImGui](https://github.com/ocornut/imgui) to render the UI on top of the game and as such it is technically a fork.
 
 - Create, load and save plugins.
-- Modify game objects and see the result immediately<sup>1</sup>
+- Modify game objects and see the result immediately<sup>1</sup>.
+- Has a map editor to easily modify systems.
 - Respects your plugin's file structure and definition order inside files.
 - Doesn't remove any unrecognized nodes from your plugin.
 - You can choose between 5 themes.
