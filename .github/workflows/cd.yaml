@@ -14,7 +14,7 @@ jobs:
   cd_ubuntu_x86_64:
     runs-on: ubuntu-latest
     env:
-      OUTPUT: endless-sky-x86_64-continuous.tar.gz
+      OUTPUT: editor-x86_64-continuous.tar.gz
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-18.04
     env:
       ARCH: x86_64
-      OUTPUT: endless-sky-x86_64-continuous.AppImage
+      OUTPUT: editor-x86_64-continuous.AppImage
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
@@ -64,7 +64,7 @@ jobs:
     env:
       DIR_MINGW64: C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\x86_64-w64-mingw32
       DIR_ESLIB: .\dev64
-      OUTPUT: EndlessSky-win64-continuous.zip
+      OUTPUT: editor-win64-continuous.zip
       AR: gcc-ar
     steps:
       - uses: actions/checkout@v2
@@ -95,7 +95,7 @@ jobs:
   cd_macos_x86_64:
     runs-on: macos-latest
     env:
-      OUTPUT: EndlessSky-macOS-continuous.zip
+      OUTPUT: editor-macOS-continuous.zip
       SDL2_FRAMEWORK: build/SDL2.framework
     steps:
       - uses: actions/checkout@v2
@@ -133,10 +133,10 @@ jobs:
       - cd_macos_x86_64
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      OUTPUT_UBUNTU: endless-sky-x86_64-continuous.tar.gz
-      OUTPUT_APPIMAGE: endless-sky-x86_64-continuous.AppImage
-      OUTPUT_WINDOWS: EndlessSky-win64-continuous.zip
-      OUTPUT_MACOS: EndlessSky-macOS-continuous.zip
+      OUTPUT_UBUNTU: editor-x86_64-continuous.tar.gz
+      OUTPUT_APPIMAGE: editor-x86_64-continuous.AppImage
+      OUTPUT_WINDOWS: editor-win64-continuous.zip
+      OUTPUT_MACOS: editor-macOS-continuous.zip
     steps:
       - uses: actions/checkout@v2
       - name: Install github-release
