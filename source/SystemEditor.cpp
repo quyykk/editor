@@ -73,6 +73,20 @@ void SystemEditor::UpdateStellarPosition(const StellarObject &object, Point dp, 
 
 
 
+void SystemEditor::ToggleLink(const System *system)
+{
+	auto it = object->links.find(system);
+	if(it != object->links.end())
+		object->Unlink(const_cast<System *>(system));
+	else
+		object->Link(const_cast<System *>(system));
+	UpdateMap();
+	SetDirty();
+	SetDirty(system);
+}
+
+
+
 void SystemEditor::Render()
 {
 	if(IsDirty())
@@ -191,7 +205,8 @@ void SystemEditor::Render()
 		object->objects.clear();
 		object->links.clear();
 		object->attributes.insert("uninhabited");
-		GameData::UpdateSystems();
+		editor.Player().Seen(*object);
+		GameData::UpdateSystems(true);
 		UpdateMap(/*updateSystem=*/false);
 		searchBox.clear();
 		SetDirty();
@@ -291,8 +306,6 @@ void SystemEditor::RenderSystem()
 		}
 		if(!toAdd.empty() || !toRemove.empty())
 		{
-			if(!toAdd.empty())
-				editor.Player().Seen(*object);
 			SetDirty();
 			UpdateMap();
 		}
@@ -971,7 +984,7 @@ void SystemEditor::WriteToFile(DataWriter &writer, const System *system)
 void SystemEditor::UpdateMap(bool updateSystem) const
 {
 	if(updateSystem)
-		GameData::UpdateSystems();
+		GameData::UpdateSystems(true);
 	if(auto *mapPanel = dynamic_cast<MapPanel*>(editor.GetUI().Top().get()))
 	{
 		mapPanel->UpdateCache();

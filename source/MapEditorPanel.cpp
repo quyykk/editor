@@ -183,6 +183,22 @@ bool MapEditorPanel::Click(int x, int y, int clicks)
 
 
 
+bool MapEditorPanel::RClick(int x, int y)
+{
+	rclick = true;
+	Point click = Point(x, y) / Zoom() - center;
+	for(const auto &it : GameData::Systems())
+		if(it.second.IsValid() && click.Distance(it.second.Position()) < 10.)
+		{
+			systemEditor->ToggleLink(&it.second);
+			break;
+		}
+
+	return true;
+}
+
+
+
 bool MapEditorPanel::Drag(double dx, double dy)
 {
 	isDragging = true;
@@ -230,6 +246,11 @@ bool MapEditorPanel::Release(int x, int y)
 	{
 		isDragging = false;
 		moveSystems = false;
+		return true;
+	}
+	if(rclick)
+	{
+		rclick = false;
 		return true;
 	}
 

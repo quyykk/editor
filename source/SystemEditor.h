@@ -40,6 +40,8 @@ public:
 	void UpdateSystemPosition(const System *system, Point dp);
 	// Updates the given stellar's position by the given delta.
 	void UpdateStellarPosition(const StellarObject &object, Point dp, const System *system);
+	// Toggles a link between the current object and the given one.
+	void ToggleLink(const System *system);
 
 
 private:
