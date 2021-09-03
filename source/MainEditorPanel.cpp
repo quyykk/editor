@@ -66,7 +66,7 @@ using namespace std;
 MainEditorPanel::MainEditorPanel(PlayerInfo &player, SystemEditor *systemEditor)
 	: player(player), systemEditor(systemEditor)
 {
-	Select(player.GetSystem());
+	Select(systemEditor->Selected() ? systemEditor->Selected() : player.GetSystem());
 	SetIsFullScreen(true);
 	SetInterruptible(false);
 

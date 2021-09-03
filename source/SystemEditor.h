@@ -43,6 +43,8 @@ public:
 	// Toggles a link between the current object and the given one.
 	void ToggleLink(const System *system);
 
+	const System *Selected() const { return object; }
+
 
 private:
 	void RenderSystem();
