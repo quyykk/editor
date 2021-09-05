@@ -41,6 +41,13 @@ namespace ImGui
 	IMGUI_API bool InputCombo(const char *label, std::string *input, const T **element, const Set<T> &elements);
 
 	IMGUI_API bool InputSwizzle(const char *label, int *swizzle, bool allowNoSwizzle = false);
+
+	template <typename F>
+	IMGUI_API void BeginSimpleModal(const char *id, const char *label, const char *button, F &&f);
+	template <typename F>
+	IMGUI_API void BeginSimpleNewModal(const char *id, F &&f);
+	template <typename F>
+	IMGUI_API void BeginSimpleCloneModal(const char *id, F &&f);
 }
 
 
@@ -183,6 +190,53 @@ template <typename T>
 IMGUI_API bool ImGui::InputCombo(const char *label, std::string *input, const T **element, const Set<T> &elements)
 {
 	return InputCombo(label, input, const_cast<T **>(element), elements);
+}
+
+
+
+template <typename F>
+IMGUI_API void ImGui::BeginSimpleModal(const char *id, const char *label, const char *button, F &&f)
+{
+	if(BeginPopupModal(id, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		if(IsWindowAppearing())
+			SetKeyboardFocusHere();
+		static std::string name;
+		bool create = InputText(label, &name, ImGuiInputTextFlags_EnterReturnsTrue);
+		if(Button("Cancel"))
+		{
+			CloseCurrentPopup();
+			name.clear();
+		}
+		SameLine();
+		if(name.empty())
+			PushDisabled();
+		if(Button(button) || create)
+		{
+			std::forward<F &&>(f)(name);
+			CloseCurrentPopup();
+			name.clear();
+		}
+		else if(name.empty())
+			PopDisabled();
+		EndPopup();
+	}
+}
+
+
+
+template <typename F>
+IMGUI_API void ImGui::BeginSimpleNewModal(const char *id, F &&f)
+{
+	return BeginSimpleModal(id, "new name", "Create", std::forward<F &&>(f));
+}
+
+
+
+template <typename F>
+IMGUI_API void ImGui::BeginSimpleCloneModal(const char *id, F &&f)
+{
+	return BeginSimpleModal(id, "clone name", "Clone", std::forward<F &&>(f));
 }
 
 

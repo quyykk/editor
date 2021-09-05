@@ -156,75 +156,37 @@ void SystemEditor::Render()
 		ImGui::OpenPopup("New System");
 	if(showCloneSystem)
 		ImGui::OpenPopup("Clone System");
-	if(ImGui::BeginPopupModal("New System", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		static string name;
-		bool create = ImGui::InputText("new name", &name, ImGuiInputTextFlags_EnterReturnsTrue);
-		if(ImGui::Button("Cancel"))
-		{
-			ImGui::CloseCurrentPopup();
-			name.clear();
-		}
-		ImGui::SameLine();
-		if(name.empty())
-			ImGui::PushDisabled();
-		if(ImGui::Button("Create") || create)
-		{
-			auto *newSystem = const_cast<System *>(GameData::Systems().Get(name));
+	ImGui::BeginSimpleNewModal("New System", [this](const string &name)
+			{
+				auto *newSystem = const_cast<System *>(GameData::Systems().Get(name));
 
-			newSystem->name = name;
-			newSystem->position = object->position + Point(25., 25.);
-			newSystem->attributes.insert("uninhabited");
-			newSystem->isDefined = true;
-			newSystem->hasPosition = true;
-			editor.Player().Seen(*newSystem);
-			GameData::UpdateSystems(true);
-			UpdateMap(false);
-			SetDirty();
-			object = newSystem;
+				newSystem->name = name;
+				newSystem->position = object->position + Point(25., 25.);
+				newSystem->attributes.insert("uninhabited");
+				newSystem->isDefined = true;
+				newSystem->hasPosition = true;
+				editor.Player().Seen(*newSystem);
+				GameData::UpdateSystems(true);
+				UpdateMap(false);
+				SetDirty();
+				object = newSystem;
+			});
+	ImGui::BeginSimpleCloneModal("Clone System", [this](const string &name)
+			{
+				auto *clone = const_cast<System *>(GameData::Systems().Get(name));
+				*clone = *object;
+				object = clone;
 
-			ImGui::CloseCurrentPopup();
-			name.clear();
-		}
-		else if(name.empty())
-			ImGui::PopDisabled();
-		ImGui::EndPopup();
-	}
-	if(ImGui::BeginPopupModal("Clone System", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		static string name;
-		bool create = ImGui::InputText("clone name", &name, ImGuiInputTextFlags_EnterReturnsTrue);
-		if(ImGui::Button("Cancel"))
-		{
-			ImGui::CloseCurrentPopup();
-			name.clear();
-		}
-		ImGui::SameLine();
-		if(name.empty())
-			ImGui::PushDisabled();
-		if(ImGui::Button("Clone") || create)
-		{
-			auto *clone = const_cast<System *>(GameData::Systems().Get(name));
-			*clone = *object;
-			object = clone;
-
-			object->name = name;
-			object->position += Point(25., 25.);
-			object->objects.clear();
-			object->links.clear();
-			object->attributes.insert("uninhabited");
-			editor.Player().Seen(*object);
-			GameData::UpdateSystems(true);
-			UpdateMap(/*updateSystem=*/false);
-			SetDirty();
-
-			ImGui::CloseCurrentPopup();
-			name.clear();
-		}
-		else if(name.empty())
-			ImGui::PopDisabled();
-		ImGui::EndPopup();
-	}
+				object->name = name;
+				object->position += Point(25., 25.);
+				object->objects.clear();
+				object->links.clear();
+				object->attributes.insert("uninhabited");
+				editor.Player().Seen(*object);
+				GameData::UpdateSystems(true);
+				UpdateMap(/*updateSystem=*/false);
+				SetDirty();
+			});
 
 	if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
 		object = const_cast<System *>(panel->Selected());

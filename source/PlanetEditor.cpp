@@ -63,7 +63,7 @@ void PlanetEditor::Render()
 	}
 
 	ImGui::SetNextWindowSize(ImVec2(550, 500), ImGuiCond_FirstUseEver);
-	if(!ImGui::Begin("Planet Editor", &show))
+	if(!ImGui::Begin("Planet Editor", &show, ImGuiWindowFlags_MenuBar))
 	{
 		if(IsDirty())
 			ImGui::PopStyleColor(3);
@@ -74,97 +74,66 @@ void PlanetEditor::Render()
 	if(IsDirty())
 		ImGui::PopStyleColor(3);
 
-	Planet *selected = nullptr;
-	if(ImGui::InputCombo("planet", &searchBox, &selected, GameData::Planets()))
-		if(selected)
+	bool showNewPlanet = false;
+	bool showClonePlanet = false;
+	if(ImGui::BeginMenuBar())
+	{
+		if(ImGui::BeginMenu("Planet"))
 		{
-			object = selected;
-			searchBox.clear();
-		}
-	if(!object || !IsDirty())
-		ImGui::PushDisabled();
-	bool reset = ImGui::Button("Reset");
-	if(!object || !IsDirty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select a planet first.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to reset.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || searchBox.empty())
-		ImGui::PushDisabled();
-	bool clone = ImGui::Button("Clone");
-	if(!object || searchBox.empty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(searchBox.empty())
-				ImGui::SetTooltip("Input the new name for the planet above.");
-			else if(!object)
-				ImGui::SetTooltip("Select a planet first.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || !editor.HasPlugin() || !IsDirty())
-		ImGui::PushDisabled();
-	bool save = ImGui::Button("Save");
-	if(!object || !editor.HasPlugin() || !IsDirty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select a planet first.");
-			else if(!editor.HasPlugin())
-				ImGui::SetTooltip("Load a plugin to save to a file.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to save.");
-		}
-	}
-
-	if(!object)
-	{
-		ImGui::End();
-		return;
-	}
-
-	if(reset)
-	{
-		bool found = false;
-		for(auto &&change : Changes())
-			if(change.TrueName() == object->TrueName())
+			ImGui::MenuItem("New", nullptr, &showNewPlanet);
+			ImGui::MenuItem("Clone", nullptr, &showClonePlanet, object);
+			if(ImGui::MenuItem("Save", nullptr, false, object && editor.HasPlugin() && IsDirty()))
+				WriteToPlugin(object);
+			if(ImGui::MenuItem("Reset", nullptr, false, object && IsDirty()))
 			{
-				*object = change;
-				found = true;
-				break;
+				bool found = false;
+				for(auto &&change : Changes())
+					if(change.TrueName() == object->TrueName())
+					{
+						*object = change;
+						found = true;
+						break;
+					}
+				if(!found)
+					*object = *GameData::basePlanets.Get(object->TrueName());
+				SetClean();
 			}
-		if(!found)
-			*object = *GameData::basePlanets.Get(object->TrueName());
-		SetClean();
-	} 
-	if(clone)
-	{
-		auto *clone = const_cast<Planet *>(GameData::Planets().Get(searchBox));
-		*clone = *object;
-		object = clone;
-
-		object->name = searchBox;
-		object->systems.clear();
-		searchBox.clear();
-		SetDirty();
+			ImGui::EndMenu();
+		}
+		ImGui::EndMenuBar();
 	}
-	if(save)
-		WriteToPlugin(object);
+
+	if(showNewPlanet)
+		ImGui::OpenPopup("New Planet");
+	if(showClonePlanet)
+		ImGui::OpenPopup("Clone Planet");
+	ImGui::BeginSimpleNewModal("New Planet", [this](const string &name)
+			{
+				auto *newPlanet = const_cast<Planet *>(GameData::Planets().Get(searchBox));
+
+				newPlanet->name = name;
+				newPlanet->isDefined = true;
+				SetDirty();
+				object = newPlanet;
+			});
+	ImGui::BeginSimpleCloneModal("Clone Planet", [this](const string &name)
+			{
+				auto *clone = const_cast<Planet *>(GameData::Planets().Get(name));
+				*clone = *object;
+				object = clone;
+
+				object->name = name;
+				object->systems.clear();
+				SetDirty();
+			});
+
+	if(ImGui::InputCombo("planet", &searchBox, &object, GameData::Planets()))
+		searchBox.clear();
 
 	ImGui::Separator();
 	ImGui::Spacing();
-	RenderPlanet();
+	if(object)
+		RenderPlanet();
 	ImGui::End();
 }
 
