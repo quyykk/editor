@@ -278,6 +278,8 @@ void Editor::RenderMain()
 		shipyardEditor.Render();
 	if(showSystemMenu)
 		systemEditor.Render();
+	else
+		systemEditor.AlwaysRender();
 	if(showPlanetMenu)
 		planetEditor.Render();
 

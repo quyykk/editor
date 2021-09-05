@@ -34,6 +34,7 @@ public:
 	SystemEditor(Editor &editor, bool &show) noexcept;
 
 	void Render();
+	void AlwaysRender(bool showNewSystem = false);
 	void WriteToFile(DataWriter &writer, const System *system);
 
 	// Updates the given system's position by the given delta.

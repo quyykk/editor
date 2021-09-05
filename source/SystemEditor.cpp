@@ -171,28 +171,9 @@ void SystemEditor::Render()
 		ImGui::EndMenuBar();
 	}
 
-	if(showNewSystem || createNewSystem)
-		ImGui::OpenPopup("New System");
 	if(showCloneSystem)
 		ImGui::OpenPopup("Clone System");
-	ImGui::BeginSimpleNewModal("New System", [this](const string &name)
-			{
-				auto *newSystem = const_cast<System *>(GameData::Systems().Get(name));
-
-				newSystem->name = name;
-				newSystem->position = createNewSystem ? position : object->position + Point(25., 25.);
-				newSystem->attributes.insert("uninhabited");
-				newSystem->isDefined = true;
-				newSystem->hasPosition = true;
-				editor.Player().Seen(*newSystem);
-				object = newSystem;
-				GameData::UpdateSystem(object);
-				for(auto &&link : object->VisibleNeighbors())
-					GameData::UpdateSystem(const_cast<System *>(link));
-				UpdateMap();
-				SetDirty();
-			});
-	createNewSystem &= ImGui::IsPopupOpen("New System");
+	AlwaysRender(showNewSystem);
 	ImGui::BeginSimpleCloneModal("Clone System", [this](const string &name)
 			{
 				auto *clone = const_cast<System *>(GameData::Systems().Get(name));
@@ -231,6 +212,32 @@ void SystemEditor::Render()
 	if(object)
 		RenderSystem();
 	ImGui::End();
+}
+
+
+
+void SystemEditor::AlwaysRender(bool showNewSystem)
+{
+	if(showNewSystem || createNewSystem)
+		ImGui::OpenPopup("New System");
+	ImGui::BeginSimpleNewModal("New System", [this](const string &name)
+			{
+				auto *newSystem = const_cast<System *>(GameData::Systems().Get(name));
+
+				newSystem->name = name;
+				newSystem->position = createNewSystem ? position : object->position + Point(25., 25.);
+				newSystem->attributes.insert("uninhabited");
+				newSystem->isDefined = true;
+				newSystem->hasPosition = true;
+				editor.Player().Seen(*newSystem);
+				object = newSystem;
+				GameData::UpdateSystem(object);
+				for(auto &&link : object->VisibleNeighbors())
+					GameData::UpdateSystem(const_cast<System *>(link));
+				UpdateMap();
+				SetDirty();
+			});
+	createNewSystem &= ImGui::IsPopupOpen("New System");
 }
 
 
