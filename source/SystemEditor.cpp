@@ -82,6 +82,8 @@ void SystemEditor::ToggleLink(const System *system)
 		object->Unlink(const_cast<System *>(system));
 	else
 		object->Link(const_cast<System *>(system));
+	GameData::UpdateSystem(object);
+	GameData::UpdateSystem(const_cast<System *>(system));
 	UpdateMap();
 	SetDirty();
 	SetDirty(system);
@@ -133,7 +135,13 @@ void SystemEditor::Render()
 				if(!found)
 					*object = *GameData::baseSystems.Get(object->name);
 				for(auto &&link : object->links)
+				{
+					GameData::UpdateSystem(const_cast<System *>(link));
 					const_cast<System *>(link)->Link(object);
+				}
+				for(auto &&link : object->VisibleNeighbors())
+					GameData::UpdateSystem(const_cast<System *>(link));
+				GameData::UpdateSystem(object);
 				UpdateMap();
 				SetClean();
 			}
@@ -166,10 +174,12 @@ void SystemEditor::Render()
 				newSystem->isDefined = true;
 				newSystem->hasPosition = true;
 				editor.Player().Seen(*newSystem);
-				GameData::UpdateSystems(true);
-				UpdateMap(false);
-				SetDirty();
 				object = newSystem;
+				GameData::UpdateSystem(object);
+				for(auto &&link : object->VisibleNeighbors())
+					GameData::UpdateSystem(const_cast<System *>(link));
+				UpdateMap();
+				SetDirty();
 			});
 	ImGui::BeginSimpleCloneModal("Clone System", [this](const string &name)
 			{
@@ -183,8 +193,10 @@ void SystemEditor::Render()
 				object->links.clear();
 				object->attributes.insert("uninhabited");
 				editor.Player().Seen(*object);
-				GameData::UpdateSystems(true);
-				UpdateMap(/*updateSystem=*/false);
+				GameData::UpdateSystem(object);
+				for(auto &&link : object->VisibleNeighbors())
+					GameData::UpdateSystem(const_cast<System *>(link));
+				UpdateMap();
 				SetDirty();
 			});
 
@@ -286,15 +298,18 @@ void SystemEditor::RenderSystem()
 		for(auto &sys : toAdd)
 		{
 			object->Link(sys);
+			GameData::UpdateSystem(sys);
 			SetDirty(sys);
 		}
 		for(auto &&sys : toRemove)
 		{
 			object->Unlink(sys);
+			GameData::UpdateSystem(sys);
 			SetDirty(sys);
 		}
 		if(!toAdd.empty() || !toRemove.empty())
 		{
+			GameData::UpdateSystem(object);
 			SetDirty();
 			UpdateMap();
 		}
@@ -549,7 +564,7 @@ void SystemEditor::RenderSystem()
 				if(ImGui::Selectable(government.first.c_str(), selected))
 				{
 					object->government = &government.second;
-					UpdateMap(/*updateSystems=*/false);
+					UpdateMap();
 					SetDirty();
 				}
 
@@ -960,10 +975,8 @@ void SystemEditor::WriteToFile(DataWriter &writer, const System *system)
 
 
 
-void SystemEditor::UpdateMap(bool updateSystem) const
+void SystemEditor::UpdateMap() const
 {
-	if(updateSystem)
-		GameData::UpdateSystems(true);
 	if(auto *mapPanel = dynamic_cast<MapPanel*>(editor.GetUI().Top().get()))
 	{
 		mapPanel->UpdateCache();

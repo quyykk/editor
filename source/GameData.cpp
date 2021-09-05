@@ -774,6 +774,13 @@ void GameData::UpdateSystems(bool initialLoad)
 
 
 
+void GameData::UpdateSystem(System *system)
+{
+	system->UpdateSystem(systems, neighborDistances);
+}
+
+
+
 void GameData::AddJumpRange(double neighborDistance)
 {
 	neighborDistances.insert(neighborDistance);
