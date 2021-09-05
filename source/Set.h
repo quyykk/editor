@@ -41,6 +41,7 @@ public:
 	typename std::map<std::string, Type>::const_iterator end() const { return data.end(); }
 	
 	int size() const { return data.size(); }
+	void clear() const { data.clear(); }
 	// Remove any objects in this set that are not in the given set, and for
 	// those that are in the given set, revert to their contents.
 	void Revert(const Set<Type> &other);

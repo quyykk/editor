@@ -626,6 +626,16 @@ void Editor::OpenPlugin(const string &plugin)
 	currentPlugin = path;
 	currentPluginName = plugin;
 
+	GameData::baseEffects.clear();
+	GameData::baseFleets.clear();
+	GameData::baseHazards.clear();
+	GameData::baseGovernments.clear();
+	GameData::baseOutfits.clear();
+	GameData::baseOutfitSales.clear();
+	GameData::baseShips.clear();
+	GameData::baseShipSales.clear();
+	GameData::baseSystems.clear();
+	GameData::basePlanets.clear();
 	GameData::LoadData(&currentPlugin);
 	player.PartialLoad();
 

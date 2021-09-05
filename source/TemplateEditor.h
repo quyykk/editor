@@ -261,7 +261,7 @@ void TemplateEditor<T>::RenderSound(const std::string &name, std::map<const Soun
 			map[toAdd] += map[toRemove->first];
 			map.erase(toRemove);
 		}
-		if(toRemove != map.end())
+		else if(toRemove != map.end())
 			map.erase(toRemove);
 		ImGui::TreePop();
 	}

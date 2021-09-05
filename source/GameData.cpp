@@ -244,6 +244,17 @@ bool GameData::BeginLoad(const char * const *argv)
 		startConditions.end()
 	);
 	
+	baseEffects = effects;
+	baseFleets = fleets;
+	baseHazards = hazards;
+	baseGovernments = governments;
+	baseOutfits = outfits;
+	baseOutfitSales = outfitSales;
+	baseShips = ships;
+	baseShipSales = shipSales;
+	baseSystems = systems;
+	basePlanets = planets;
+
 	// Store the current state, to revert back to later.
 	defaultFleets = fleets;
 	defaultGovernments = governments;
