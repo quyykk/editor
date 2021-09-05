@@ -145,6 +145,11 @@ public:
 	
 	static const StarField &Background();
 	static void SetHaze(const Sprite *sprite, bool allowAnimation);
+
+	static const std::vector<const Sprite *> &Stars();
+	static const std::vector<const Sprite *> &PlanetSprites();
+	static const std::vector<const Sprite *> &MoonSprites();
+	static const std::vector<const Sprite *> &GiantSprites();
 	
 	static const std::string &Tooltip(const std::string &label);
 	static std::string HelpMessage(const std::string &name);

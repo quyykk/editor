@@ -105,6 +105,11 @@ namespace {
 	
 	Politics politics;
 	vector<StartConditions> startConditions;
+
+	vector<const Sprite *> stars;
+	vector<const Sprite *> planetSprites;
+	vector<const Sprite *> moonSprites;
+	vector<const Sprite *> giantSprites;
 	
 	Trade trade;
 	map<const System *, map<string, int>> purchases;
@@ -444,10 +449,21 @@ double GameData::Progress()
 		{
 			// Now that we have finished loading all the basic sprites, we can look for invalid file paths,
 			// e.g. due to capitalization errors or other typos. Landscapes are allowed to still be empty.
-			auto unloaded = SpriteSet::CheckReferences();
-			for(const auto &path : unloaded)
-				if(path.compare(0, 5, "land/") != 0)
-					Files::LogError("Warning: image \"" + path + "\" is referred to, but has no pixels.");
+			for(const auto &pair : SpriteSet::GetSprites())
+			{
+				if(pair.first.compare(0, 5, "land/") != 0 && pair.second.Height() == 0 && pair.second.Width() == 0)
+					Files::LogError("Warning: image \"" + pair.first + "\" is referred to, but has no pixels.");
+				else if(!pair.first.compare(0, 7, "planet/"))
+				{
+					auto radius = pair.second.Width() / 2. - 4.;
+					if(radius <= 50.)
+						moonSprites.push_back(&pair.second);
+					else if(radius >= 120.)
+						giantSprites.push_back(&pair.second);
+					else
+						planetSprites.push_back(&pair.second);
+				}
+			}
 			initiallyLoaded = true;
 		}
 	}
@@ -1223,6 +1239,7 @@ void GameData::LoadFile(
 		else if(key == "star" && node.Size() >= 2 && initialLoad)
 		{
 			const Sprite *sprite = SpriteSet::Get(node.Token(1));
+			stars.push_back(sprite);
 			for(const DataNode &child : node)
 			{
 				if(child.Token(0) == "power" && child.Size() >= 2)
@@ -1312,6 +1329,34 @@ map<string, shared_ptr<ImageSet>> GameData::FindImages()
 			}
 	}
 	return images;
+}
+
+
+
+const vector<const Sprite *> &GameData::Stars()
+{
+	return stars;
+}
+
+
+
+const vector<const Sprite *> &GameData::PlanetSprites()
+{
+	return planetSprites;
+}
+
+
+
+const vector<const Sprite *> &GameData::MoonSprites()
+{
+	return moonSprites;
+}
+
+
+
+const vector<const Sprite *> &GameData::GiantSprites()
+{
+	return giantSprites;
 }
 
 

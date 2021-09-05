@@ -34,6 +34,8 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "UI.h"
 #include "Visual.h"
 
+#include <random>
+
 using namespace std;
 
 
@@ -97,7 +99,7 @@ void SystemEditor::Render()
 	}
 
 	ImGui::SetNextWindowSize(ImVec2(550, 500), ImGuiCond_FirstUseEver);
-	if(!ImGui::Begin("System Editor", &show))
+	if(!ImGui::Begin("System Editor", &show, ImGuiWindowFlags_MenuBar))
 	{
 		if(IsDirty())
 			ImGui::PopStyleColor(3);
@@ -108,115 +110,140 @@ void SystemEditor::Render()
 	if(IsDirty())
 		ImGui::PopStyleColor(3);
 
+	bool showNewSystem = false;
+	bool showCloneSystem = false;
+	if(ImGui::BeginMenuBar())
+	{
+		if(ImGui::BeginMenu("System"))
+		{
+			ImGui::MenuItem("New", nullptr, &showNewSystem);
+			ImGui::MenuItem("Clone", nullptr, &showCloneSystem, object);
+			if(ImGui::MenuItem("Save", nullptr, false, object && editor.HasPlugin() && IsDirty()))
+				WriteToPlugin(object);
+			if(ImGui::MenuItem("Reset", nullptr, false, object && IsDirty()))
+			{
+				bool found = false;
+				for(auto &&change : Changes())
+					if(change.Name() == object->Name())
+					{
+						*object = change;
+						found = true;
+						break;
+					}
+				if(!found)
+					*object = *GameData::baseSystems.Get(object->name);
+				for(auto &&link : object->links)
+					const_cast<System *>(link)->Link(object);
+				UpdateMap();
+				SetClean();
+			}
+			ImGui::EndMenu();
+		}
+		if(ImGui::BeginMenu("Tools"))
+		{
+			if(ImGui::MenuItem("Randomize Stellars (experimental)", nullptr, false, object))
+				Randomize();
+			if(ImGui::MenuItem("Randomize Asteroids", nullptr, false, object))
+				RandomizeAsteroids();
+			if(ImGui::MenuItem("Randomize Minables", nullptr, false, object))
+				RandomizeMinables();
+			ImGui::EndMenu();
+		}
+		ImGui::EndMenuBar();
+	}
+
+	if(showNewSystem)
+		ImGui::OpenPopup("New System");
+	if(showCloneSystem)
+		ImGui::OpenPopup("Clone System");
+	if(ImGui::BeginPopupModal("New System", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		static string name;
+		bool create = ImGui::InputText("new name", &name, ImGuiInputTextFlags_EnterReturnsTrue);
+		if(ImGui::Button("Cancel"))
+		{
+			ImGui::CloseCurrentPopup();
+			name.clear();
+		}
+		ImGui::SameLine();
+		if(name.empty())
+			ImGui::PushDisabled();
+		if(ImGui::Button("Create") || create)
+		{
+			auto *newSystem = const_cast<System *>(GameData::Systems().Get(name));
+
+			newSystem->name = name;
+			newSystem->position = object->position + Point(25., 25.);
+			newSystem->attributes.insert("uninhabited");
+			newSystem->isDefined = true;
+			newSystem->hasPosition = true;
+			editor.Player().Seen(*newSystem);
+			GameData::UpdateSystems(true);
+			UpdateMap(false);
+			SetDirty();
+			object = newSystem;
+
+			ImGui::CloseCurrentPopup();
+			name.clear();
+		}
+		else if(name.empty())
+			ImGui::PopDisabled();
+		ImGui::EndPopup();
+	}
+	if(ImGui::BeginPopupModal("Clone System", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		static string name;
+		bool create = ImGui::InputText("clone name", &name, ImGuiInputTextFlags_EnterReturnsTrue);
+		if(ImGui::Button("Cancel"))
+		{
+			ImGui::CloseCurrentPopup();
+			name.clear();
+		}
+		ImGui::SameLine();
+		if(name.empty())
+			ImGui::PushDisabled();
+		if(ImGui::Button("Clone") || create)
+		{
+			auto *clone = const_cast<System *>(GameData::Systems().Get(name));
+			*clone = *object;
+			object = clone;
+
+			object->name = name;
+			object->position += Point(25., 25.);
+			object->objects.clear();
+			object->links.clear();
+			object->attributes.insert("uninhabited");
+			editor.Player().Seen(*object);
+			GameData::UpdateSystems(true);
+			UpdateMap(/*updateSystem=*/false);
+			SetDirty();
+
+			ImGui::CloseCurrentPopup();
+			name.clear();
+		}
+		else if(name.empty())
+			ImGui::PopDisabled();
+		ImGui::EndPopup();
+	}
+
 	if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
 		object = const_cast<System *>(panel->Selected());
 	if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
 		object = const_cast<System *>(panel->Selected());
 
-	System *selected = nullptr;
-	if(ImGui::InputCombo("system", &searchBox, &selected, GameData::Systems()))
-		if(selected)
-		{
-			object = selected;
-			searchBox.clear();
-			if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
-				panel->Select(object);
-			if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
-				panel->Select(object);
-		}
-	if(!object || !IsDirty())
-		ImGui::PushDisabled();
-	bool reset = ImGui::Button("Reset");
-	if(!object || !IsDirty())
+	if(ImGui::InputCombo("system", &searchBox, &object, GameData::Systems()))
 	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select a system first.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to reset.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || searchBox.empty())
-		ImGui::PushDisabled();
-	bool clone = ImGui::Button("Clone");
-	if(!object || searchBox.empty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(searchBox.empty())
-				ImGui::SetTooltip("Input the new name for the system above.");
-			else if(!object)
-				ImGui::SetTooltip("Select a system first.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || !editor.HasPlugin() || !IsDirty())
-		ImGui::PushDisabled();
-	bool save = ImGui::Button("Save");
-	if(!object || !editor.HasPlugin() || !IsDirty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select a system first.");
-			else if(!editor.HasPlugin())
-				ImGui::SetTooltip("Load a plugin to save to a file.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to save.");
-		}
-	}
-
-	if(!object)
-	{
-		ImGui::End();
-		return;
-	}
-
-	if(reset)
-	{
-		bool found = false;
-		for(auto &&change : Changes())
-			if(change.Name() == object->Name())
-			{
-				*object = change;
-				found = true;
-				break;
-			}
-		if(!found)
-			*object = *GameData::baseSystems.Get(object->name);
-		for(auto &&link : object->links)
-			const_cast<System *>(link)->Link(object);
-		UpdateMap();
-		SetClean();
-	} 
-	if(clone)
-	{
-		auto *clone = const_cast<System *>(GameData::Systems().Get(searchBox));
-		*clone = *object;
-		object = clone;
-
-		object->name = searchBox;
-		object->position += Point(25., 25.);
-		object->objects.clear();
-		object->links.clear();
-		object->attributes.insert("uninhabited");
-		editor.Player().Seen(*object);
-		GameData::UpdateSystems(true);
-		UpdateMap(/*updateSystem=*/false);
 		searchBox.clear();
-		SetDirty();
+		if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
+			panel->Select(object);
+		if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
+			panel->Select(object);
 	}
-	if(save)
-		WriteToPlugin(object);
 
 	ImGui::Separator();
 	ImGui::Spacing();
-	RenderSystem();
+	if(object)
+		RenderSystem();
 	ImGui::End();
 }
 
@@ -318,15 +345,13 @@ void SystemEditor::RenderSystem()
 		if(ImGui::Selectable("Add Asteroid"))
 		{
 			object->asteroids.emplace_back("small rock", 1, 1.);
-			if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
-				panel->UpdateCache();
+			UpdateAsteroids();
 			SetDirty();
 		}
 		if(ImGui::Selectable("Add Mineable"))
 		{
 			object->asteroids.emplace_back(&GameData::Minables().begin()->second, 1, 1.);
-			if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
-				panel->UpdateCache();
+			UpdateAsteroids();
 			SetDirty();
 		}
 		ImGui::EndPopup();
@@ -360,8 +385,7 @@ void SystemEditor::RenderSystem()
 							if(ImGui::Selectable(item.first.c_str(), selected))
 							{
 								asteroid.type = &item.second;
-								if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
-									panel->UpdateCache();
+								UpdateAsteroids();
 								SetDirty();
 							}
 							++index;
@@ -373,14 +397,12 @@ void SystemEditor::RenderSystem()
 					}
 					if(ImGui::InputInt("count", &asteroid.count))
 					{
-						if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
-							panel->UpdateCache();
+						UpdateAsteroids();
 						SetDirty();
 					}
 					if(ImGui::InputDoubleEx("energy", &asteroid.energy))
 					{
-						if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
-							panel->UpdateCache();
+						UpdateAsteroids();
 						SetDirty();
 					}
 					ImGui::TreePop();
@@ -393,8 +415,7 @@ void SystemEditor::RenderSystem()
 				{
 					if(ImGui::Selectable("Remove"))
 					{
-						if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
-							panel->UpdateCache();
+						UpdateAsteroids();
 						toRemove = index;
 					}
 					ImGui::EndPopup();
@@ -404,20 +425,17 @@ void SystemEditor::RenderSystem()
 				{
 					if(ImGui::InputText("name", &asteroid.name))
 					{
-						if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
-							panel->UpdateCache();
+						UpdateAsteroids();
 						SetDirty();
 					}
 					if(ImGui::InputInt("count", &asteroid.count))
 					{
-						if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
-							panel->UpdateCache();
+						UpdateAsteroids();
 						SetDirty();
 					}
 					if(ImGui::InputDoubleEx("energy", &asteroid.energy))
 					{
-						if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
-							panel->UpdateCache();
+						UpdateAsteroids();
 						SetDirty();
 					}
 					ImGui::TreePop();
@@ -430,8 +448,7 @@ void SystemEditor::RenderSystem()
 		if(toRemove != -1)
 		{
 			object->asteroids.erase(object->asteroids.begin() + toRemove);
-			if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
-				panel->UpdateCache();
+			UpdateAsteroids();
 			SetDirty();
 		}
 		ImGui::TreePop();
@@ -992,4 +1009,351 @@ void SystemEditor::UpdateMap(bool updateSystem) const
 	}
 	if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
 		panel->UpdateCache();
+}
+
+
+
+void SystemEditor::UpdateAsteroids() const
+{
+	if(auto *panel = dynamic_cast<MainEditorPanel *>(editor.GetMenu().Top().get()))
+		panel->UpdateCache();
+}
+
+
+
+void SystemEditor::Randomize()
+{
+	// Randomizes a star system. This code is adapted from
+	// the official ES map editor.
+	constexpr int STAR_DISTANCE = 40;
+	static random_device rd;
+	static mt19937 gen(rd());
+	static uniform_int_distribution<> randStarNum(0, 2);
+	static uniform_int_distribution<> randStarDist(0, STAR_DISTANCE);
+
+	auto getRadius = [](const StellarObject &stellar)
+	{
+		return stellar.sprite->Width() / 2. - 4.;
+	};
+	auto getMass = [&getRadius](const StellarObject &stellar)
+	{
+		constexpr double STAR_MASS_SCALE = .75;
+		const auto radius = getRadius(stellar);
+		return radius * radius * STAR_MASS_SCALE;
+	};
+
+	object->objects.clear();
+
+	// First we generate the (or 2) star(s).
+	const int numStars = 1 + !randStarNum(gen);
+	double mass;
+	if(numStars == 1)
+	{
+		StellarObject stellar;
+		stellar.sprite = RandomStarSprite();
+		stellar.speed = 36.;
+		mass = getMass(stellar);
+
+		object->objects.push_back(stellar);
+	}
+	else
+	{
+		StellarObject stellar1;
+		StellarObject stellar2;
+
+		stellar1.sprite = RandomStarSprite();
+		stellar2.sprite = RandomStarSprite();
+		stellar2.offset = 180.;
+
+		double radius1 = getRadius(stellar1);
+		double radius2 = getRadius(stellar2);
+		double mass1 = getMass(stellar1);
+		double mass2 = getMass(stellar2);
+		mass = mass1 + mass2;
+
+		double distance = radius1 + radius2 + randStarDist(gen) + STAR_DISTANCE;
+		stellar1.distance = (mass2 * distance) / mass;
+		stellar2.distance = (mass1 * distance) / mass;
+
+		double period = sqrt(distance * distance * distance / mass);
+		stellar1.speed = 360. / period;
+		stellar2.speed = 360. / period;
+
+		object->objects.push_back(stellar1);
+		object->objects.push_back(stellar2);
+	}
+
+	constexpr double HABITABLE_SCALE = 1.25;
+	object->habitable = mass / HABITABLE_SCALE;
+
+	// Now we generate lots of planets with moons.
+	uniform_int_distribution<> randPlanetCount(2, 5);
+	int planetCount = randPlanetCount(gen);
+	for(int i = 0; i < planetCount; ++i)
+	{
+		constexpr int RANDOM_SPACE = 100;
+		int space = RANDOM_SPACE;
+		for(const auto &stellar : object->objects)
+			if(!stellar.isStar && stellar.parent == -1)
+				space += RANDOM_SPACE / 2;
+
+		int distance = object->objects.back().distance;
+		if(object->objects.back().sprite)
+			distance += getRadius(object->objects.back());
+		if(object->objects.back().parent != -1)
+			distance += object->objects[object->objects.back().parent].distance;
+
+		uniform_int_distribution<> randSpace(0, distance);
+		const int addSpace = randSpace(gen);
+		distance += (addSpace * addSpace) * .01 + 50.;
+
+		set<const Sprite *> used;
+		for(const auto &stellar : object->objects)
+			used.insert(stellar.sprite);
+
+		uniform_int_distribution<> rand10(0, 9);
+		uniform_int_distribution<> rand2000(0, 1999);
+		const bool isHabitable = distance > object->habitable * .5 && distance < object->habitable * 2.;
+		const bool isSmall = !rand10(gen);
+		const bool isTerrestrial = !isSmall && rand2000(gen) > distance;
+
+		const int rootIndex = static_cast<int>(object->objects.size());
+
+		const Sprite *planetSprite;
+		do {
+			if(isSmall)
+				planetSprite = RandomMoonSprite();
+			else if(isTerrestrial)
+				planetSprite = isHabitable ? RandomPlanetSprite() : RandomPlanetSprite();
+			else
+				planetSprite = RandomGiantSprite();
+		} while(used.count(planetSprite));
+
+		object->objects.emplace_back();
+		object->objects.back().sprite = planetSprite;
+		used.insert(planetSprite);
+		auto &planet = object->objects.back();
+
+		uniform_int_distribution<> oneOrTwo(1, 2);
+		uniform_int_distribution<> threeOrFive(3, 5);
+
+		const int randMoon = isTerrestrial ? oneOrTwo(gen) : threeOrFive(gen);
+		int moonCount = uniform_int_distribution<>(0, randMoon - 1)(gen);
+		if(getRadius(object->objects.back()) < 70.)
+			moonCount = 0;
+
+		auto calcPeriod = [this, &getRadius](StellarObject &stellar, bool isMoon)
+		{
+			const auto radius = getRadius(stellar);
+			constexpr double PLANET_MASS_SCALE = .015;
+			stellar.speed = isMoon ? 360. / (radius * radius * radius * PLANET_MASS_SCALE)
+				: object->habitable * HABITABLE_SCALE;
+		};
+
+		double moonDistance = getRadius(object->objects.back());
+		int randomMoonSpace = 50.;
+		for(int i = 0; i < moonCount; ++i)
+		{
+			uniform_int_distribution<> randMoonDist(10., randomMoonSpace);
+			moonDistance += randMoonDist(gen);
+			randomMoonSpace += 20.;
+
+			const Sprite *moonSprite;
+			do moonSprite = RandomMoonSprite();
+			while(used.count(moonSprite));
+			used.insert(moonSprite);
+
+			object->objects.emplace_back();
+			object->objects.back().sprite = moonSprite;
+			object->objects.back().parent = rootIndex;
+			object->objects.back().distance = moonDistance + getRadius(object->objects.back());
+			calcPeriod(object->objects.back(), true);
+			moonDistance += 2. * getRadius(object->objects.back());
+		}
+
+		planet.distance = distance + moonDistance;
+		calcPeriod(planet, false);
+	}
+
+	object->SetDate(editor.Player().GetDate());
+	SetDirty();
+}
+
+
+
+void SystemEditor::RandomizeAsteroids()
+{
+	// Randomizes the asteroids in this system.
+	// Code adapted from the official ES map editor.
+	object->asteroids.erase(remove_if(object->asteroids.begin(), object->asteroids.end(),
+				[](const System::Asteroid &asteroid) { return !asteroid.Type(); }),
+			object->asteroids.end());
+
+	static random_device rd;
+	static mt19937 gen(rd());
+
+	uniform_int_distribution<> rand(0, 21);
+	const int total = rand(gen) * rand(gen) + 1;
+	const double energy = (rand(gen) + 10) * (rand(gen) + 10) * .01;
+	const string prefix[] = { "small", "medium", "large" };
+	const char *suffix[] = { " rock", " metal" };
+
+	uniform_int_distribution<> randCount(0, total - 1);
+	int amount[] = { randCount(gen), 0 };
+	amount[1] = total - amount[0];
+
+	for(int i = 0; i < 2; ++i)
+	{
+		if(!amount[i])
+			continue;
+
+		uniform_int_distribution<> randCount(0, amount[i] - 1);
+		int count[] = { 0, randCount(gen), 0 };
+		int remaining = amount[i] - count[1];
+		if(remaining)
+		{
+			uniform_int_distribution<> randRemaining(0, remaining - 1);
+			count[0] = randRemaining(gen);
+			count[2] = remaining - count[0];
+		}
+
+		for(int j = 0; j < 3; ++j)
+			if(count[j])
+			{
+				uniform_int_distribution<> randEnergy(50, 100);
+				object->asteroids.emplace_back(prefix[j] + suffix[i], count[j], energy * randEnergy(gen) * .01);
+			}
+	}
+
+	UpdateAsteroids();
+	SetDirty();
+}
+
+
+
+void SystemEditor::RandomizeMinables()
+{
+	// Randomizes the minables in this system.
+	// Code adapted from the official ES map editor.
+	object->asteroids.erase(remove_if(object->asteroids.begin(), object->asteroids.end(),
+				[](const System::Asteroid &asteroid) { return asteroid.Type(); }),
+			object->asteroids.end());
+
+	static random_device rd;
+	static mt19937 gen(rd());
+
+	uniform_int_distribution<> randBelt(1000, 2000);
+	object->asteroidBelt = randBelt(gen);
+
+	int totalCount = 0;
+	double totalEnergy = 0.;
+	for(const auto &asteroid : object->asteroids)
+	{
+		totalCount += asteroid.count;
+		totalEnergy += asteroid.energy * asteroid.count;
+	}
+
+	if(!totalCount)
+	{
+		// This system has no other asteroids, so we generate a few minables only.
+		totalCount = 1;
+		uniform_real_distribution<> randEnergy(50., 100.);
+		totalEnergy = randEnergy(gen) * .01;
+	}
+
+	double meanEnergy = totalEnergy / totalCount;
+	totalCount /= 4;
+
+	const unordered_map<const char *, double> probabilities = {
+        { "aluminum", 12 },
+        { "copper", 8 },
+        { "gold", 2 },
+        { "iron", 13 },
+        { "lead", 15 },
+        { "neodymium", 3 },
+        { "platinum", 1 },
+        { "silicon", 2 },
+        { "silver", 5 },
+        { "titanium", 11 },
+        { "tungsten", 6 },
+        { "uranium", 4 },
+	};
+
+	unordered_map<const char *, int> choices;
+	uniform_int_distribution<> rand100(0, 99);
+	for(int i = 0; i < 3; ++i)
+	{
+		uniform_int_distribution<> randCount(0, totalCount);
+		totalCount = randCount(gen);
+		if(!totalCount)
+			break;
+
+		int choice = rand100(gen);
+		for(const auto &pair : probabilities)
+		{
+			choice -= pair.second;
+			if(choice < 0)
+			{
+				choices[pair.first] += totalCount;
+				break;
+			}
+		}
+	}
+
+	for(const auto &pair : choices)
+	{
+		const double energy = randBelt(gen) * .001 * meanEnergy;
+		object->asteroids.emplace_back(GameData::Minables().Get(pair.first), pair.second, energy);
+	}
+
+	UpdateAsteroids();
+	SetDirty();
+}
+
+
+
+const Sprite *SystemEditor::RandomStarSprite()
+{
+	static random_device rd;
+	static mt19937 gen(rd());
+
+	const auto &stars = GameData::Stars();
+	uniform_int_distribution<> randStar(0, stars.size() - 1);
+	return stars[randStar(gen)];
+}
+
+
+
+const Sprite *SystemEditor::RandomPlanetSprite(bool recalculate)
+{
+	static random_device rd;
+	static mt19937 gen(rd());
+
+	const auto &planets = GameData::PlanetSprites();
+	uniform_int_distribution<> randPlanet(0, planets.size() - 1);
+	return planets[randPlanet(gen)];
+}
+
+
+
+const Sprite *SystemEditor::RandomMoonSprite()
+{
+	static random_device rd;
+	static mt19937 gen(rd());
+
+	const auto &moons = GameData::MoonSprites();
+	uniform_int_distribution<> randMoon(0, moons.size() - 1);
+	return moons[randMoon(gen)];
+}
+
+
+
+const Sprite *SystemEditor::RandomGiantSprite()
+{
+	static random_device rd;
+	static mt19937 gen(rd());
+
+	const auto &giants = GameData::GiantSprites();
+	uniform_int_distribution<> randGiant(0, giants.size() - 1);
+	return giants[randGiant(gen)];
 }

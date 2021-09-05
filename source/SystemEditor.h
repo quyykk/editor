@@ -53,6 +53,16 @@ private:
 	void WriteObject(DataWriter &writer, const System *system, const StellarObject *object, bool add = false);
 
 	void UpdateMap(bool updateSystem = true) const;
+	void UpdateAsteroids() const;
+
+	void Randomize();
+	void RandomizeAsteroids();
+	void RandomizeMinables();
+
+	const Sprite *RandomStarSprite();
+	const Sprite *RandomPlanetSprite(bool recalculate = false);
+	const Sprite *RandomMoonSprite();
+	const Sprite *RandomGiantSprite();
 };
 
 
