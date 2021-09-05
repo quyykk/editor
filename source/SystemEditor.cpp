@@ -77,6 +77,9 @@ void SystemEditor::UpdateStellarPosition(const StellarObject &object, Point dp, 
 
 void SystemEditor::ToggleLink(const System *system)
 {
+	if(system == object)
+		return;
+
 	auto it = object->links.find(system);
 	if(it != object->links.end())
 		object->Unlink(const_cast<System *>(system));
@@ -304,6 +307,11 @@ void SystemEditor::RenderSystem()
 			newLink = nullptr;
 		}
 
+		if(toAdd.count(object))
+		{
+			toAdd.erase(object);
+			toRemove.erase(object);
+		}
 		for(auto &sys : toAdd)
 		{
 			object->Link(sys);
