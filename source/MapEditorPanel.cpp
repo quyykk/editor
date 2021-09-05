@@ -182,7 +182,10 @@ bool MapEditorPanel::Click(int x, int y, int clicks)
 
 			// On triple click we enter the system.
 			if(clicks == 3)
+			{
 				GetUI()->Push(new MainEditorPanel(player, systemEditor));
+				moveSystems = false;
+			}
 			break;
 		}
 
