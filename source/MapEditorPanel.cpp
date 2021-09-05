@@ -28,6 +28,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Information.h"
 #include "Interface.h"
 #include "LineShader.h"
+#include "MainEditorPanel.h"
 #include "MapDetailPanel.h"
 #include "MapOutfitterPanel.h"
 #include "MapShipyardPanel.h"
@@ -176,8 +177,15 @@ bool MapEditorPanel::Click(int x, int y, int clicks)
 		{
 			if(find(selectedSystems.begin(), selectedSystems.end(), &it.second) != selectedSystems.end())
 				moveSystems = true;
+			else
+				Select(&it.second);
+
+			// On triple click we enter the system.
+			if(clicks == 3)
+				GetUI()->Push(new MainEditorPanel(player, systemEditor));
 			break;
 		}
+
 	return true;
 }
 
@@ -242,28 +250,14 @@ bool MapEditorPanel::Scroll(double dx, double dy)
 
 bool MapEditorPanel::Release(int x, int y)
 {
-	// Figure out if a system was clicked on, but
-	// only if we didn't move the systems.
-	if(isDragging)
-	{
-		isDragging = false;
-		moveSystems = false;
-		return true;
-	}
+	isDragging = false;
+	moveSystems = false;
+
 	if(rclick)
 	{
 		rclick = false;
 		return true;
 	}
-
-	click = Point(x, y) / Zoom() - center;
-	for(const auto &it : GameData::Systems())
-		if(it.second.IsValid() && click.Distance(it.second.Position()) < 10.)
-		{
-			Select(&it.second);
-			break;
-		}
-
 	return true;
 }
 
