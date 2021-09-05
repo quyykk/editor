@@ -91,6 +91,14 @@ void SystemEditor::ToggleLink(const System *system)
 
 
 
+void SystemEditor::CreateNewSystem(Point position)
+{
+	this->position = position;
+	createNewSystem = true;
+}
+
+
+
 void SystemEditor::Render()
 {
 	if(IsDirty())
@@ -160,7 +168,7 @@ void SystemEditor::Render()
 		ImGui::EndMenuBar();
 	}
 
-	if(showNewSystem)
+	if(showNewSystem || createNewSystem)
 		ImGui::OpenPopup("New System");
 	if(showCloneSystem)
 		ImGui::OpenPopup("Clone System");
@@ -169,7 +177,7 @@ void SystemEditor::Render()
 				auto *newSystem = const_cast<System *>(GameData::Systems().Get(name));
 
 				newSystem->name = name;
-				newSystem->position = object->position + Point(25., 25.);
+				newSystem->position = createNewSystem ? position : object->position + Point(25., 25.);
 				newSystem->attributes.insert("uninhabited");
 				newSystem->isDefined = true;
 				newSystem->hasPosition = true;
@@ -181,6 +189,7 @@ void SystemEditor::Render()
 				UpdateMap();
 				SetDirty();
 			});
+	createNewSystem &= ImGui::IsPopupOpen("New System");
 	ImGui::BeginSimpleCloneModal("Clone System", [this](const string &name)
 			{
 				auto *clone = const_cast<System *>(GameData::Systems().Get(name));

@@ -42,6 +42,8 @@ public:
 	void UpdateStellarPosition(const StellarObject &object, Point dp, const System *system);
 	// Toggles a link between the current object and the given one.
 	void ToggleLink(const System *system);
+	// Create a new system at the specified position.
+	void CreateNewSystem(Point position);
 
 	const System *Selected() const { return object; }
 
@@ -63,6 +65,11 @@ private:
 	const Sprite *RandomPlanetSprite(bool recalculate = false);
 	const Sprite *RandomMoonSprite();
 	const Sprite *RandomGiantSprite();
+
+
+private:
+	Point position;
+	bool createNewSystem = false;
 };
 
 

@@ -191,9 +191,11 @@ bool MapEditorPanel::RClick(int x, int y)
 		if(it.second.IsValid() && click.Distance(it.second.Position()) < 10.)
 		{
 			systemEditor->ToggleLink(&it.second);
-			break;
+			return true;
 		}
 
+	// A right click on nothing creates a new system.
+	systemEditor->CreateNewSystem(click);
 	return true;
 }
 
