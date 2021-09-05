@@ -46,6 +46,7 @@ public:
 	void CreateNewSystem(Point position);
 
 	const System *Selected() const { return object; }
+	void Select(const System *system) { object = const_cast<System *>(system); }
 
 
 private:

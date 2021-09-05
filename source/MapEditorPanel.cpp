@@ -69,7 +69,10 @@ MapEditorPanel::MapEditorPanel(PlayerInfo &player, SystemEditor *systemEditor)
 	: player(player), systemEditor(systemEditor),
 	playerJumpDistance(System::DEFAULT_NEIGHBOR_DISTANCE)
 {
-	selectedSystems.push_back(systemEditor->Selected() ? systemEditor->Selected() : player.GetSystem());
+	if(!systemEditor->Selected())
+		systemEditor->Select(player.GetSystem());
+	selectedSystems.push_back(systemEditor->Selected());
+
 	SetIsFullScreen(true);
 	SetInterruptible(false);
 
