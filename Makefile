@@ -116,12 +116,13 @@ deploy: output/index.html
 	@if curl -s https://play-endless-sky.com/dataversion.js | diff - dataversion.js; \
 		then \
 			echo 'uploading all files except endless-sky.data...'; \
-			aws s3 sync --exclude endless-sky.data output s3://play-endless-sky.com/live;\
+			aws s3 sync --exclude endless-sky.data output s3://play-endless-sky.com/editor;\
 		else \
 			echo 'uploading all files, including endless-sky.data...'; \
-			aws s3 sync output s3://play-endless-sky.com/live;\
+			aws s3 sync output s3://play-endless-sky.com/editor;\
 	fi
 	# play-endless-sky.com
 	aws cloudfront create-invalidation --distribution-id E2TZUW922XPLEF --paths /\*
 	# play-endless-web.com
 	aws cloudfront create-invalidation --distribution-id E3D0Y4DMGSVPWC --paths /\*
+
