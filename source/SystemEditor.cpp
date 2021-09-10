@@ -1090,11 +1090,13 @@ void SystemEditor::Randomize()
 	int planetCount = randPlanetCount(gen);
 	for(int i = 0; i < planetCount; ++i)
 	{
+		/*
 		constexpr int RANDOM_SPACE = 100;
 		int space = RANDOM_SPACE;
 		for(const auto &stellar : object->objects)
 			if(!stellar.isStar && stellar.parent == -1)
 				space += RANDOM_SPACE / 2;
+				*/
 
 		int distance = object->objects.back().distance;
 		if(object->objects.back().sprite)
