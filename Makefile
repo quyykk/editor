@@ -113,13 +113,14 @@ output/index.html: endless-sky.js endless-sky.html favicon.ico endless-sky.data 
 	cp favicon.ico output/
 	cp Ubuntu-Regular.ttf output/
 deploy: output/index.html
+	# note /editor/editor S3 path: first is the subdirectory the origin points to, second is so the url matches
 	@if curl -s https://play-endless-sky.com/dataversion.js | diff - dataversion.js; \
 		then \
 			echo 'uploading all files except endless-sky.data...'; \
-			aws s3 sync --exclude endless-sky.data output s3://play-endless-sky.com/editor;\
+			aws s3 sync --exclude endless-sky.data output s3://play-endless-sky.com/editor/editor;\
 		else \
 			echo 'uploading all files, including endless-sky.data...'; \
-			aws s3 sync output s3://play-endless-sky.com/editor;\
+			aws s3 sync output s3://play-endless-sky.com/editor/editor;\
 	fi
 	# play-endless-sky.com
 	aws cloudfront create-invalidation --distribution-id E2TZUW922XPLEF --paths /\*

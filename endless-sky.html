@@ -2,7 +2,7 @@
 <html lang="en-us">
   <head>
     <meta charset="utf-8">
-    <title>Endless Sky</title>
+    <title>Endless Web Editor</title>
     <style>
       html {
           width: 100%;
@@ -22,7 +22,12 @@
           padding: 0;
           overflow: hidden;
       }
-      button {
+      .ugly-header a {
+        appearance: button;
+        text-decoration: none;
+        color: initial;
+      }
+      button, .ugly-header a {
         background-color: rgba(24, 24, 24, 1);
         border-width: 1px;
         color: rgb(115, 115, 115);
@@ -32,9 +37,11 @@
         border-bottom-color: rgb(50, 50, 50);
         border-left-color: rgb(50, 50, 50);
         font-family: 'Ubuntu', "times new roman", times, roman, serif;
+        font-size: 14px;
+        padding: 1px 6px;
         outline: none;
       }
-      button:hover {
+      button:hover, .ugly-header a:hover {
         color: rgb(215, 215, 215);
       }
       h1, h2, h3 {
@@ -145,7 +152,7 @@
           <div class="progress"></div>
         </div>
       </div>
-      <button class="load-button" disabled>Play Endless Sky</button>
+      <button class="load-button" disabled>Play</button>
       <h2 class="plugins-header" style="display: none;">Plugins</h2>
       <div class="plugins-list">Plugins</div>
     </div>
@@ -231,9 +238,9 @@
         if (numerator === denominator) {
           progress.style.transition = 'none';
           if (usingCache) {
-            progressText.textContent = "Using cached data"
+            progressText.textContent = "Using cached data. Loading..."
           } else {
-            progressText.textContent = "Downloading complete"
+            progressText.textContent = "Downloading complete. Loading..."
           }
         }
       }
@@ -263,7 +270,7 @@
       });
 
       let runtimeInitializedResolve;
-      const runtimeInitializedPromise = new Promise(r => {runtimeInitializedResolve = r})
+      const runtimeInitializedPromise = new Promise(r => {runtimeInitializedResolve = r});
 
       var Module = {
           print: (function(text) {
