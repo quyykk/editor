@@ -1,7 +1,7 @@
 # Compiled Binaries and shortcuts
 editor
 endless-sky-tests
-libendless-sky.a
+libeditor.a
 *.exe
 *.lnk
 

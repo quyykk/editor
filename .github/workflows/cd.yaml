@@ -37,28 +37,6 @@ jobs:
           name: ${{ env.OUTPUT }}
           path: ${{ env.OUTPUT }}
 
-  cd_appimage_x86_64:
-    runs-on: ubuntu-18.04
-    env:
-      ARCH: x86_64
-      OUTPUT: editor-x86_64-continuous.AppImage
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install dependencies
-        run: |
-          sudo rm /etc/apt/sources.list.d/* && sudo dpkg --clear-avail # Speed up installation and get rid of unwanted lists
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libsdl2-dev libpng-dev libjpeg-turbo8-dev libopenal-dev libmad0-dev libglew-dev libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev uuid-dev scons
-      - name: Adjust version strings
-        run: ./utils/cd_update_versions.sh
-      - name: Build AppImage
-        run: ./utils/build_appimage.sh
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ env.OUTPUT }}
-          path: ${{ env.OUTPUT }}
-
   cd_windows_win64:
     runs-on: windows-latest
     env:
