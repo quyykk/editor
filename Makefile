@@ -92,6 +92,17 @@ build/emcc/%.o: source/%.cpp source/%.h
 	@mkdir -p build/emcc/text
 	em++ $(CFLAGS) -c $< -o $@
 
+build/emcc/main.o: source/main.cpp
+	em++ $(CFLAGS) -c $< -o $@
+build/emcc/imgui_demo.o: source/imgui_demo.cpp
+	em++ $(CFLAGS) -c $< -o $@
+build/emcc/imgui_draw.o: source/imgui_draw.cpp
+	em++ $(CFLAGS) -c $< -o $@
+build/emcc/imgui_tables.o: source/imgui_tables.cpp
+	em++ $(CFLAGS) -c $< -o $@
+build/emcc/imgui_widgets.o: source/imgui_widgets.cpp
+	em++ $(CFLAGS) -c $< -o $@
+
 lib/emcc/libendless-sky.a: $(OBJS_EXCEPT_MAIN)
 	@mkdir -p lib/emcc
 	emar rcs lib/emcc/libendless-sky.a $(OBJS_EXCEPT_MAIN)
