@@ -203,7 +203,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ${{ env.SDL2_FRAMEWORK }}
-        key: ${{ matrix.os }}-sdl2-${{ hashFiles('.github/workflows/ci.yml', 'EndlessSky.xcodeproj/**', 'utils/set_dylibs_rpath.sh', 'utils/fetch_sdl2_framework.sh') }}
+        key: ${{ matrix.os }}-sdl2-${{ hashFiles('.github/workflows/ci.yml', 'Editor.xcodeproj/**', 'utils/set_dylibs_rpath.sh', 'utils/fetch_sdl2_framework.sh') }}
     - name: Compile
       if: steps.cache-artifact.outputs.cache-hit != 'true'
       run: xcodebuild -configuration "Release" -jobs $(sysctl -n hw.logicalcpu) -quiet

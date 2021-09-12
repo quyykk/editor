@@ -22,7 +22,7 @@ macos:
 
 windows:
  - '**/*.cbp'
- - EndlessSky.workspace
+ - Editor.workspace
  - SConstruct
  - .winmake
  - *build
