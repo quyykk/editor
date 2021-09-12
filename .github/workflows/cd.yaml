@@ -110,7 +110,7 @@ jobs:
       - cd_macos_x86_64
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      OUTPUT_UBUNTU: editor-x86_64-continuous.tar.gz
+      OUTPUT_UBUNTU: editor-linux-continuous.tar.gz
       OUTPUT_WINDOWS: editor-win64-continuous.zip
       OUTPUT_MACOS: editor-macOS-continuous.zip
     steps:
