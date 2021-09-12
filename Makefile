@@ -1,5 +1,7 @@
 EMSCRIPTEN_ENV := $(shell command -v emmake 2> /dev/null)
 
+all: dev
+
 clean:
 	rm -f endless-sky.js
 	#rm -f endless-sky.worker.js
@@ -9,7 +11,6 @@ clean:
 	rm -rf output
 	rm -f endless-sky.wasm.map
 	rm -f lib/emcc/libendless-sky.a
-clean-full: clean
 	rm -f favicon.ico
 	rm -f Ubuntu-Regular.ttf
 	rm -f title.png
@@ -86,7 +87,7 @@ TEMP := $(subst source/,build/emcc/,$(CPPS_EXCEPT_MAIN))
 OBJS_EXCEPT_MAIN := $(subst .cpp,.o,$(TEMP))
 HEADERS := $(shell ls source/*.h*) $(shell ls source/text/*.h*)
 
-build/emcc/%.o: source/%.cpp
+build/emcc/%.o: source/%.cpp source/%.h
 	@mkdir -p build/emcc
 	@mkdir -p build/emcc/text
 	em++ $(CFLAGS) -c $< -o $@
