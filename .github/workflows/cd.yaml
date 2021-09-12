@@ -30,7 +30,7 @@ jobs:
       - name: Run Unit Tests
         run: scons -Qj $(nproc) test
       - name: Package Application
-        run: tar -czf ${{ env.OUTPUT }} sounds images/ data/ license.txt keys.txt icon.png endless-sky credits.txt copyright changelog
+        run: tar -czf ${{ env.OUTPUT }} sounds images/ data/ license.txt keys.txt icon.png editor credits.txt copyright changelog
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
@@ -80,7 +80,7 @@ jobs:
         run: make -re -j ($(Get-CIMInstance -Class 'CIM_Processor').NumberOfLogicalProcessors) -f .winmake
       - name: Package Application
         run: |
-          COPY .\bin\pkgd\release\endless-sky.exe EndlessSky.exe
+          COPY .\bin\pkgd\release\editor.exe EndlessSky.exe
           COPY ".\dev64\bin\*.dll" .
           COPY $Env:DIR_MINGW64\lib\libgcc_s_seh-1.dll .
           COPY $Env:DIR_MINGW64\lib\libstdc++-6.dll .
