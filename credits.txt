@@ -1,13 +1,16 @@
-Welcome to Endless Sky!
-version 0.9.14
+Welcome to the unofficial Editor
+			for Endless Sky!
+version 0.9.15 (experimental)
 
-This WebAssembly port done by:
+Report any bugs or
+give feedback on GitHub:
+- https://github.com/quyykk/editor
+
+WebAssembly port done by:
   janisozaur
   thomasballinger
 
-Fork available at
-  https://github.com
-    /janisozaur/endless-sky
+---------------------------------------
 
 This game is open source.
 To report bugs, give feedback,
