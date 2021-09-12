@@ -94,7 +94,7 @@ jobs:
       - name: Package Application
         run: |
           cd build/Release
-          7z a ${{ github.workspace }}/${{ env.OUTPUT }} Endless\ Sky.app
+          7z a ${{ github.workspace }}/${{ env.OUTPUT }} Editor.app
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
