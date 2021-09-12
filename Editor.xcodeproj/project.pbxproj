@@ -514,7 +514,7 @@
 		A9BDFB551E00B94700A6B27E /* libmad.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmad.0.dylib; path = /usr/local/opt/libmad/lib/libmad.0.dylib; sourceTree = "<absolute>"; };
 		A9C70E0E1C0E5B51000B3D14 /* File.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = File.cpp; path = source/File.cpp; sourceTree = "<group>"; };
 		A9C70E0F1C0E5B51000B3D14 /* File.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = File.h; path = source/File.h; sourceTree = "<group>"; };
-		A9CC52691950C9F6004E4E22 /* Endless Sky.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Endless Sky.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A9CC52691950C9F6004E4E22 /* Editor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Editor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9CC526C1950C9F6004E4E22 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		A9CC526F1950C9F6004E4E22 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		A9CC52701950C9F6004E4E22 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
@@ -931,7 +931,7 @@
 		A9CC526A1950C9F6004E4E22 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A9CC52691950C9F6004E4E22 /* Endless Sky.app */,
+				A9CC52691950C9F6004E4E22 /* Editor.app */,
 				072599BE26A8C67D007EC229 /* SDL2.dylib */,
 			);
 			name = Products;
@@ -1002,9 +1002,9 @@
 			productReference = 072599BE26A8C67D007EC229 /* SDL2.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
-		A9CC52681950C9F6004E4E22 /* EndlessSky */ = {
+		A9CC52681950C9F6004E4E22 /* Editor */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A9CC529A1950C9F6004E4E22 /* Build configuration list for PBXNativeTarget "EndlessSky" */;
+			buildConfigurationList = A9CC529A1950C9F6004E4E22 /* Build configuration list for PBXNativeTarget "Editor" */;
 			buildPhases = (
 				A93931ED19880ECA00C2A87B /* CopyFiles */,
 				072599A726A0CDC9007EC229 /* ShellScript */,
@@ -1020,7 +1020,7 @@
 			);
 			name = Editor;
 			productName = Editor;
-			productReference = A9CC52691950C9F6004E4E22 /* Endless Sky.app */;
+			productReference = A9CC52691950C9F6004E4E22 /* Editor.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -1037,7 +1037,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A9CC52641950C9F6004E4E22 /* Build configuration list for PBXProject "EndlessSky" */;
+			buildConfigurationList = A9CC52641950C9F6004E4E22 /* Build configuration list for PBXProject "Editor" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -1049,7 +1049,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A9CC52681950C9F6004E4E22 /* EndlessSky */,
+				A9CC52681950C9F6004E4E22 /* Editor */,
 				072599BD26A8C67D007EC229 /* SDL2 */,
 			);
 		};
@@ -1444,7 +1444,7 @@
 					"/usr/local/opt/jpeg-turbo/include",
 					/usr/local/include,
 				);
-				INFOPLIST_FILE = "XCode/EndlessSky-Info.plist";
+				INFOPLIST_FILE = "XCode/Editor-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1452,7 +1452,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				PRODUCT_BUNDLE_IDENTIFIER = "${PRODUCT_NAME:rfc1034identifier}";
-				PRODUCT_NAME = "Endless Sky";
+				PRODUCT_NAME = "Editor";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -1473,7 +1473,7 @@
 					"/usr/local/opt/jpeg-turbo/include",
 					/usr/local/include,
 				);
-				INFOPLIST_FILE = "XCode/EndlessSky-Info.plist";
+				INFOPLIST_FILE = "XCode/Editor-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1481,7 +1481,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				PRODUCT_BUNDLE_IDENTIFIER = "${PRODUCT_NAME:rfc1034identifier}";
-				PRODUCT_NAME = "Endless Sky";
+				PRODUCT_NAME = "Editor";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
@@ -1498,7 +1498,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A9CC52641950C9F6004E4E22 /* Build configuration list for PBXProject "EndlessSky" */ = {
+		A9CC52641950C9F6004E4E22 /* Build configuration list for PBXProject "Editor" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A9CC52981950C9F6004E4E22 /* Debug */,
@@ -1507,7 +1507,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A9CC529A1950C9F6004E4E22 /* Build configuration list for PBXNativeTarget "EndlessSky" */ = {
+		A9CC529A1950C9F6004E4E22 /* Build configuration list for PBXNativeTarget "Editor" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A9CC529B1950C9F6004E4E22 /* Debug */,
