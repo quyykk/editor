@@ -458,8 +458,8 @@ double GameData::Progress()
 	{
 		if(!initiallyLoaded)
 		{
-			// Now that we have finished loading all the basic sprites, we can look for invalid file paths,
-			// e.g. due to capitalization errors or other typos. Landscapes are allowed to still be empty.
+			// Now that we have finished loading all the basic sprites and sounds, we can look for invalid file paths,
+			// e.g. due to capitalization errors or other typos.
 			for(const auto &pair : SpriteSet::GetSprites())
 			{
 				if(pair.first.compare(0, 5, "land/") != 0 && pair.second.Height() == 0 && pair.second.Width() == 0)
@@ -475,6 +475,7 @@ double GameData::Progress()
 						planetSprites.push_back(&pair.second);
 				}
 			}
+			Audio::CheckReferences();
 			initiallyLoaded = true;
 		}
 	}
