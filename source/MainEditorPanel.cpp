@@ -67,7 +67,7 @@ MainEditorPanel::MainEditorPanel(PlayerInfo &player, SystemEditor *systemEditor)
 	: player(player), systemEditor(systemEditor)
 {
 	if(!systemEditor->Selected())
-		systemEditor->Select(player.GetSystem());
+		systemEditor->Select(player.GetSystem() ? player.GetSystem() : GameData::Systems().Get("Sol"));
 	Select(systemEditor->Selected());
 	SetIsFullScreen(true);
 	SetInterruptible(false);

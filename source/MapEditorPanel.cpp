@@ -70,7 +70,7 @@ MapEditorPanel::MapEditorPanel(PlayerInfo &player, SystemEditor *systemEditor)
 	playerJumpDistance(System::DEFAULT_NEIGHBOR_DISTANCE)
 {
 	if(!systemEditor->Selected())
-		systemEditor->Select(player.GetSystem());
+		systemEditor->Select(player.GetSystem() ? player.GetSystem() : GameData::Systems().Get("Sol"));
 	selectedSystems.push_back(systemEditor->Selected());
 
 	SetIsFullScreen(true);
