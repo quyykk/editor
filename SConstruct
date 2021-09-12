@@ -222,11 +222,11 @@ def RecursiveInstall(env, target, source):
 			RecursiveInstall(env, pathjoin(target, name), node.abspath)
 		else:
 			env.Install(target, node)
-RecursiveInstall(env, "$DESTDIR$PREFIX/share/games/endless-sky/data", "data")
-RecursiveInstall(env, "$DESTDIR$PREFIX/share/games/endless-sky/images", "images")
-RecursiveInstall(env, "$DESTDIR$PREFIX/share/games/endless-sky/sounds", "sounds")
-env.Install("$DESTDIR$PREFIX/share/games/endless-sky", "credits.txt")
-env.Install("$DESTDIR$PREFIX/share/games/endless-sky", "keys.txt")
+RecursiveInstall(env, "$DESTDIR$PREFIX/share/games/editor/data", "data")
+RecursiveInstall(env, "$DESTDIR$PREFIX/share/games/editor/images", "images")
+RecursiveInstall(env, "$DESTDIR$PREFIX/share/games/editor/sounds", "sounds")
+env.Install("$DESTDIR$PREFIX/share/games/editor", "credits.txt")
+env.Install("$DESTDIR$PREFIX/share/games/editor", "keys.txt")
 
 # Make the word "install" in the command line do an installation.
 env.Alias("install", "$DESTDIR$PREFIX")

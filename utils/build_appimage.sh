@@ -13,7 +13,7 @@ scons -Qj $(nproc) install DESTDIR=AppDir
 
 # Inside an AppImage, the executable is a link called "AppRun" at the root of AppDir/.
 # Keeping the data files next to the executable is perfectly valid, so we just move them to AppDir/ to avoid errors.
-mv AppDir/usr/local/share/games/endless-sky/* AppDir/
+mv AppDir/usr/local/share/games/editor/* AppDir/
 
 # Now build the actual AppImage
 curl -sSL https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage -o linuxdeploy && chmod +x linuxdeploy
