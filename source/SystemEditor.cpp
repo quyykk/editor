@@ -1102,7 +1102,7 @@ void SystemEditor::Randomize()
 		if(object->objects.back().parent != -1)
 			distance += object->objects[object->objects.back().parent].distance;
 
-		uniform_int_distribution<> randSpace(0, distance);
+		uniform_int_distribution<> randSpace(0, space);
 		const int addSpace = randSpace(gen);
 		distance += (addSpace * addSpace) * .01 + 50.;
 
