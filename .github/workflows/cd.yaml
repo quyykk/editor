@@ -14,7 +14,7 @@ jobs:
   cd_ubuntu_x86_64:
     runs-on: ubuntu-latest
     env:
-      OUTPUT: editor-x86_64-continuous.tar.gz
+      OUTPUT: editor-linux-continuous.tar.gz
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
