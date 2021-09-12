@@ -498,7 +498,6 @@
 		A98150831EA9635D00428AD6 /* PlayerInfoPanel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PlayerInfoPanel.cpp; path = source/PlayerInfoPanel.cpp; sourceTree = "<group>"; };
 		A98150841EA9635D00428AD6 /* PlayerInfoPanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PlayerInfoPanel.h; path = source/PlayerInfoPanel.h; sourceTree = "<group>"; };
 		A99F7A4F195DF3E8002C30B8 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = XCode/Images.xcassets; sourceTree = SOURCE_ROOT; };
-		A99F7A51195DF3F9002C30B8 /* EndlessSky-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "EndlessSky-Info.plist"; path = "XCode/EndlessSky-Info.plist"; sourceTree = SOURCE_ROOT; };
 		A99F7A6F195DF44B002C30B8 /* credits.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = credits.txt; sourceTree = "<group>"; };
 		A99F7A94195DF44B002C30B8 /* keys.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = keys.txt; sourceTree = "<group>"; };
 		A99F7A95195DF44B002C30B8 /* license.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = license.txt; sourceTree = "<group>"; };
@@ -972,14 +971,6 @@
 			path = XCode;
 			sourceTree = "<group>";
 		};
-		A9CC52731950C9F6004E4E22 /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				A99F7A51195DF3F9002C30B8 /* EndlessSky-Info.plist */,
-			);
-			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -1027,8 +1018,8 @@
 			dependencies = (
 				072599CF26A8CADA007EC229 /* PBXTargetDependency */,
 			);
-			name = EndlessSky;
-			productName = EndlessSky;
+			name = Editor;
+			productName = Editor;
 			productReference = A9CC52691950C9F6004E4E22 /* Endless Sky.app */;
 			productType = "com.apple.product-type.application";
 		};

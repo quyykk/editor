@@ -2,14 +2,14 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="EndlessSky" />
+		<Option title="Editor" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/EndlessSky" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Debug/Editor" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
-				<Option external_deps="lib/Debug/libendless-sky.a;" />
+				<Option external_deps="lib/Debug/libeditor.a;" />
 				<Option type="0" />
 				<Option compiler="gcc" />
 				<Option projectLinkerOptionsRelation="2" />
@@ -17,13 +17,13 @@
 					<Add option="-g" />
 				</Compiler>
 				<Linker>
-					<Add library="lib/Debug/libendless-sky.a" />
+					<Add library="lib/Debug/libeditor.a" />
 				</Linker>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/EndlessSky" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release/Editor" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
-				<Option external_deps="lib/Release/libendless-sky.a;" />
+				<Option external_deps="lib/Release/libeditor.a;" />
 				<Option type="0" />
 				<Option compiler="gcc" />
 				<Option projectLinkerOptionsRelation="2" />
@@ -34,13 +34,13 @@
 				</Compiler>
 				<Linker>
 					<Add option="-flto" />
-					<Add library="lib/Release/libendless-sky.a" />
+					<Add library="lib/Release/libeditor.a" />
 				</Linker>
 			</Target>
 			<Target title="Win32">
-				<Option output="bin/Win32/EndlessSky" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Win32/Editor" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Win32/" />
-				<Option external_deps="lib/Win32/libendless-sky.a;" />
+				<Option external_deps="lib/Win32/libeditor.a;" />
 				<Option type="0" />
 				<Option compiler="gnu_gcc_compiler_win32" />
 				<Option projectLinkerOptionsRelation="1" />
@@ -55,7 +55,7 @@
 					<Add option="-flto" />
 					<Add option="-Wl,--subsystem,windows" />
 					<Add option="-lwinmm" />
-					<Add library="lib/Win32/libendless-sky.a" />
+					<Add library="lib/Win32/libeditor.a" />
 					<Add library="libmingw32.a" />
 					<Add library="libsdl2main.a" />
 					<Add library="libsdl2.dll.a" />

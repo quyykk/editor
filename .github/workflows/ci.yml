@@ -77,7 +77,7 @@ jobs:
     env:
         CCACHE_DIR: ./ccache/
         CXX: ccache g++
-        ARTIFACT: endless-sky
+        ARTIFACT: editor
     steps:
     - uses: actions/checkout@v2
     - name: Restore cached game binary
@@ -166,7 +166,7 @@ jobs:
       run: make -re -j ($(Get-CIMInstance -Class 'CIM_Processor').NumberOfLogicalProcessors) -f .winmake
     - name: Prepare game binary
       if: steps.cache-artifact.outputs.cache-hit != 'true'
-      run: COPY .\bin\pkgd\release\endless-sky.exe EndlessSky.exe
+      run: COPY .\bin\pkgd\release\editor.exe Editor.exe
     - name: Upload game binary
       uses: actions/upload-artifact@v2
       with:
@@ -182,7 +182,7 @@ jobs:
       matrix:
         os: [macos-latest]
     env:
-      ARTIFACT: Endless Sky
+      ARTIFACT: Editor
       SDL2_FRAMEWORK: build/SDL2.framework
     steps:
     - uses: actions/checkout@v2
@@ -209,7 +209,7 @@ jobs:
       run: xcodebuild -configuration "Release" -jobs $(sysctl -n hw.logicalcpu) -quiet
     - name: Prepare game binary
       if: steps.cache-artifact.outputs.cache-hit != 'true'
-      run: mv "build/Release/Endless Sky.app/Contents/MacOS/Endless Sky" .
+      run: mv "build/Release/Editor.app/Contents/MacOS/Editor" .
     - name: Upload game binary
       uses: actions/upload-artifact@v2
       with:
