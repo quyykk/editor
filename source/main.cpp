@@ -178,7 +178,7 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 
 	Editor editor(player, menuPanels, gamePanels);
 	
-	menuPanels.Push(new MenuPanel(player, gamePanels));
+	menuPanels.Push(new MenuPanel(player, gamePanels, editor));
 	if(!conversation.IsEmpty())
 		menuPanels.Push(new ConversationPanel(player, conversation));
 	
@@ -228,7 +228,7 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 			{
 				// User pressed the Menu key.
 				menuPanels.Push(shared_ptr<Panel>(
-							new MenuPanel(player, gamePanels)));
+							new MenuPanel(player, gamePanels, editor)));
 			}
 			else if(event.type == SDL_QUIT)
 			{

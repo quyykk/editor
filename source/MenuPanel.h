@@ -18,6 +18,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include <string>
 #include <vector>
 
+class Editor;
 class PlayerInfo;
 class UI;
 
@@ -28,7 +29,7 @@ class UI;
 // credits and basic information on the currently loaded player.
 class MenuPanel : public Panel {
 public:
-	MenuPanel(PlayerInfo &player, UI &gamePanels);
+	MenuPanel(PlayerInfo &player, UI &gamePanels, Editor &editor);
 	
 	virtual void Step() override;
 	virtual void Draw() override;
@@ -42,6 +43,7 @@ protected:
 private:
 	PlayerInfo &player;
 	UI &gamePanels;
+	Editor &editor;
 	
 	std::vector<std::string> credits;
 	unsigned scroll;

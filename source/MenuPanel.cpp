@@ -14,6 +14,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 #include "Command.h"
 #include "ConversationPanel.h"
+#include "Editor.h"
 #include "Files.h"
 #include "text/Font.h"
 #include "text/FontSet.h"
@@ -51,8 +52,8 @@ namespace {
 
 
 
-MenuPanel::MenuPanel(PlayerInfo &player, UI &gamePanels)
-	: player(player), gamePanels(gamePanels), scroll(0)
+MenuPanel::MenuPanel(PlayerInfo &player, UI &gamePanels, Editor &editor)
+	: player(player), gamePanels(gamePanels), editor(editor), scroll(0)
 {
 	SetIsFullScreen(true);
 	
@@ -178,7 +179,7 @@ bool MenuPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, boo
 		GetUI()->Push(new StartConditionsPanel(player, gamePanels, GameData::StartOptions(), nullptr));
 	}
 	else if(key == 'q')
-		GetUI()->Quit();
+		editor.ShowConfirmationDialog();
 	else
 		return false;
 	
