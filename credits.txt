@@ -1,6 +1,6 @@
 Welcome to the unofficial Editor
 			for Endless Sky!
-version 0.9.15 (experimental)
+version 0.9.15
 
 Report any bugs or
 give feedback on GitHub:

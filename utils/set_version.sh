@@ -18,7 +18,7 @@ else
 fi
 
 # Update main.cpp
-perl -p -i -e "s/(\"Endless Sky) .+?\"/\$1 ${replacement}\"/ig" source/main.cpp
+perl -p -i -e "s/(\"Editor) .+?\"/\$1 ${replacement}\"/ig" source/main.cpp
 rm -rf source/main.cpp.bak
 
 # Update manpage.
