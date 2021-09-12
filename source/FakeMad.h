@@ -2,6 +2,8 @@
 // without actually doing anything.
 // Ordinarily provided by <mad.h>
 
+#ifdef __EMSCRIPTEN__
+
 typedef signed long mad_sample_t;
 typedef signed long mad_fixed_t;
 enum mad_error {
@@ -44,3 +46,5 @@ int mad_frame_decode(struct mad_frame *, struct mad_stream *){return 0;}
 # define MAD_F_FRACBITS		28
 # define MAD_F(x)		((mad_fixed_t) (x##L))
 # define MAD_F_ONE		MAD_F(0x10000000)
+
+#endif

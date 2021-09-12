@@ -47,7 +47,7 @@ IMGUI_IMPL_API void     ImGui_ImplOpenGL3_DestroyDeviceObjects();
 // You can explicitly select a loader by using one of the '#define IMGUI_IMPL_OPENGL_LOADER_XXX' in imconfig.h or compiler command-line.
 // (that's exactly what we've done here, deleted the auto-detection code and replaced with this)
 #ifdef __EMSCRIPTEN__
-#define IMGUI_IMPL_OPENGL_ES2
+#define IMGUI_IMPL_OPENGL_ES3
 #else
 #define IMGUI_IMPL_OPENGL_LOADER_GLEW
 #endif

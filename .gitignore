@@ -39,6 +39,7 @@ endless-sky.wasm.map
 # other html build artifacts
 title.png
 dataversion.js
+favicon.ico
 
 # libjpeg-turbo
 2.1.0.tar.gz
