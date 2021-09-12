@@ -25,7 +25,7 @@ on:
     - 'source/**'
     - 'data/**'
     - 'tests/**'
-    - 'EndlessSky.xcodeproj/**'
+    - 'Editor.xcodeproj/**'
     - 'XCode/**'
     - '.github/workflows/**'
     - keys.txt
@@ -38,7 +38,7 @@ on:
     - 'source/**'
     - 'data/**'
     - 'tests/**'
-    - 'EndlessSky.xcodeproj/**'
+    - 'Editor.xcodeproj/**'
     - 'XCode/**'
     - '.github/workflows/**'
     - keys.txt
@@ -191,7 +191,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ${{ env.ARTIFACT }}
-        key: ${{ matrix.os }}-artifacts-${{ hashFiles('source/**') }}-${{ hashFiles('.github/workflows/ci.yml', 'EndlessSky.xcodeproj/**', 'utils/set_dylibs_rpath.sh', 'utils/fetch_sdl2_framework.sh') }}
+        key: ${{ matrix.os }}-artifacts-${{ hashFiles('source/**') }}-${{ hashFiles('.github/workflows/ci.yml', 'Editor.xcodeproj/**', 'utils/set_dylibs_rpath.sh', 'utils/fetch_sdl2_framework.sh') }}
     - name: Update Homebrew
       if: steps.cache-artifact.outputs.cache-hit != 'true'
       run: brew update
