@@ -551,6 +551,7 @@
 		DFAAE2A81FD4A27B0072C0A8 /* ImageSet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ImageSet.cpp; path = source/ImageSet.cpp; sourceTree = "<group>"; };
 		DFAAE2A91FD4A27B0072C0A8 /* ImageSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ImageSet.h; path = source/ImageSet.h; sourceTree = "<group>"; };
 		E1BB4D18A3606498E7C94DAA /* GovernmentEditor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GovernmentEditor.cpp; path = source/GovernmentEditor.cpp; sourceTree = "<group>"; };
+		E34D44F6AC308E0BFE501A6F /* FakeMad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FakeMad.h; path = source/FakeMad.h; sourceTree = "<group>"; };
 		E6844C1D8915DCB4462C421B /* imconfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = imconfig.h; path = source/imconfig.h; sourceTree = "<group>"; };
 		E6FB44109AFBC4AE69D02B5E /* MapEditorPanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MapEditorPanel.h; path = source/MapEditorPanel.h; sourceTree = "<group>"; };
 		EE314D08918B0B943ADA0D29 /* OutfitEditor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OutfitEditor.h; path = source/OutfitEditor.h; sourceTree = "<group>"; };
@@ -906,6 +907,7 @@
 				43C24ABD85EC1A084413CB2C /* ShipyardEditor.h */,
 				480D4167A02A39C70C8BF646 /* EffectEditor.cpp */,
 				B88E4771B6D935635A0606A8 /* EffectEditor.h */,
+				E34D44F6AC308E0BFE501A6F /* FakeMad.h */,
 			);
 			name = source;
 			sourceTree = "<group>";
