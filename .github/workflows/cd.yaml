@@ -106,13 +106,11 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - cd_ubuntu_x86_64
-      - cd_appimage_x86_64
       - cd_windows_win64
       - cd_macos_x86_64
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       OUTPUT_UBUNTU: editor-x86_64-continuous.tar.gz
-      OUTPUT_APPIMAGE: editor-x86_64-continuous.AppImage
       OUTPUT_WINDOWS: editor-win64-continuous.zip
       OUTPUT_MACOS: editor-macOS-continuous.zip
     steps:
@@ -161,13 +159,6 @@ jobs:
             --replace \
             --name ${{ env.OUTPUT_UBUNTU }} \
             --file ${{ env.OUTPUT_UBUNTU }}/${{ env.OUTPUT_UBUNTU }}
-      - name: Add ${{ env.OUTPUT_APPIMAGE }} to release tag
-        run: |
-          github-release upload \
-            --tag continuous \
-            --replace \
-            --name ${{ env.OUTPUT_APPIMAGE }} \
-            --file ${{ env.OUTPUT_APPIMAGE }}/${{ env.OUTPUT_APPIMAGE }}
       - name: Add ${{ env.OUTPUT_WINDOWS }} to release tag
         run: |
           github-release upload \
