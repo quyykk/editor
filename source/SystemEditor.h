@@ -57,7 +57,7 @@ private:
 	void WriteObject(DataWriter &writer, const System *system, const StellarObject *object, bool add = false);
 
 	void UpdateMap() const;
-	void UpdateAsteroids() const;
+	void UpdateMain() const;
 
 	void Randomize();
 	void RandomizeAsteroids();

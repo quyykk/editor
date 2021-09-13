@@ -346,13 +346,13 @@ void SystemEditor::RenderSystem()
 		if(ImGui::Selectable("Add Asteroid"))
 		{
 			object->asteroids.emplace_back("small rock", 1, 1.);
-			UpdateAsteroids();
+			UpdateMain();
 			SetDirty();
 		}
 		if(ImGui::Selectable("Add Mineable"))
 		{
 			object->asteroids.emplace_back(&GameData::Minables().begin()->second, 1, 1.);
-			UpdateAsteroids();
+			UpdateMain();
 			SetDirty();
 		}
 		ImGui::EndPopup();
@@ -386,7 +386,7 @@ void SystemEditor::RenderSystem()
 							if(ImGui::Selectable(item.first.c_str(), selected))
 							{
 								asteroid.type = &item.second;
-								UpdateAsteroids();
+								UpdateMain();
 								SetDirty();
 							}
 							++index;
@@ -398,12 +398,12 @@ void SystemEditor::RenderSystem()
 					}
 					if(ImGui::InputInt("count", &asteroid.count))
 					{
-						UpdateAsteroids();
+						UpdateMain();
 						SetDirty();
 					}
 					if(ImGui::InputDoubleEx("energy", &asteroid.energy))
 					{
-						UpdateAsteroids();
+						UpdateMain();
 						SetDirty();
 					}
 					ImGui::TreePop();
@@ -416,7 +416,7 @@ void SystemEditor::RenderSystem()
 				{
 					if(ImGui::Selectable("Remove"))
 					{
-						UpdateAsteroids();
+						UpdateMain();
 						toRemove = index;
 					}
 					ImGui::EndPopup();
@@ -426,17 +426,17 @@ void SystemEditor::RenderSystem()
 				{
 					if(ImGui::InputText("name", &asteroid.name))
 					{
-						UpdateAsteroids();
+						UpdateMain();
 						SetDirty();
 					}
 					if(ImGui::InputInt("count", &asteroid.count))
 					{
-						UpdateAsteroids();
+						UpdateMain();
 						SetDirty();
 					}
 					if(ImGui::InputDoubleEx("energy", &asteroid.energy))
 					{
-						UpdateAsteroids();
+						UpdateMain();
 						SetDirty();
 					}
 					ImGui::TreePop();
@@ -449,7 +449,7 @@ void SystemEditor::RenderSystem()
 		if(toRemove != -1)
 		{
 			object->asteroids.erase(object->asteroids.begin() + toRemove);
-			UpdateAsteroids();
+			UpdateMain();
 			SetDirty();
 		}
 		ImGui::TreePop();
@@ -614,6 +614,7 @@ void SystemEditor::RenderSystem()
 	if(ImGui::InputCombo("haze", &enterHaze, &object->haze, SpriteSet::GetSprites()))
 	{
 		enterHaze = object->haze->Name();
+		UpdateMain();
 		SetDirty();
 	}
 
@@ -843,7 +844,7 @@ void SystemEditor::WriteObject(DataWriter &writer, const System *system, const S
 	writer.Write();
 
 	writer.BeginChild();
-	if(object->GetSprite() && !object->GetSprite()->Name().empty())
+	if(object->GetSprite())
 		writer.Write("sprite", object->GetSprite()->Name());
 	if(object->distance)
 		writer.Write("distance", object->Distance());
@@ -1015,7 +1016,7 @@ void SystemEditor::UpdateMap() const
 
 
 
-void SystemEditor::UpdateAsteroids() const
+void SystemEditor::UpdateMain() const
 {
 	if(auto *panel = dynamic_cast<MainEditorPanel *>(editor.GetMenu().Top().get()))
 		panel->UpdateCache();
@@ -1227,7 +1228,7 @@ void SystemEditor::RandomizeAsteroids()
 			}
 	}
 
-	UpdateAsteroids();
+	UpdateMain();
 	SetDirty();
 }
 
@@ -1308,7 +1309,7 @@ void SystemEditor::RandomizeMinables()
 		object->asteroids.emplace_back(GameData::Minables().Get(pair.first), pair.second, energy);
 	}
 
-	UpdateAsteroids();
+	UpdateMain();
 	SetDirty();
 }
 

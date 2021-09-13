@@ -250,6 +250,7 @@ void MainEditorPanel::Select(const System *system)
 
 void MainEditorPanel::UpdateCache()
 {
+	GameData::SetHaze(currentSystem->Haze(), true);
 	asteroids.Clear();
 	for(const System::Asteroid &a : currentSystem->Asteroids())
 	{
