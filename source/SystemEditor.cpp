@@ -752,14 +752,15 @@ void SystemEditor::RenderObject(StellarObject &object, int index, int &nested, b
 			planetName = object.planet->TrueName();
 		if(ImGui::InputCombo("planet", &planetName, &planet, GameData::Planets()))
 		{
+			if(object.planet)
+				const_cast<Planet *>(object.planet)->RemoveSystem(this->object);
 			object.planet = planet;
-			SetDirty();
 			if(planet)
 			{
-				const_cast<Planet *>(planet)->RemoveSystem(planet->GetSystem());
 				planet->SetSystem(this->object);
 				planet = nullptr;
 			}
+			SetDirty();
 		}
 		static Sprite *sprite = nullptr;
 		static string spriteName;
