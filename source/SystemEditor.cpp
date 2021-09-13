@@ -770,7 +770,7 @@ void SystemEditor::RenderObject(StellarObject &object, int index, int &nested, b
 			spriteName = object.sprite->Name();
 		if(ImGui::InputCombo("sprite", &spriteName, &sprite, SpriteSet::GetSprites()))
 		{
-			object.sprite = SpriteSet::Get(spriteName);
+			object.sprite = sprite;
 			sprite = nullptr;
 			SetDirty();
 		}
