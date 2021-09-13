@@ -843,7 +843,7 @@ void SystemEditor::WriteObject(DataWriter &writer, const System *system, const S
 	writer.Write();
 
 	writer.BeginChild();
-	if(object->GetSprite())
+	if(object->GetSprite() && !object->GetSprite()->Name().empty())
 		writer.Write("sprite", object->GetSprite()->Name());
 	if(object->distance)
 		writer.Write("distance", object->Distance());

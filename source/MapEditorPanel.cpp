@@ -436,7 +436,8 @@ void MapEditorPanel::DrawWormholes()
 		const System *from = waypoints.back();
 		for(const System *to : waypoints)
 		{
-			arrowsToDraw.emplace(from, to);
+			if(from->FindStellar(&p)->HasSprite())
+				arrowsToDraw.emplace(from, to);
 			from = to;
 		}
 	}
