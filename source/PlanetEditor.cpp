@@ -109,7 +109,7 @@ void PlanetEditor::Render()
 		ImGui::OpenPopup("Clone Planet");
 	ImGui::BeginSimpleNewModal("New Planet", [this](const string &name)
 			{
-				auto *newPlanet = const_cast<Planet *>(GameData::Planets().Get(searchBox));
+				auto *newPlanet = const_cast<Planet *>(GameData::Planets().Get(name));
 
 				newPlanet->name = name;
 				newPlanet->isDefined = true;
@@ -183,10 +183,12 @@ void PlanetEditor::RenderPlanet()
 
 		static string addAttribute;
 		if(ImGui::InputText("##planet", &addAttribute, ImGuiInputTextFlags_EnterReturnsTrue))
-		{
-			object->attributes.insert(addAttribute);
-			SetDirty();
-		}
+			if(!addAttribute.empty())
+			{
+				object->attributes.insert(addAttribute);
+				addAttribute.clear();
+				SetDirty();
+			}
 		ImGui::TreePop();
 	}
 
