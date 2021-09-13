@@ -113,8 +113,8 @@ void PlanetEditor::Render()
 
 				newPlanet->name = name;
 				newPlanet->isDefined = true;
-				SetDirty();
 				object = newPlanet;
+				SetDirty();
 			});
 	ImGui::BeginSimpleCloneModal("Clone Planet", [this](const string &name)
 			{
