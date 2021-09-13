@@ -706,7 +706,7 @@ void SystemEditor::RenderSystem()
 
 			// Recalculate every parent index.
 			for(auto it = next; it != object->objects.end(); ++it)
-				if(it->Parent() != -1)
+				if(it->parent >= index)
 					it->parent -= removed;
 		}
 		else if(selectedToAdd != object->objects.end())
