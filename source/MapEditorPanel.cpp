@@ -315,12 +315,17 @@ Color MapEditorPanel::UninhabitedColor()
 void MapEditorPanel::Select(const System *system)
 {
 	if(!system)
+	{
+		selectedSystems.clear();
+		selectedSystems.push_back(player.GetSystem());
 		return;
+	}
 
 	// Pressing shift selects multiple systems.
 	if(!(SDL_GetModState() & KMOD_SHIFT))
 		selectedSystems.clear();
 	selectedSystems.push_back(system);
+	systemEditor->Select(selectedSystems.back());
 }
 
 
@@ -337,6 +342,7 @@ void MapEditorPanel::Find(const string &name)
 				bestIndex = index;
 				selectedSystems.clear();
 				selectedSystems.push_back(&it.second);
+				systemEditor->Select(selectedSystems.back());
 				CenterOnSystem();
 				if(!index)
 					return;
@@ -351,6 +357,7 @@ void MapEditorPanel::Find(const string &name)
 				bestIndex = index;
 				selectedSystems.clear();
 				selectedSystems.push_back(it.second.GetSystem());
+				systemEditor->Select(selectedSystems.back());
 				CenterOnSystem();
 				if(!index)
 					return;
