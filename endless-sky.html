@@ -164,6 +164,8 @@
       <button onclick="document.querySelector('.file-selector').click();" />upload saved game</button>
       <button class="show-save-games">Show save game files for download</button>
       <div class="save-games"></div>
+      <button class="show-plugins-to-download">Show plugins for download</button>
+      <div class="plugins-to-download"></div>
       <input type="file" style="display: none;" class="file-selector" multiple="multiple">
       <div class="status">Status goes here</div>
       <textarea id="output" rows="8">stdout output goes here</textarea>
@@ -229,6 +231,9 @@
       const saveGamesList = document.querySelector('.save-games');
       const showSaveGamesButton = document.querySelector('.show-save-games');
       showSaveGamesButton.addEventListener('click', () => showSaveGames(saveGamesList));
+      const pluginsToDownloadList = document.querySelector('.plugins-to-download');
+      const pluginsToDownloadButton = document.querySelector('.show-plugins-to-download');
+      pluginsToDownloadButton.addEventListener('click', () => showPluginsForDownload(pluginsToDownloadList));
 
       const progressBar = document.querySelector('.progressBar');
       const progress = document.querySelector('.progress');
@@ -381,6 +386,7 @@
         await runtimeInitializedPromise;
 
         FS.mkdir('plugins');
+        FS.mkdir('saves');
         if (showRemotePlugins) {
           let remotePlugins;
           // catch mostly for offline dev

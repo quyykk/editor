@@ -166,7 +166,7 @@
         const stream = FS.open(dest, "w+");
         FS.write(stream, new Uint8Array(ab), 0, ab.byteLength, 0);
         FS.close(stream);
-        console.log("wrote data to", dest);
+        console.log("wrote uploaded data to", dest);
       }
 
       input.style.display = "none";
@@ -239,6 +239,66 @@
     });
   }
 
+  function showPluginsForDownload(container) {
+    const now = new Date();
+    const contents = FS.lookupPath("plugins").node.contents;
+    const plugins = Object.keys(contents).map((name) => {
+      const path = `/plugins/${name}`;
+      return {
+        name,
+        path: `/plugins/${name}`,
+      };
+    });
+
+    container.innerHTML = "";
+    plugins.forEach(({ name, path }) => {
+      const button = document.createElement("button");
+      button.class = "download-button";
+      button.innerText = `${name}`;
+      function zipName(path) {
+        return path.replace("plugins/", "");
+      }
+      button.onclick = async function offerFileAsDownload() {
+        const archive = new JSZip();
+
+        const frontier = [path];
+
+        while (frontier.length) {
+          const path = frontier.pop();
+          const node = FS.lookupPath(path).node;
+          if (node.isFolder) {
+            for (const [name, _childNode] of Object.entries(node.contents)) {
+              frontier.push(path + "/" + name);
+            }
+            archive.folder(zipName(path));
+            continue;
+          }
+          // TODO preserve data modified etc.
+          // TODO preserve folders (they get lost on upload)
+          archive.file(zipName(path), FS.lookupPath(path).node.contents);
+        }
+
+        const downloadable = await archive.generateAsync({
+          type: "blob",
+        });
+
+        const a = document.createElement("a");
+        a.download = name;
+        a.href = URL.createObjectURL(downloadable);
+        a.style.display = "none";
+
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(a.href);
+        }, 10000);
+      };
+      container.appendChild(button);
+    });
+  }
+
+  window.showPluginsForDownload = showPluginsForDownload;
   window.showPlugins = showPlugins;
   window.showPluginUpload = showPluginUpload;
 })();
