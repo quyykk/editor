@@ -48,6 +48,7 @@
   // Caches a single version of a resource
   class CachedResource {
     constructor(resourceUrl, keySuffix) {
+      if (keySuffix === undefined) keySuffix = "";
       this.resourceUrl = resourceUrl;
       this.cacheKey = resourceUrl + keySuffix;
     }
@@ -56,12 +57,22 @@
       const cachedVersion = await kvstore.get(this.cacheKey + "-version");
       if (cachedData) {
         if (version === cachedVersion) {
-          console.log("Using cached resource", this.resourceUrl);
+          console.log(
+            "Using cached resource",
+            this.cacheKey,
+            "originally downloaded from",
+            this.resourceUrl
+          );
           progressCallback(cachedData.byteLength, cachedData.byteLength, true);
           console.log("cached data:", cachedData);
           return cachedData;
         }
-        console.log("Out of date resource, redownloading", this.resourceUrl);
+        console.log(
+          "Out of date resource",
+          this.cacheKey,
+          "so redownloading",
+          this.resourceUrl
+        );
         console.log(
           "required version",
           version,
