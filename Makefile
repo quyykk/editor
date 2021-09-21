@@ -125,7 +125,7 @@ deploy: output/index.html
 			aws s3 sync output s3://play-endless-sky.com/editor/editor;\
 	fi
 	# play-endless-sky.com
-	aws cloudfront create-invalidation --distribution-id E2TZUW922XPLEF --paths /\*
+	aws cloudfront create-invalidation --distribution-id E2TZUW922XPLEF --paths /editor/\* /editor
 	# play-endless-web.com
-	aws cloudfront create-invalidation --distribution-id E3D0Y4DMGSVPWC --paths /\*
+	aws cloudfront create-invalidation --distribution-id E3D0Y4DMGSVPWC --paths /editor/\* /editor
 
