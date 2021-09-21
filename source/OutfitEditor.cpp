@@ -76,8 +76,57 @@ void OutfitEditor::Render()
 	if(IsDirty())
 		ImGui::PopStyleColor(3);
 
+	bool showNewOutfit = false;
+	bool showRenameOutfit = false;
+	bool showCloneOutfit = false;
 	if(ImGui::BeginMenuBar())
 	{
+		if(ImGui::BeginMenu("Outfit"))
+		{
+			const bool alreadyDefined = object && !GameData::baseOutfits.Has(object->name);
+			ImGui::MenuItem("New", nullptr, &showNewOutfit);
+			ImGui::MenuItem("Rename", nullptr, &showRenameOutfit, alreadyDefined);
+			ImGui::MenuItem("Clone", nullptr, &showCloneOutfit, object);
+			if(ImGui::MenuItem("Save", nullptr, false, object && editor.HasPlugin() && IsDirty()))
+				WriteToPlugin(object);
+			if(ImGui::MenuItem("Reset", nullptr, false, object && IsDirty()))
+			{
+				SetClean();
+				bool found = false;
+				for(auto &&change : Changes())
+					if(change.Name() == object->Name())
+					{
+						*object = change;
+						found = true;
+						break;
+					}
+				if(!found && GameData::baseOutfits.Has(object->name))
+					*object = *GameData::baseOutfits.Get(object->name);
+				else if(!found)
+				{
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+					GameData::Outfits().Erase(object->name);
+					object = nullptr;
+				}
+			}
+			if(ImGui::MenuItem("Delete", nullptr, false, alreadyDefined))
+			{
+				if(find_if(Changes().begin(), Changes().end(), [this](const Outfit &outfit)
+							{
+								return outfit.name == object->name;
+							}) != Changes().end())
+				{
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+				}
+				else
+					SetClean();
+				GameData::Outfits().Erase(object->name);
+				object = nullptr;
+			}
+			ImGui::EndMenu();
+		}
 		if(ImGui::BeginMenu("Tools"))
 		{
 			if(ImGui::MenuItem("Add to Cargo", nullptr, false, object && editor.Player().Cargo().Free() >= -object->Attributes().Get("outfit space")))
@@ -105,96 +154,45 @@ void OutfitEditor::Render()
 		ImGui::EndMenuBar();
 	}
 
-	Outfit *selected = nullptr;
-	if(ImGui::InputCombo("outfit", &searchBox, &selected, GameData::Outfits()))
-		if(selected)
-		{
-			object = selected;
-			searchBox.clear();
-		}
-	if(!object || !IsDirty())
-		ImGui::PushDisabled();
-	bool reset = ImGui::Button("Reset");
-	if(!object || !IsDirty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select an outfit first.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to reset.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || searchBox.empty())
-		ImGui::PushDisabled();
-	bool clone = ImGui::Button("Clone");
-	if(!object || searchBox.empty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(searchBox.empty())
-				ImGui::SetTooltip("Input the new name for the outfit above.");
-			else if(!object)
-				ImGui::SetTooltip("Select a outfit first.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || !editor.HasPlugin() || !IsDirty())
-		ImGui::PushDisabled();
-	bool save = ImGui::Button("Save");
-	if(!object || !editor.HasPlugin() || !IsDirty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select a outfit first.");
-			else if(!editor.HasPlugin())
-				ImGui::SetTooltip("Load a plugin to save to a file.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to save.");
-		}
-	}
-
-	if(!object)
-	{
-		ImGui::End();
-		return;
-	}
-
-	if(reset)
-	{
-		bool found = false;
-		for(auto &&change : Changes())
-			if(change.Name() == object->Name())
+	if(showNewOutfit)
+		ImGui::OpenPopup("New Outfit");
+	if(showRenameOutfit)
+		ImGui::OpenPopup("Rename Outfit");
+	if(showCloneOutfit)
+		ImGui::OpenPopup("Clone Outfit");
+	ImGui::BeginSimpleNewModal("New Outfit", [this](const string &name)
 			{
-				*object = change;
-				found = true;
-				break;
-			}
-		if(!found)
-			*object = *GameData::baseOutfits.Get(object->name);
-		SetClean();
-	}
-	if(clone)
-	{
-		auto *clone = const_cast<Outfit *>(GameData::Outfits().Get(searchBox));
-		*clone = *object;
-		object = clone;
+				auto *newOutfit = const_cast<Outfit *>(GameData::Outfits().Get(name));
+				newOutfit->name = name;
+				newOutfit->isDefined = true;
+				object = newOutfit;
+				SetDirty();
+			});
+	ImGui::BeginSimpleRenameModal("Rename Outfit", [this](const string &name)
+			{
+				DeleteFromChanges();
+				editor.RenameObject(keyFor<Outfit>(), object->name, name);
+				GameData::Outfits().Rename(object->name, name);
+				object->name = name;
+				WriteToPlugin(object, false);
+				SetDirty();
+			});
+	ImGui::BeginSimpleCloneModal("Clone Outfit", [this](const string &name)
+			{
+				auto *clone = const_cast<Outfit *>(GameData::Outfits().Get(name));
+				*clone = *object;
+				object = clone;
 
-		object->name = searchBox;
+				object->name = name;
+				SetDirty();
+			});
+	if(ImGui::InputCombo("outfit", &searchBox, &object, GameData::Outfits()))
 		searchBox.clear();
-		SetDirty();
-	}
-	if(save)
-		WriteToPlugin(object);
 
 	ImGui::Separator();
 	ImGui::Spacing();
-	RenderOutfit();
+	if(object)
+		RenderOutfit();
 	ImGui::End();
 }
 

@@ -64,7 +64,7 @@ void OutfitterEditor::Render()
 	}
 
 	ImGui::SetNextWindowSize(ImVec2(550, 500), ImGuiCond_FirstUseEver);
-	if(!ImGui::Begin("Outfitter Editor", &show))
+	if(!ImGui::Begin("Outfitter Editor", &show, ImGuiWindowFlags_MenuBar))
 	{
 		if(IsDirty())
 			ImGui::PopStyleColor(3);
@@ -75,103 +75,100 @@ void OutfitterEditor::Render()
 	if(IsDirty())
 		ImGui::PopStyleColor(3);
 
-	if(ImGui::BeginCombo("outfitter", object ? object->Name().c_str() : ""))
+	bool showNewOutfitter = false;
+	bool showRenameOutfitter = false;
+	bool showCloneOutfitter = false;
+	if(ImGui::BeginMenuBar())
 	{
-		for(const auto &outfitter : GameData::Outfitters())
+		if(ImGui::BeginMenu("Outfitter"))
 		{
-			const bool selected = object ? object->Name() == outfitter.first : false;
-			if(ImGui::Selectable(outfitter.first.c_str(), selected))
-				object = const_cast<Sale<Outfit> *>(&outfitter.second);
-			if(selected)
-				ImGui::SetItemDefaultFocus();
-		}
-		ImGui::EndCombo();
-	}
-	ImGui::InputText("new clone name:", &searchBox);
-
-	if(!object || !IsDirty())
-		ImGui::PushDisabled();
-	bool reset = ImGui::Button("Reset");
-	if(!object || !IsDirty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select an outfitter first.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to reset.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || searchBox.empty())
-		ImGui::PushDisabled();
-	bool clone = ImGui::Button("Clone");
-	if(!object || searchBox.empty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(searchBox.empty())
-				ImGui::SetTooltip("Input the new name for the outfitter above.");
-			else if(!object)
-				ImGui::SetTooltip("Select an outfitter first.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || !editor.HasPlugin() || !IsDirty())
-		ImGui::PushDisabled();
-	bool save = ImGui::Button("Save");
-	if(!object || !editor.HasPlugin() || !IsDirty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select an outfitter first.");
-			else if(!editor.HasPlugin())
-				ImGui::SetTooltip("Load a plugin to save to a file.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to save.");
-		}
-	}
-
-	if(!object)
-	{
-		ImGui::End();
-		return;
-	}
-
-	if(reset)
-	{
-		bool found = false;
-		for(auto &&change : Changes())
-			if(change.Name() == object->Name())
+			const bool alreadyDefined = object && !GameData::baseOutfitSales.Has(object->name);
+			ImGui::MenuItem("New", nullptr, &showNewOutfitter);
+			ImGui::MenuItem("Rename", nullptr, &showRenameOutfitter, alreadyDefined);
+			ImGui::MenuItem("Clone", nullptr, &showCloneOutfitter, object);
+			if(ImGui::MenuItem("Save", nullptr, false, object && editor.HasPlugin() && IsDirty()))
+				WriteToPlugin(object);
+			if(ImGui::MenuItem("Reset", nullptr, false, object && IsDirty()))
 			{
-				*object = change;
-				found = true;
-				break;
-			}
-		if(!found)
-			*object = *GameData::baseOutfitSales.Get(object->name);
-		SetClean();
-	}
-	if(clone)
-	{
-		auto *clone = const_cast<Sale<Outfit> *>(GameData::Outfitters().Get(searchBox));
-		*clone = *object;
-		object = clone;
+				SetClean();
+				bool found = false;
+				for(auto &&change : Changes())
+					if(change.Name() == object->Name())
+					{
+						*object = change;
+						found = true;
+						break;
+					}
 
-		object->name = searchBox;
-		searchBox.clear();
-		SetDirty();
+				if(!found && GameData::baseOutfitSales.Has(object->name))
+					*object = *GameData::baseOutfitSales.Get(object->name);
+				else if(!found)
+				{
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+					GameData::Outfitters().Erase(object->name);
+					object = nullptr;
+				}
+			}
+			if(ImGui::MenuItem("Delete", nullptr, false, alreadyDefined))
+			{
+				if(find_if(Changes().begin(), Changes().end(), [this](const Sale<Outfit> &outfitter)
+							{
+								return outfitter.name == object->name;
+							}) != Changes().end())
+				{
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+				}
+				else
+					SetClean();
+				GameData::Outfitters().Erase(object->name);
+				object = nullptr;
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMenuBar();
 	}
-	if(save)
-		WriteToPlugin(object);
+
+	if(showNewOutfitter)
+		ImGui::OpenPopup("New Outfitter");
+	if(showRenameOutfitter)
+		ImGui::OpenPopup("Rename Outfitter");
+	if(showCloneOutfitter)
+		ImGui::OpenPopup("Clone Outfitter");
+	ImGui::BeginSimpleNewModal("New Outfitter", [this](const string &name)
+			{
+				auto *newOutfitter = const_cast<Sale<Outfit> *>(GameData::Outfitters().Get(name));
+				newOutfitter->name = name;
+				object = newOutfitter;
+				SetDirty();
+			});
+	ImGui::BeginSimpleRenameModal("Rename Outfitter", [this](const string &name)
+			{
+				DeleteFromChanges();
+				editor.RenameObject(keyFor<Sale<Outfit>>(), object->name, name);
+				GameData::Outfitters().Rename(object->name, name);
+				object->name = name;
+				WriteToPlugin(object, false);
+				SetDirty();
+			});
+	ImGui::BeginSimpleCloneModal("Clone Outfitter", [this](const string &name)
+			{
+				auto *clone = const_cast<Sale<Outfit> *>(GameData::Outfitters().Get(name));
+				*clone = *object;
+				object = clone;
+
+				object->name = name;
+				SetDirty();
+			});
+
+	if(ImGui::InputCombo("outfitter", &searchBox, &object, GameData::Outfitters()))
+		searchBox.clear();
 
 	ImGui::Separator();
 	ImGui::Spacing();
-	RenderOutfitter();
+	if(object)
+		RenderOutfitter();
 	ImGui::End();
 }
 

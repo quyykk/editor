@@ -32,6 +32,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include <map>
 #include <set>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
@@ -67,6 +68,15 @@ template <> constexpr const char *keyFor<Ship>() { return "ship"; }
 template <> constexpr const char *keyFor<Sale<Ship>>() { return "shipyard"; }
 template <> constexpr const char *keyFor<System>() { return "system"; }
 
+namespace impl {
+template <typename T>
+std::string GetName(const T &obj, ...) { return obj.Name(); }
+template <typename T>
+std::string GetName(const T &obj, decltype(std::declval<T>().TrueName(), int()) *) { return obj.TrueName(); }
+}
+template <typename T>
+std::string GetName(const T &obj) { return impl::GetName<T>(obj, 0); }
+
 // Base class common for any editor window.
 template <typename T>
 class TemplateEditor {
@@ -77,7 +87,7 @@ public:
 	TemplateEditor& operator=(const TemplateEditor &) = delete;
 
 	const std::list<T> &Changes() const { return changes; }
-	const std::set<const T *> &Dirty() const { return dirty; }
+	const std::map<const T *, std::string> &Dirty() const { return dirty; }
 
 	// Saves the specified object.
 	void WriteToPlugin(const T *object, bool useDefault = true) { WriteToPlugin(object, useDefault, 0); }
@@ -113,16 +123,31 @@ public:
 	void WriteAll()
 	{
 		auto copy = dirty;
+		std::string_view deleted = "[deleted] ";
 		for(auto &&obj : copy)
-			WriteToPlugin(obj);
+			if(obj.second.size() <= deleted.size() || obj.second.compare(0, deleted.size(), deleted))
+				WriteToPlugin(obj.first);
+			else
+				dirty.erase(obj.first);
 	}
 
 protected:
 	// Marks the current object as dirty.
-	void SetDirty() { dirty.insert(object); }
-	void SetDirty(const T *obj) { dirty.insert(obj); }
+	void SetDirty() { dirty[object] = GetName(*object); }
+	void SetDirty(const std::string &prefix) { dirty[object] = prefix + " " + GetName(*object); }
+	void SetDirty(const T *obj) { dirty[obj] = GetName(*obj); }
 	bool IsDirty() { return dirty.count(object); }
 	void SetClean() { dirty.erase(object); }
+	void DeleteFromChanges()
+	{
+		assert(object && "can't delete null object from list");
+		auto it = std::find_if(changes.begin(), changes.end(), [this](const auto &obj)
+				{
+					return GetName(obj) == GetName(*object);
+				});
+		if(it != changes.end())
+			changes.erase(it);
+	}
 
 	void RenderSprites(const std::string &name, std::vector<std::pair<Body, int>> &map);
 	bool RenderElement(Body *sprite, const std::string &name);
@@ -139,7 +164,7 @@ protected:
 
 
 private:
-	std::set<const T *> dirty;
+	std::map<const T *, std::string> dirty;
 	std::list<T> changes;
 };
 

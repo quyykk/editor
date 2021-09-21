@@ -64,7 +64,7 @@ void ShipyardEditor::Render()
 	}
 
 	ImGui::SetNextWindowSize(ImVec2(550, 500), ImGuiCond_FirstUseEver);
-	if(!ImGui::Begin("Shipyard Editor", &show))
+	if(!ImGui::Begin("Shipyard Editor", &show, ImGuiWindowFlags_MenuBar))
 	{
 		if(IsDirty())
 			ImGui::PopStyleColor(3);
@@ -75,103 +75,99 @@ void ShipyardEditor::Render()
 	if(IsDirty())
 		ImGui::PopStyleColor(3);
 
-	if(ImGui::BeginCombo("shipyard", object ? object->Name().c_str() : ""))
+	bool showNewShipyard = false;
+	bool showRenameShipyard = false;
+	bool showCloneShipyard = false;
+	if(ImGui::BeginMenuBar())
 	{
-		for(const auto &shipyard : GameData::Shipyards())
+		if(ImGui::BeginMenu("Shipyard"))
 		{
-			const bool selected = object ? object->Name() == shipyard.first : false;
-			if(ImGui::Selectable(shipyard.first.c_str(), selected))
-				object = const_cast<Sale<Ship> *>(&shipyard.second);
-			if(selected)
-				ImGui::SetItemDefaultFocus();
-		}
-		ImGui::EndCombo();
-	}
-	ImGui::InputText("new clone name:", &searchBox);
-
-	if(!object || !IsDirty())
-		ImGui::PushDisabled();
-	bool reset = ImGui::Button("Reset");
-	if(!object || !IsDirty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select a shipyard first.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to reset.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || searchBox.empty())
-		ImGui::PushDisabled();
-	bool clone = ImGui::Button("Clone");
-	if(!object || searchBox.empty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(searchBox.empty())
-				ImGui::SetTooltip("Input the new name for the shipyard above.");
-			else if(!object)
-				ImGui::SetTooltip("Select an shipyard first.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || !editor.HasPlugin() || !IsDirty())
-		ImGui::PushDisabled();
-	bool save = ImGui::Button("Save");
-	if(!object || !editor.HasPlugin() || !IsDirty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select a shipyard first.");
-			else if(!editor.HasPlugin())
-				ImGui::SetTooltip("Load a plugin to save to a file.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to save.");
-		}
-	}
-
-	if(!object)
-	{
-		ImGui::End();
-		return;
-	}
-
-	if(reset)
-	{
-		bool found = false;
-		for(auto &&change : Changes())
-			if(change.Name() == object->Name())
+			const bool alreadyDefined = object && !GameData::baseShipSales.Has(object->name);
+			ImGui::MenuItem("New", nullptr, &showNewShipyard);
+			ImGui::MenuItem("Rename", nullptr, &showRenameShipyard, alreadyDefined);
+			ImGui::MenuItem("Clone", nullptr, &showCloneShipyard, object);
+			if(ImGui::MenuItem("Save", nullptr, false, object && editor.HasPlugin() && IsDirty()))
+				WriteToPlugin(object);
+			if(ImGui::MenuItem("Reset", nullptr, false, object && IsDirty()))
 			{
-				*object = change;
-				found = true;
-				break;
+				SetClean();
+				bool found = false;
+				for(auto &&change : Changes())
+					if(change.Name() == object->Name())
+					{
+						*object = change;
+						found = true;
+						break;
+					}
+				if(!found && GameData::baseShipSales.Has(object->name))
+					*object = *GameData::baseShipSales.Get(object->name);
+				else if(!found)
+				{
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+					GameData::Shipyards().Erase(object->name);
+					object = nullptr;
+				}
 			}
-		if(!found)
-			*object = *GameData::baseShipSales.Get(object->name);
-		SetClean();
+			if(ImGui::MenuItem("Delete", nullptr, false, alreadyDefined))
+			{
+				if(find_if(Changes().begin(), Changes().end(), [this](const Sale<Ship> &shipyard)
+							{
+								return shipyard.name == object->name;
+							}) != Changes().end())
+				{
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+				}
+				else
+					SetClean();
+				GameData::Shipyards().Erase(object->name);
+				object = nullptr;
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMenuBar();
 	}
-	if(clone)
-	{
-		auto *clone = const_cast<Sale<Ship> *>(GameData::Shipyards().Get(searchBox));
-		*clone = *object;
-		object = clone;
 
-		object->name = searchBox;
+	if(showNewShipyard)
+		ImGui::OpenPopup("New Shipyard");
+	if(showRenameShipyard)
+		ImGui::OpenPopup("Rename Shipyard");
+	if(showCloneShipyard)
+		ImGui::OpenPopup("Clone Shipyard");
+	ImGui::BeginSimpleNewModal("New Shipyard", [this](const string &name)
+			{
+				auto *newShipyard = const_cast<Sale<Ship> *>(GameData::Shipyards().Get(name));
+				newShipyard->name = name;
+				object = newShipyard;
+				SetDirty();
+			});
+	ImGui::BeginSimpleRenameModal("Rename Shipyard", [this](const string &name)
+			{
+				DeleteFromChanges();
+				editor.RenameObject(keyFor<Sale<Ship>>(), object->name, name);
+				GameData::Shipyards().Rename(object->name, name);
+				object->name = name;
+				WriteToPlugin(object, false);
+				SetDirty();
+			});
+	ImGui::BeginSimpleCloneModal("Clone Shipyard", [this](const string &name)
+			{
+				auto *clone = const_cast<Sale<Ship> *>(GameData::Shipyards().Get(name));
+				*clone = *object;
+				object = clone;
+
+				object->name = name;
+				SetDirty();
+			});
+
+	if(ImGui::InputCombo("shipyard", &searchBox, &object, GameData::Shipyards()))
 		searchBox.clear();
-		SetDirty();
-	}
-	if(save)
-		WriteToPlugin(object);
 
 	ImGui::Separator();
 	ImGui::Spacing();
-	RenderShipyard();
+	if(object)
+		RenderShipyard();
 	ImGui::End();
 }
 

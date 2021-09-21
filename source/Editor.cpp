@@ -124,6 +124,8 @@ void Editor::WriteAll()
 						[&toSearch](const Planet &p) { return p.TrueName() == toSearch; });
 				if(it != planets.end())
 					planetEditor.WriteToFile(writer, &*it);
+				else
+					continue;
 			}
 			else if(type == "ship")
 			{
@@ -131,6 +133,8 @@ void Editor::WriteAll()
 						[&toSearch](const Ship &s) { return s.TrueName() == toSearch; });
 				if(it != ships.end())
 					shipEditor.WriteToFile(writer, &*it);
+				else
+					continue;
 			}
 			else if(type == "system")
 			{
@@ -138,6 +142,8 @@ void Editor::WriteAll()
 						[&toSearch](const System &sys) { return sys.Name() == toSearch; });
 				if(it != systems.end())
 					systemEditor.WriteToFile(writer, &*it);
+				else
+					continue;
 			}
 			else if(type == "outfit")
 			{
@@ -145,6 +151,8 @@ void Editor::WriteAll()
 						[&toSearch](const Outfit &o) { return o.Name() == toSearch; });
 				if(it != outfits.end())
 					outfitEditor.WriteToFile(writer, &*it);
+				else
+					continue;
 			}
 			else if(type == "hazard")
 			{
@@ -152,6 +160,8 @@ void Editor::WriteAll()
 						[&toSearch](const Hazard &h) { return h.Name() == toSearch; });
 				if(it != hazards.end())
 					hazardEditor.WriteToFile(writer, &*it);
+				else
+					continue;
 			}
 			else if(type == "government")
 			{
@@ -159,6 +169,8 @@ void Editor::WriteAll()
 						[&toSearch](const Government &g) { return g.TrueName() == toSearch; });
 				if(it != governments.end())
 					governmentEditor.WriteToFile(writer, &*it);
+				else
+					continue;
 			}
 			else if(type == "fleet")
 			{
@@ -166,6 +178,8 @@ void Editor::WriteAll()
 						[&toSearch](const Fleet &f) { return f.Name() == toSearch; });
 				if(it != fleets.end())
 					fleetEditor.WriteToFile(writer, &*it);
+				else
+					continue;
 			}
 			else if(type == "outfitter")
 			{
@@ -173,6 +187,8 @@ void Editor::WriteAll()
 						[&toSearch](const Sale<Outfit> &o) { return o.Name() == toSearch; });
 				if(it != outfitters.end())
 					outfitterEditor.WriteToFile(writer, &*it);
+				else
+					continue;
 			}
 			else if(type == "shipyard")
 			{
@@ -180,6 +196,8 @@ void Editor::WriteAll()
 						[&toSearch](const Sale<Ship> &s) { return s.Name() == toSearch; });
 				if(it != shipyards.end())
 					shipyardEditor.WriteToFile(writer, &*it);
+				else
+					continue;
 			}
 			else if(type == "effect")
 			{
@@ -187,6 +205,8 @@ void Editor::WriteAll()
 						[&toSearch](const Effect &e) { return e.Name() == toSearch; });
 				if(it != effects.end())
 					effectEditor.WriteToFile(writer, &*it);
+				else
+					continue;
 			}
 			else
 			{
@@ -256,6 +276,18 @@ UI &Editor::GetMenu()
 	return menu;
 }
 
+
+
+void Editor::RenameObject(const std::string &type, const std::string &oldName, const std::string &newName)
+{
+	for(auto &&file : pluginPaths)
+		for(auto &&object : file.second)
+			if(object.first == type && object.second == oldName)
+			{
+				object.second = newName;
+				break;
+			}
+}
 
 
 void Editor::RenderMain()
@@ -351,70 +383,70 @@ void Editor::RenderMain()
 			if(!dirtyEffects.empty() && ImGui::BeginMenu("Effects"))
 			{
 				for(auto &&e : dirtyEffects)
-					ImGui::MenuItem(e->Name().c_str(), nullptr, false, false);
+					ImGui::MenuItem(e.second.c_str(), nullptr, false, false);
 				ImGui::EndMenu();
 			}
 
 			if(!dirtyFleets.empty() && ImGui::BeginMenu("Fleets"))
 			{
 				for(auto &&f : dirtyFleets)
-					ImGui::MenuItem(f->Name().c_str(), nullptr, false, false);
+					ImGui::MenuItem(f.second.c_str(), nullptr, false, false);
 				ImGui::EndMenu();
 			}
 
 			if(!dirtyHazards.empty() && ImGui::BeginMenu("Hazards"))
 			{
 				for(auto &&h : dirtyHazards)
-					ImGui::MenuItem(h->Name().c_str(), nullptr, false, false);
+					ImGui::MenuItem(h.second.c_str(), nullptr, false, false);
 				ImGui::EndMenu();
 			}
 
 			if(!dirtyGovernments.empty() && ImGui::BeginMenu("Governments"))
 			{
 				for(auto &&g : dirtyGovernments)
-					ImGui::MenuItem(g->TrueName().c_str(), nullptr, false, false);
+					ImGui::MenuItem(g.second.c_str(), nullptr, false, false);
 				ImGui::EndMenu();
 			}
 
 			if(!dirtyOutfits.empty() && ImGui::BeginMenu("Outfits"))
 			{
 				for(auto &&o : dirtyOutfits)
-					ImGui::MenuItem(o->Name().c_str(), nullptr, false, false);
+					ImGui::MenuItem(o.second.c_str(), nullptr, false, false);
 				ImGui::EndMenu();
 			}
 
 			if(!dirtyOutfitters.empty() && ImGui::BeginMenu("Outfitters"))
 			{
 				for(auto &&o : dirtyOutfitters)
-					ImGui::MenuItem(o->Name().c_str(), nullptr, false, false);
+					ImGui::MenuItem(o.second.c_str(), nullptr, false, false);
 				ImGui::EndMenu();
 			}
 
 			if(!dirtyPlanets.empty() && ImGui::BeginMenu("Planets"))
 			{
 				for(auto &&p : dirtyPlanets)
-					ImGui::MenuItem(p->TrueName().c_str(), nullptr, false, false);
+					ImGui::MenuItem(p.second.c_str(), nullptr, false, false);
 				ImGui::EndMenu();
 			}
 
 			if(!dirtyShips.empty() && ImGui::BeginMenu("Ships"))
 			{
 				for(auto &&s : dirtyShips)
-					ImGui::MenuItem(s->TrueName().c_str(), nullptr, false, false);
+					ImGui::MenuItem(s.second.c_str(), nullptr, false, false);
 				ImGui::EndMenu();
 			}
 
 			if(!dirtyShipyards.empty() && ImGui::BeginMenu("Shipyards"))
 			{
 				for(auto &&s : dirtyShipyards)
-					ImGui::MenuItem(s->Name().c_str(), nullptr, false, false);
+					ImGui::MenuItem(s.second.c_str(), nullptr, false, false);
 				ImGui::EndMenu();
 			}
 
 			if(!dirtySystems.empty() && ImGui::BeginMenu("Systems"))
 			{
 				for(auto &&sys : dirtySystems)
-					ImGui::MenuItem(sys->Name().c_str(), nullptr, false, false);
+					ImGui::MenuItem(sys.second.c_str(), nullptr, false, false);
 				ImGui::EndMenu();
 			}
 

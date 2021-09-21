@@ -124,17 +124,33 @@ void SystemEditor::Render()
 		ImGui::PopStyleColor(3);
 
 	bool showNewSystem = false;
+	bool showRenameSystem = false;
 	bool showCloneSystem = false;
 	if(ImGui::BeginMenuBar())
 	{
 		if(ImGui::BeginMenu("System"))
 		{
+			const bool alreadyDefined = object && !GameData::baseSystems.Has(object->name);
 			ImGui::MenuItem("New", nullptr, &showNewSystem);
+			ImGui::MenuItem("Rename", nullptr, &showRenameSystem, alreadyDefined);
 			ImGui::MenuItem("Clone", nullptr, &showCloneSystem, object);
 			if(ImGui::MenuItem("Save", nullptr, false, object && editor.HasPlugin() && IsDirty()))
 				WriteToPlugin(object);
 			if(ImGui::MenuItem("Reset", nullptr, false, object && IsDirty()))
 			{
+				SetClean();
+				auto oldLinks = object->links;
+				for(auto &&link : oldLinks)
+				{
+					const_cast<System *>(link)->Unlink(object);
+					SetDirty(link);
+					GameData::UpdateSystem(const_cast<System *>(link));
+				}
+				for(auto &&stellar : object->Objects())
+					if(stellar.planet)
+						const_cast<Planet *>(stellar.planet)->RemoveSystem(object);
+
+				auto oldNeighbors = object->VisibleNeighbors();
 				bool found = false;
 				for(auto &&change : Changes())
 					if(change.Name() == object->Name())
@@ -143,18 +159,73 @@ void SystemEditor::Render()
 						found = true;
 						break;
 					}
-				if(!found)
+
+				if(!found && GameData::baseSystems.Has(object->name))
 					*object = *GameData::baseSystems.Get(object->name);
-				for(auto &&link : object->links)
+				else if(!found)
 				{
-					GameData::UpdateSystem(const_cast<System *>(link));
-					const_cast<System *>(link)->Link(object);
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+					GameData::Systems().Erase(object->name);
+					object = nullptr;
+					if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
+						panel->Select(object);
+					if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
+						panel->Select(object);
 				}
-				for(auto &&link : object->VisibleNeighbors())
+
+				for(auto &&link : oldNeighbors)
 					GameData::UpdateSystem(const_cast<System *>(link));
-				GameData::UpdateSystem(object);
+
+				if(object)
+				{
+					for(auto &&link : object->links)
+					{
+						const_cast<System *>(link)->Link(object);
+						GameData::UpdateSystem(const_cast<System *>(link));
+					}
+					for(auto &&stellar : object->Objects())
+						if(stellar.planet)
+							const_cast<Planet *>(stellar.planet)->SetSystem(object);
+					for(auto &&link : object->VisibleNeighbors())
+						GameData::UpdateSystem(const_cast<System *>(link));
+					GameData::UpdateSystem(object);
+				}
 				UpdateMap();
-				SetClean();
+			}
+			if(ImGui::MenuItem("Delete", nullptr, false, alreadyDefined))
+			{
+				if(find_if(Changes().begin(), Changes().end(), [this](const System &system)
+							{
+								return system.name == object->name;
+							}) != Changes().end())
+				{
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+				}
+				else
+					SetClean();
+				auto oldLinks = object->links;
+				for(auto &&link : oldLinks)
+				{
+					const_cast<System *>(link)->Unlink(object);
+					SetDirty(link);
+					GameData::UpdateSystem(const_cast<System *>(link));
+				}
+				for(auto &&stellar : object->Objects())
+					if(stellar.planet)
+						const_cast<Planet *>(stellar.planet)->RemoveSystem(object);
+
+				auto oldNeighbors = object->VisibleNeighbors();
+				GameData::Systems().Erase(object->name);
+				for(auto &&link : oldNeighbors)
+					GameData::UpdateSystem(const_cast<System *>(link));
+				object = nullptr;
+				if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
+					panel->Select(object);
+				if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
+					panel->Select(object);
+				UpdateMap();
 			}
 			ImGui::EndMenu();
 		}
@@ -171,9 +242,21 @@ void SystemEditor::Render()
 		ImGui::EndMenuBar();
 	}
 
+	if(showRenameSystem)
+		ImGui::OpenPopup("Rename System");
 	if(showCloneSystem)
 		ImGui::OpenPopup("Clone System");
 	AlwaysRender(showNewSystem);
+	ImGui::BeginSimpleRenameModal("Rename System", [this](const string &name)
+			{
+				DeleteFromChanges();
+				editor.RenameObject(keyFor<System>(), object->name, name);
+				GameData::Systems().Rename(object->name, name);
+				object->name = name;
+				WriteToPlugin(object, false);
+				UpdateMap();
+				SetDirty();
+			});
 	ImGui::BeginSimpleCloneModal("Clone System", [this](const string &name)
 			{
 				auto *clone = const_cast<System *>(GameData::Systems().Get(name));
@@ -191,6 +274,10 @@ void SystemEditor::Render()
 					GameData::UpdateSystem(const_cast<System *>(link));
 				UpdateMap();
 				SetDirty();
+				if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
+					panel->Select(object);
+				if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
+					panel->Select(object);
 			});
 
 	if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
@@ -236,6 +323,10 @@ void SystemEditor::AlwaysRender(bool showNewSystem)
 					GameData::UpdateSystem(const_cast<System *>(link));
 				UpdateMap();
 				SetDirty();
+				if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
+					panel->Select(object);
+				if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
+					panel->Select(object);
 			});
 	createNewSystem &= ImGui::IsPopupOpen("New System");
 }

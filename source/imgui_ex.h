@@ -23,6 +23,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include <algorithm>
 #include <cstdint>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 
@@ -47,7 +48,23 @@ namespace ImGui
 	template <typename F>
 	IMGUI_API void BeginSimpleNewModal(const char *id, F &&f);
 	template <typename F>
+	IMGUI_API void BeginSimpleRenameModal(const char *id, F &&f);
+	template <typename F>
 	IMGUI_API void BeginSimpleCloneModal(const char *id, F &&f);
+}
+
+
+
+
+template <typename T>
+bool IsValid(const T &obj, ...)
+{
+	return !obj.Name().empty();
+}
+template <typename T>
+bool IsValid(const T &obj, decltype(obj.TrueName(), void()) *)
+{
+	return !obj.TrueName().empty();
 }
 
 
@@ -105,9 +122,11 @@ IMGUI_API bool ImGui::InputCombo(const char *label, std::string *input, T **elem
 			return input->empty();
 		}
 
-		std::vector<const std::string *> strings(elements.size());
-		std::transform(elements.begin(), elements.end(), strings.begin(),
-				[](const std::pair<const std::string, T> &pair) { return &pair.first; });
+		std::vector<const std::string *> strings;
+		strings.reserve(elements.size());
+		for(auto it = elements.begin(); it != elements.end(); ++it)
+			if(IsValid(it->second, 0))
+				strings.push_back(&it->first);
 
 		std::vector<std::pair<double, const char *>> weights;
 		for(auto &&second : strings)
@@ -148,34 +167,37 @@ IMGUI_API bool ImGui::InputCombo(const char *label, std::string *input, T **elem
 				[](const std::pair<double, const char *> &lhs, const std::pair<double, const char *> &rhs)
 					{ return lhs.first > rhs.first; });
 
-		auto topWeight = weights[0].first;
-		for(const auto &item : weights)
+		if(!weights.empty())
 		{
-			// Allow the user to select an entry in the combo box.
-			// This is a hack to workaround the fact that we change the focus when clicking an
-			// entry and that this means that the filtered list will change (breaking entries).
-			if(GetActiveID() == GetCurrentWindow()->GetID(item.second) || GetFocusID() == GetCurrentWindow()->GetID(item.second))
+			auto topWeight = weights[0].first;
+			for(const auto &item : weights)
 			{
-				*element = const_cast<T *>(elements.Get(item.second));
-				changed = true;
-				*input = item.second;
-				CloseCurrentPopup();
-				SetActiveID(0, GetCurrentWindow());
-			}
-
-			if(topWeight && item.first < topWeight * .45)
-				continue;
-
-			if(Selectable(item.second) || autocomplete)
-			{
-				*element = const_cast<T *>(elements.Get(item.second));
-				changed = true;
-				*input = item.second;
-				if(autocomplete)
+				// Allow the user to select an entry in the combo box.
+				// This is a hack to workaround the fact that we change the focus when clicking an
+				// entry and that this means that the filtered list will change (breaking entries).
+				if(GetActiveID() == GetCurrentWindow()->GetID(item.second) || GetFocusID() == GetCurrentWindow()->GetID(item.second))
 				{
-					autocomplete = false;
+					*element = const_cast<T *>(elements.Get(item.second));
+					changed = true;
+					*input = item.second;
 					CloseCurrentPopup();
 					SetActiveID(0, GetCurrentWindow());
+				}
+
+				if(topWeight && item.first < topWeight * .45)
+					continue;
+
+				if(Selectable(item.second) || autocomplete)
+				{
+					*element = const_cast<T *>(elements.Get(item.second));
+					changed = true;
+					*input = item.second;
+					if(autocomplete)
+					{
+						autocomplete = false;
+						CloseCurrentPopup();
+						SetActiveID(0, GetCurrentWindow());
+					}
 				}
 			}
 		}
@@ -229,6 +251,14 @@ template <typename F>
 IMGUI_API void ImGui::BeginSimpleNewModal(const char *id, F &&f)
 {
 	return BeginSimpleModal(id, "new name", "Create", std::forward<F &&>(f));
+}
+
+
+
+template <typename F>
+IMGUI_API void ImGui::BeginSimpleRenameModal(const char *id, F &&f)
+{
+	return BeginSimpleModal(id, "new name", "Rename", std::forward<F &&>(f));
 }
 
 

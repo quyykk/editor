@@ -75,17 +75,21 @@ void PlanetEditor::Render()
 		ImGui::PopStyleColor(3);
 
 	bool showNewPlanet = false;
+	bool showRenamePlanet = false;
 	bool showClonePlanet = false;
 	if(ImGui::BeginMenuBar())
 	{
 		if(ImGui::BeginMenu("Planet"))
 		{
+			const bool alreadyDefined = object && !GameData::basePlanets.Has(object->TrueName());
 			ImGui::MenuItem("New", nullptr, &showNewPlanet);
+			ImGui::MenuItem("Rename", nullptr, &showRenamePlanet, alreadyDefined);
 			ImGui::MenuItem("Clone", nullptr, &showClonePlanet, object);
 			if(ImGui::MenuItem("Save", nullptr, false, object && editor.HasPlugin() && IsDirty()))
 				WriteToPlugin(object);
 			if(ImGui::MenuItem("Reset", nullptr, false, object && IsDirty()))
 			{
+				SetClean();
 				bool found = false;
 				for(auto &&change : Changes())
 					if(change.TrueName() == object->TrueName())
@@ -94,9 +98,31 @@ void PlanetEditor::Render()
 						found = true;
 						break;
 					}
-				if(!found)
+
+				if(!found && GameData::basePlanets.Has(object->name))
 					*object = *GameData::basePlanets.Get(object->TrueName());
-				SetClean();
+				else if(!found)
+				{
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+					GameData::Planets().Erase(object->name);
+					object = nullptr;
+				}
+			}
+			if(ImGui::MenuItem("Delete", nullptr, false, alreadyDefined))
+			{
+				if(find_if(Changes().begin(), Changes().end(), [this](const Planet &planet)
+							{
+								return planet.name == object->name;
+							}) != Changes().end())
+				{
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+				}
+				else
+					SetClean();
+				GameData::Planets().Erase(object->name);
+				object = nullptr;
 			}
 			ImGui::EndMenu();
 		}
@@ -105,15 +131,25 @@ void PlanetEditor::Render()
 
 	if(showNewPlanet)
 		ImGui::OpenPopup("New Planet");
+	if(showRenamePlanet)
+		ImGui::OpenPopup("Rename Planet");
 	if(showClonePlanet)
 		ImGui::OpenPopup("Clone Planet");
 	ImGui::BeginSimpleNewModal("New Planet", [this](const string &name)
 			{
 				auto *newPlanet = const_cast<Planet *>(GameData::Planets().Get(name));
-
 				newPlanet->name = name;
 				newPlanet->isDefined = true;
 				object = newPlanet;
+				SetDirty();
+			});
+	ImGui::BeginSimpleRenameModal("Rename Planet", [this](const string &name)
+			{
+				DeleteFromChanges();
+				editor.RenameObject(keyFor<Planet>(), object->name, name);
+				GameData::Planets().Rename(object->name, name);
+				object->name = name;
+				WriteToPlugin(object, false);
 				SetDirty();
 			});
 	ImGui::BeginSimpleCloneModal("Clone Planet", [this](const string &name)

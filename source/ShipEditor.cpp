@@ -75,8 +75,60 @@ void ShipEditor::Render()
 	if(IsDirty())
 		ImGui::PopStyleColor(3);
 
+	bool showNewShip = false;
+	bool showRenameShip = false;
+	bool showCloneModel = false;
+	bool showCloneVariant = false;
 	if(ImGui::BeginMenuBar())
 	{
+		if(ImGui::BeginMenu("Ship"))
+		{
+			const bool alreadyDefined = object && !GameData::baseShips.Has(object->TrueName());
+			ImGui::MenuItem("New", nullptr, &showNewShip);
+			ImGui::MenuItem("Rename", nullptr, &showRenameShip, alreadyDefined);
+			ImGui::MenuItem("Clone Model", nullptr, &showCloneModel, object);
+			ImGui::MenuItem("Clone Variant", nullptr, &showCloneVariant, object);
+			if(ImGui::MenuItem("Save", nullptr, false, object && editor.HasPlugin() && IsDirty()))
+				WriteToPlugin(object);
+			if(ImGui::MenuItem("Reset", nullptr, false, object && IsDirty()))
+			{
+				SetClean();
+				bool found = false;
+				for(auto &&change : Changes())
+					if(change.TrueName() == object->TrueName())
+					{
+						*object = change;
+						found = true;
+						break;
+					}
+
+				if(!found && GameData::baseShips.Has(object->TrueName()))
+					*object = *GameData::baseShips.Get(object->TrueName());
+				else if(!found)
+				{
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+					GameData::Ships().Erase(object->TrueName());
+					object = nullptr;
+				}
+			}
+			if(ImGui::MenuItem("Delete", nullptr, false, alreadyDefined))
+			{
+				if(find_if(Changes().begin(), Changes().end(), [this](const Ship &ship)
+							{
+								return ship.TrueName() == object->TrueName();
+							}) != Changes().end())
+				{
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+				}
+				else
+					SetClean();
+				GameData::Ships().Erase(object->TrueName());
+				object = nullptr;
+			}
+			ImGui::EndMenu();
+		}
 		if(ImGui::BeginMenu("Tools"))
 		{
 			if(ImGui::MenuItem("Add as Escort", nullptr, false, object))
@@ -101,104 +153,59 @@ void ShipEditor::Render()
 		ImGui::EndMenuBar();
 	}
 
-	Ship *selected = nullptr;
-	if(ImGui::InputCombo("ship", &searchBox, &selected, GameData::Ships()))
-		if(selected)
-		{
-			object = selected;
-			searchBox.clear();
-		}
-	if(!object || !IsDirty())
-		ImGui::PushDisabled();
-	bool reset = ImGui::Button("Reset");
-	if(!object || !IsDirty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select a ship first.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to reset.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || searchBox.empty())
-		ImGui::PushDisabled();
-	bool cloneModel = ImGui::Button("Clone as New Model");
-	ImGui::SameLine();
-	bool cloneVariant = ImGui::Button("Clone as Variant");
-	if(!object || searchBox.empty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(searchBox.empty())
-				ImGui::SetTooltip("Input the new name for the ship above.");
-			else if(!object)
-				ImGui::SetTooltip("Select a ship first.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || !editor.HasPlugin() || !IsDirty())
-		ImGui::PushDisabled();
-	bool save = ImGui::Button("Save");
-	if(!object || !editor.HasPlugin() || !IsDirty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select a ship first.");
-			else if(!editor.HasPlugin())
-				ImGui::SetTooltip("Load a plugin to save to a file.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to save.");
-		}
-	}
-
-	if(!object)
-	{
-		ImGui::End();
-		return;
-	}
-
-	if(reset)
-	{
-		bool found = false;
-		for(auto &&change : Changes())
-			if(change.TrueName() == object->TrueName())
+	if(showNewShip)
+		ImGui::OpenPopup("New Ship");
+	if(showRenameShip)
+		ImGui::OpenPopup("Rename Ship");
+	if(showCloneModel)
+		ImGui::OpenPopup("Clone Model");
+	if(showCloneVariant)
+		ImGui::OpenPopup("Clone Variant");
+	ImGui::BeginSimpleNewModal("New Ship", [this](const string &name)
 			{
-				*object = change;
-				found = true;
-				break;
-			}
-		if(!found)
-			*object = *GameData::baseShips.Get(object->TrueName());
-		SetClean();
-	} 
-	if(cloneModel || cloneVariant)
-	{
-		auto *clone = const_cast<Ship *>(GameData::Ships().Get(searchBox));
-		*clone = *object;
-		object = clone;
+				auto *newShip = const_cast<Ship *>(GameData::Ships().Get(name));
+				newShip->modelName = name;
+				newShip->isDefined = true;
+				object = newShip;
+				SetDirty();
+			});
+	ImGui::BeginSimpleRenameModal("Rename Ship", [this](const string &name)
+			{
+				DeleteFromChanges();
+				editor.RenameObject(keyFor<Ship>(), object->TrueName(), name);
+				GameData::Ships().Rename(object->TrueName(), name);
+				if(!object->variantName.empty())
+					object->variantName = name;
+				else
+					object->modelName = name;
+				WriteToPlugin(object, false);
+				SetDirty();
+			});
+	ImGui::BeginSimpleCloneModal("Clone Model", [this](const string &name)
+			{
+				auto *clone = const_cast<Ship *>(GameData::Ships().Get(name));
+				*clone = *object;
+				object = clone;
+				object->modelName = name;
+				SetDirty();
+			});
+	ImGui::BeginSimpleCloneModal("Clone Variant", [this](const string &name)
+			{
+				auto *clone = const_cast<Ship *>(GameData::Ships().Get(name));
+				*clone = *object;
+				object = clone;
+				object->variantName = name;
+				object->base = GameData::Ships().Get(object->modelName);
+				SetDirty();
+			});
 
-		if(cloneModel)
-			object->modelName = searchBox;
-		if(cloneVariant)
-		{
-			object->variantName = searchBox;
-			object->base = GameData::Ships().Get(object->modelName);
-		}
+	if(ImGui::InputCombo("ship", &searchBox, &object, GameData::Ships()))
 		searchBox.clear();
-		SetDirty();
-	}
-	if(save)
-		WriteToPlugin(object);
 
 	ImGui::Separator();
 	ImGui::Spacing();
-	RenderShip();
+	if(object)
+		RenderShip();
 	ImGui::End();
 }
 

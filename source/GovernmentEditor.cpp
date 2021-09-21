@@ -64,7 +64,7 @@ void GovernmentEditor::Render()
 	}
 
 	ImGui::SetNextWindowSize(ImVec2(550, 500), ImGuiCond_FirstUseEver);
-	if(!ImGui::Begin("Government Editor", &show))
+	if(!ImGui::Begin("Government Editor", &show, ImGuiWindowFlags_MenuBar))
 	{
 		if(IsDirty())
 			ImGui::PopStyleColor(3);
@@ -75,103 +75,100 @@ void GovernmentEditor::Render()
 	if(IsDirty())
 		ImGui::PopStyleColor(3);
 
-	if(ImGui::BeginCombo("government", object ? object->Name().c_str() : ""))
+	bool showNewGovernment = false;
+	bool showRenameGovernment = false;
+	bool showCloneGovernment = false;
+	if(ImGui::BeginMenuBar())
 	{
-		for(const auto &gov : GameData::Governments())
+		if(ImGui::BeginMenu("Government"))
 		{
-			const bool selected = object ? object->Name() == gov.first : false;
-			if(ImGui::Selectable(gov.first.c_str(), selected))
-				object = const_cast<Government *>(&gov.second);
-			if(selected)
-				ImGui::SetItemDefaultFocus();
-		}
-		ImGui::EndCombo();
-	}
-	ImGui::InputText("new clone name:", &searchBox);
-
-	if(!object || !IsDirty())
-		ImGui::PushDisabled();
-	bool reset = ImGui::Button("Reset");
-	if(!object || !IsDirty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select a government first.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to reset.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || searchBox.empty())
-		ImGui::PushDisabled();
-	bool clone = ImGui::Button("Clone");
-	if(!object || searchBox.empty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(searchBox.empty())
-				ImGui::SetTooltip("Input the new name for the government above.");
-			else if(!object)
-				ImGui::SetTooltip("Select a hazard first.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || !editor.HasPlugin() || !IsDirty())
-		ImGui::PushDisabled();
-	bool save = ImGui::Button("Save");
-	if(!object || !editor.HasPlugin() || !IsDirty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select a government first.");
-			else if(!editor.HasPlugin())
-				ImGui::SetTooltip("Load a plugin to save to a file.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to save.");
-		}
-	}
-
-	if(!object)
-	{
-		ImGui::End();
-		return;
-	}
-
-	if(reset)
-	{
-		bool found = false;
-		for(auto &&change : Changes())
-			if(change.TrueName() == object->TrueName())
+			const bool alreadyDefined = object && !GameData::baseGovernments.Has(object->TrueName());
+			ImGui::MenuItem("New", nullptr, &showNewGovernment);
+			ImGui::MenuItem("Rename", nullptr, &showRenameGovernment, alreadyDefined);
+			ImGui::MenuItem("Clone", nullptr, &showCloneGovernment, object);
+			if(ImGui::MenuItem("Save", nullptr, false, object && editor.HasPlugin() && IsDirty()))
+				WriteToPlugin(object);
+			if(ImGui::MenuItem("Reset", nullptr, false, object && IsDirty()))
 			{
-				*object = change;
-				found = true;
-				break;
-			}
-		if(!found)
-			*object = *GameData::baseGovernments.Get(object->TrueName());
-		SetClean();
-	}
-	if(clone)
-	{
-		auto *clone = const_cast<Government *>(GameData::Governments().Get(searchBox));
-		*clone = *object;
-		object = clone;
+				SetClean();
+				bool found = false;
+				for(auto &&change : Changes())
+					if(change.TrueName() == object->TrueName())
+					{
+						*object = change;
+						found = true;
+						break;
+					}
 
-		object->name = searchBox;
-		searchBox.clear();
-		SetDirty();
+				if(!found && GameData::baseGovernments.Has(object->TrueName()))
+					*object = *GameData::baseGovernments.Get(object->TrueName());
+				else if(!found)
+				{
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+					GameData::Governments().Erase(object->TrueName());
+					object = nullptr;
+				}
+			}
+			if(ImGui::MenuItem("Delete", nullptr, false, alreadyDefined))
+			{
+				if(find_if(Changes().begin(), Changes().end(), [this](const Government &gov)
+							{
+								return gov.TrueName() == object->TrueName();
+							}) != Changes().end())
+				{
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+				}
+				else
+					SetClean();
+				GameData::Governments().Erase(object->TrueName());
+				object = nullptr;
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMenuBar();
 	}
-	if(save)
-		WriteToPlugin(object);
+
+	if(showNewGovernment)
+		ImGui::OpenPopup("New Government");
+	if(showRenameGovernment)
+		ImGui::OpenPopup("Rename Government");
+	if(showCloneGovernment)
+		ImGui::OpenPopup("Clone Government");
+	ImGui::BeginSimpleNewModal("New Government", [this](const string &name)
+			{
+				auto *newGov = const_cast<Government *>(GameData::Governments().Get(name));
+				newGov->name = name;
+				object = newGov;
+				SetDirty();
+			});
+	ImGui::BeginSimpleRenameModal("Rename Government", [this](const string &name)
+			{
+				DeleteFromChanges();
+				editor.RenameObject(keyFor<Government>(), object->TrueName(), name);
+				GameData::Governments().Rename(object->TrueName(), name);
+				object->name = name;
+				WriteToPlugin(object, false);
+				SetDirty();
+			});
+	ImGui::BeginSimpleCloneModal("Clone Government", [this](const string &name)
+			{
+				auto *clone = const_cast<Government *>(GameData::Governments().Get(name));
+				*clone = *object;
+				object = clone;
+
+				object->name = name;
+				SetDirty();
+			});
+
+	if(ImGui::InputCombo("government", &searchBox, &object, GameData::Governments()))
+		searchBox.clear();
 
 	ImGui::Separator();
 	ImGui::Spacing();
-	RenderGovernment();
+	if(object)
+		RenderGovernment();
 	ImGui::End();
 }
 

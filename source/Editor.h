@@ -76,6 +76,8 @@ public:
 	UI &GetUI();
 	UI &GetMenu();
 
+	void RenameObject(const std::string &type, const std::string &oldName, const std::string &newName);
+
 
 private:
 	void NewPlugin(const std::string &plugin);

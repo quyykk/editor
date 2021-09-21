@@ -63,7 +63,7 @@ void EffectEditor::Render()
 	}
 
 	ImGui::SetNextWindowSize(ImVec2(550, 500), ImGuiCond_FirstUseEver);
-	if(!ImGui::Begin("Effect Editor", &show))
+	if(!ImGui::Begin("Effect Editor", &show, ImGuiWindowFlags_MenuBar))
 	{
 		if(IsDirty())
 			ImGui::PopStyleColor(3);
@@ -74,96 +74,100 @@ void EffectEditor::Render()
 	if(IsDirty())
 		ImGui::PopStyleColor(3);
 
-	Effect *selected = nullptr;
-	if(ImGui::InputCombo("effect", &searchBox, &selected, GameData::Effects()))
-		if(selected)
+	bool showNewEffect = false;
+	bool showRenameEffect = false;
+	bool showCloneEffect = false;
+	if(ImGui::BeginMenuBar())
+	{
+		if(ImGui::BeginMenu("Effect"))
 		{
-			object = selected;
-			searchBox.clear();
-		}
-	if(!object || !IsDirty())
-		ImGui::PushDisabled();
-	bool reset = ImGui::Button("Reset");
-	if(!object || !IsDirty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select an effect first.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to reset.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || searchBox.empty())
-		ImGui::PushDisabled();
-	bool clone = ImGui::Button("Clone");
-	if(!object || searchBox.empty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(searchBox.empty())
-				ImGui::SetTooltip("Input the new name for the effect above.");
-			else if(!object)
-				ImGui::SetTooltip("Select a effect first.");
-		}
-	}
-	ImGui::SameLine();
-	if(!object || !editor.HasPlugin() || !IsDirty())
-		ImGui::PushDisabled();
-	bool save = ImGui::Button("Save");
-	if(!object || !editor.HasPlugin() || !IsDirty())
-	{
-		ImGui::PopDisabled();
-		if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		{
-			if(!object)
-				ImGui::SetTooltip("Select an effect first.");
-			else if(!editor.HasPlugin())
-				ImGui::SetTooltip("Load a plugin to save to a file.");
-			else if(!IsDirty())
-				ImGui::SetTooltip("No changes to save.");
-		}
-	}
-
-	if(!object)
-	{
-		ImGui::End();
-		return;
-	}
-
-	if(reset)
-	{
-		bool found = false;
-		for(auto &&change : Changes())
-			if(change.Name() == object->Name())
+			const bool alreadyDefined = object && !GameData::baseEffects.Has(object->name);
+			ImGui::MenuItem("New", nullptr, &showNewEffect);
+			ImGui::MenuItem("Rename", nullptr, &showRenameEffect, alreadyDefined);
+			ImGui::MenuItem("Clone", nullptr, &showCloneEffect, object);
+			if(ImGui::MenuItem("Save", nullptr, false, object && editor.HasPlugin() && IsDirty()))
+				WriteToPlugin(object);
+			if(ImGui::MenuItem("Reset", nullptr, false, object && IsDirty()))
 			{
-				*object = change;
-				found = true;
-				break;
-			}
-		if(!found)
-			*object = *GameData::baseEffects.Get(object->name);
-		SetClean();
-	}
-	if(clone)
-	{
-		auto *clone = const_cast<Effect *>(GameData::Effects().Get(searchBox));
-		*clone = *object;
-		object = clone;
+				SetClean();
+				bool found = false;
+				for(auto &&change : Changes())
+					if(change.Name() == object->Name())
+					{
+						*object = change;
+						found = true;
+						break;
+					}
 
-		object->name = searchBox;
-		searchBox.clear();
-		SetDirty();
+				if(!found && GameData::baseEffects.Has(object->name))
+					*object = *GameData::baseEffects.Get(object->name);
+				else if(!found)
+				{
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+					GameData::Effects().Erase(object->name);
+					object = nullptr;
+				}
+			}
+			if(ImGui::MenuItem("Delete", nullptr, false, alreadyDefined))
+			{
+				if(find_if(Changes().begin(), Changes().end(), [this](const Effect &effect)
+							{
+								return effect.name == object->name;
+							}) != Changes().end())
+				{
+					SetDirty("[deleted]");
+					DeleteFromChanges();
+				}
+				else
+					SetClean();
+				GameData::Effects().Erase(object->name);
+				object = nullptr;
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMenuBar();
 	}
-	if(save)
-		WriteToPlugin(object);
+
+	if(showNewEffect)
+		ImGui::OpenPopup("New Effect");
+	if(showRenameEffect)
+		ImGui::OpenPopup("Rename Effect");
+	if(showCloneEffect)
+		ImGui::OpenPopup("Clone Effect");
+	ImGui::BeginSimpleNewModal("New Effect", [this](const string &name)
+			{
+				auto *newEffect = const_cast<Effect *>(GameData::Effects().Get(name));
+				newEffect->name = name;
+				object = newEffect;
+				SetDirty();
+			});
+	ImGui::BeginSimpleRenameModal("Rename Effect", [this](const string &name)
+			{
+				DeleteFromChanges();
+				editor.RenameObject(keyFor<Effect>(), object->name, name);
+				GameData::Effects().Rename(object->name, name);
+				object->name = name;
+				WriteToPlugin(object, false);
+				SetDirty();
+			});
+	ImGui::BeginSimpleCloneModal("Clone Effect", [this](const string &name)
+			{
+				auto *clone = const_cast<Effect *>(GameData::Effects().Get(name));
+				*clone = *object;
+				object = clone;
+
+				object->name = searchBox;
+				SetDirty();
+			});
+
+	if(ImGui::InputCombo("effect", &searchBox, &object, GameData::Effects()))
+		searchBox.clear();
 
 	ImGui::Separator();
 	ImGui::Spacing();
-	RenderEffect();
+	if(object)
+		RenderEffect();
 	ImGui::End();
 }
 

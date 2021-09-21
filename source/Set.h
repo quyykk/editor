@@ -34,6 +34,8 @@ public:
 	const Type *Find(const std::string &name) const;
 	
 	bool Has(const std::string &name) const { return data.count(name); }
+	void Rename(const std::string &name, const std::string &newName) const;
+	void Erase(const std::string &name) const { data[name] = {}; }
 	
 	typename std::map<std::string, Type>::iterator begin() { return data.begin(); }
 	typename std::map<std::string, Type>::const_iterator begin() const { return data.begin(); }
@@ -66,6 +68,16 @@ template <class Type>
 Type *Set<Type>::Find(const std::string &name)
 {
 	return const_cast<Type *>(const_cast<const Set<Type> *>(this)->Find(name));
+}
+
+
+
+template <typename T>
+void Set<T>::Rename(const std::string &name, const std::string &newName) const
+{
+	auto node = data.extract(name);
+	node.key() = newName;
+	data.insert(std::move(node));
 }
 
 
