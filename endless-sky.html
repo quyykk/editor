@@ -153,7 +153,9 @@
         </div>
       </div>
       <button class="load-button" disabled>Play</button>
-      <h2 class="plugins-header" style="display: none;">Plugins</h2>
+      <h2 class="plugin-editor-header" style="display: none;">Upload Plugins</h2>
+      <div class="plugin-editor-upload"></div>
+      <h2 class="external-plugins-header" style="display: none;">Published Plugins</h2>
       <div class="plugins-list">Plugins</div>
     </div>
     <div class="debug">
@@ -353,16 +355,19 @@
         }
         await idbReady();
 
-        const showPluginManager = (new URL(location)).searchParams.has('plugins');
+        const showRemotePlugins = (new URL(location)).searchParams.has('plugins');
 
         let loadButtonResolve
         const loadButtonPromise = new Promise((r) => loadButtonResolve = r);
         const loadButton = document.querySelector('.load-button');
 
-        if (showPluginManager) {
+        const pluginEditor = true; // this is the the editor
+        if (showRemotePlugins || pluginEditor) {
           loadButton.disabled = false;
           loadButton.addEventListener("click", loadButtonResolve);
         } else {
+          // just load immediately
+          loadButtonResolve();
           loadButton.style.display = 'none';
         }
 
@@ -375,14 +380,30 @@
         await addMainScriptTag(data);
         await runtimeInitializedPromise;
 
-        if (showPluginManager) {
-          document.querySelector('.plugins-header').style.display = '';
-          const plugins = await (await fetch("https://raw.githubusercontent.com/EndlessSkyCommunity/endless-sky-plugins/master/generated/plugins.json")).json()
-          showPlugins(document.querySelector('.plugins-list'), plugins);
-          FS.mkdir('plugins');
+        FS.mkdir('plugins');
+        if (showRemotePlugins) {
+          let remotePlugins;
+          // catch mostly for offline dev
+          try {
+            remotePlugins = await (await fetch("https://raw.githubusercontent.com/EndlessSkyCommunity/endless-sky-plugins/master/generated/plugins.json")).json();
+          } catch (e) {
+            window.foo = e;
+            if (e instanceof TypeError && e.message === 'Failed to fetch') {
+              console.log("maybe the GitHub plugins link is broken, but more likely you're offline");
+              // TODO check connection status?
+            } else throw e;
+          }
 
-          await loadButtonPromise
+          if (remotePlugins) {
+            document.querySelector('.external-plugins-header').style.display = '';
+            showPlugins(document.querySelector('.plugins-list'), remotePlugins);
+          }
         }
+        if (pluginEditor) {
+            document.querySelector('.plugin-editor-header').style.display = '';
+            showPluginUpload(document.querySelector('.plugin-editor-upload'));
+        }
+        await loadButtonPromise;
         loadButton.disabled = true;
         document.querySelector('.loading').style.zIndex = -1;
         Module.callMain([]);
