@@ -349,23 +349,46 @@ void OutfitEditor::RenderOutfit()
 		ImGui::TreePop();
 	}
 
+	if(ImGui::Checkbox("Weapon", &object->isWeapon))
+		SetDirty();
 	if(ImGui::TreeNode("weapon"))
 	{
 		bool isClustered = false;
 		if(ImGui::Checkbox("stream", &object->isStreamed))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::Checkbox("cluster", &isClustered))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::Checkbox("safe", &object->isSafe))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::Checkbox("phasing", &object->isPhasing))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::Checkbox("no damage scaling", &object->isDamageScaled))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::Checkbox("parallel", &object->isParallel))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::Checkbox("gravitational", &object->isGravitational))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		RenderElement(&object->sprite, "sprite");
 		RenderElement(&object->hardpointSprite, "hardpoint sprite");
 		static string value;
@@ -375,6 +398,7 @@ void OutfitEditor::RenderOutfit()
 			if(Audio::Has(value))
 			{
 				object->sound = Audio::Get(value);
+				object->isWeapon = true;
 				SetDirty();
 			}
 		if(ImGui::TreeNode("ammo"))
@@ -400,6 +424,7 @@ void OutfitEditor::RenderOutfit()
 		if(ImGui::InputCombo("icon", &value, &iconSprite, SpriteSet::GetSprites()))
 		{
 			object->icon = iconSprite;
+			object->isWeapon = true;
 			SetDirty();
 		}
 		RenderEffect("fire effect", object->fireEffects);
@@ -414,6 +439,7 @@ void OutfitEditor::RenderOutfit()
 			if(ImGui::Selectable("Add submunition"))
 			{
 				object->submunitions.emplace_back(nullptr, 1);
+				object->isWeapon = true;
 				SetDirty();
 			}
 			ImGui::EndPopup();
@@ -474,164 +500,290 @@ void OutfitEditor::RenderOutfit()
 		if(ImGui::InputInt("lifetime", &object->lifetime))
 		{
 			object->lifetime = max(0, object->lifetime);
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputInt("random lifetime", &object->randomLifetime))
 		{
 			object->randomLifetime = max(0, object->randomLifetime);
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputDoubleEx("reload", &object->reload))
 		{
 			object->reload = max(1., object->reload);
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputDoubleEx("burst reload", &object->burstReload))
 		{
 			object->burstReload = max(1., object->burstReload);
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputInt("burst count", &object->burstCount))
 		{
 			object->burstCount = max(1, object->burstCount);
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputInt("homing", &object->homing))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputInt("missile strength", &object->missileStrength))
 		{
 			object->missileStrength = max(0, object->missileStrength);
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputInt("anti-missile", &object->antiMissile))
 		{
 			object->antiMissile = max(0, object->antiMissile);
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputDoubleEx("velocity", &object->velocity))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("random velocity", &object->randomVelocity))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("acceleration", &object->acceleration))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("drag", &object->drag))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		double hardpointOffset[2] = {object->hardpointOffset.X(), -object->hardpointOffset.Y()};
 		if(ImGui::InputDouble2Ex("hardpoint offset", hardpointOffset))
 		{
 			object->hardpointOffset.Set(hardpointOffset[0], -hardpointOffset[1]);
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputDoubleEx("turn", &object->turn))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("inaccuracy", &object->inaccuracy))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("turret turn", &object->turretTurn))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("tracking", &object->tracking))
 		{
 			object->tracking = max(0., min(1., object->tracking));
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputDoubleEx("optical tracking", &object->opticalTracking))
 		{
 			object->opticalTracking = max(0., min(1., object->opticalTracking));
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputDoubleEx("infrared tracking", &object->infraredTracking))
 		{
 			object->infraredTracking = max(0., min(1., object->infraredTracking));
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputDoubleEx("radar tracking", &object->radarTracking))
 		{
 			object->radarTracking = max(0., min(1., object->radarTracking));
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputDoubleEx("firing energy", &object->firingEnergy))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("firing force", &object->firingForce))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("firing fuel", &object->firingFuel))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("firing heat", &object->firingHeat))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("firing hull", &object->firingHull))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("firing shields", &object->firingShields))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("firing ion", &object->firingIon))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("firing slowing", &object->firingSlowing))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("firing disruption", &object->firingDisruption))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("relative firing energy", &object->relativeFiringEnergy))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("relative firing heat", &object->relativeFiringHeat))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("relative firing fuel", &object->relativeFiringFuel))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("relative firing hull", &object->relativeFiringHull))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("relative firing shields", &object->relativeFiringShields))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("split range", &object->splitRange))
 		{
 			object->splitRange = max(0., object->splitRange);
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputDoubleEx("trigger radius", &object->triggerRadius))
 		{
 			object->triggerRadius = max(0., object->triggerRadius);
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputDoubleEx("blast radius", &object->blastRadius))
 		{
 			object->blastRadius = max(0., object->blastRadius);
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputDoubleEx("shield damage", &object->damage[Weapon::SHIELD_DAMAGE]))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("hull damage", &object->damage[Weapon::HULL_DAMAGE]))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("fuel damage", &object->damage[Weapon::FUEL_DAMAGE]))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("heat damage", &object->damage[Weapon::HEAT_DAMAGE]))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("energy damage", &object->damage[Weapon::ENERGY_DAMAGE]))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("ion damage", &object->damage[Weapon::ION_DAMAGE]))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("disruption damage", &object->damage[Weapon::DISRUPTION_DAMAGE]))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("slowing damage", &object->damage[Weapon::SLOWING_DAMAGE]))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("relatile shield damage", &object->damage[Weapon::RELATIVE_SHIELD_DAMAGE]))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("relative hull damage", &object->damage[Weapon::RELATIVE_HULL_DAMAGE]))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("relative fuel damage", &object->damage[Weapon::RELATIVE_FUEL_DAMAGE]))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("relative heat damage", &object->damage[Weapon::RELATIVE_HEAT_DAMAGE]))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("relative energy damage", &object->damage[Weapon::RELATIVE_ENERGY_DAMAGE]))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("hit force", &object->damage[Weapon::HIT_FORCE]))
+		{
+			object->isWeapon = true;
 			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("piecing", &object->piercing))
 		{
 			object->piercing = max(0., object->piercing);
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputDoubleEx("range override", &object->rangeOverride))
 		{
 			object->rangeOverride = max(0., object->rangeOverride);
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputDoubleEx("velocity override", &object->velocityOverride))
 		{
 			object->velocityOverride = max(0., object->velocityOverride);
+			object->isWeapon = true;
 			SetDirty();
 		}
 		double dropoff[2] = {object->damageDropoffRange.first, object->damageDropoffRange.second};
@@ -640,11 +792,13 @@ void OutfitEditor::RenderOutfit()
 			object->damageDropoffRange.first = max(0., dropoff[0]);
 			object->damageDropoffRange.second = dropoff[1];
 			object->hasDamageDropoff = true;
+			object->isWeapon = true;
 			SetDirty();
 		}
 		if(ImGui::InputDoubleEx("dropoff modifier", &object->damageDropoffModifier))
 		{
 			object->damageDropoffModifier = max(0., object->damageDropoffModifier);
+			object->isWeapon = true;
 			SetDirty();
 		}
 
@@ -758,6 +912,13 @@ void OutfitEditor::WriteToFile(DataWriter &writer, const Outfit *outfit)
 		for(auto &&jumpEffect : outfit->jumpEffects)
 			for(int i = 0; i < jumpEffect.second; ++i)
 				writer.Write("jump effect", jumpEffect.first->Name());
+	if(!outfit->isWeapon && (!diff || outfit->ammo != diff->ammo))
+		if(outfit->ammo.first || diff)
+		{
+			writer.WriteToken("ammo");
+			writer.WriteToken(outfit->ammo.first->Name());
+			writer.Write();
+		}
 
 	bool hasWrittenWeapon = false;
 	auto writeWeapon = [&hasWrittenWeapon, &writer]()
@@ -818,7 +979,7 @@ void OutfitEditor::WriteToFile(DataWriter &writer, const Outfit *outfit)
 			writeWeapon();
 			writer.Write("sound", outfit->sound->Name());
 		}
-	if(!diff || outfit->ammo != diff->ammo)
+	if(outfit->isWeapon && (!diff || outfit->ammo != diff->ammo))
 		if(outfit->ammo.first || diff)
 		{
 			writeWeapon();
