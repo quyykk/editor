@@ -246,9 +246,9 @@
         if (numerator === denominator) {
           progress.style.transition = 'none';
           if (usingCache) {
-            progressText.textContent = "Using cached data. Loading..."
+            progressText.textContent = "Using cached data."
           } else {
-            progressText.textContent = "Downloading complete. Loading..."
+            progressText.textContent = "Downloading complete."
           }
         }
       }
@@ -373,7 +373,6 @@
         } else {
           // just load immediately
           loadButtonResolve();
-          loadButton.style.display = 'none';
         }
 
         // If no dataversion available, force download with date string
@@ -410,8 +409,18 @@
             showPluginUpload(document.querySelector('.plugin-editor-upload'));
         }
         await loadButtonPromise;
+        loadButton.style.display = 'none';
         loadButton.disabled = true;
         document.querySelector('.loading').style.zIndex = -1;
+
+        progressText.textContent = progressText.textContent + " Loading...";
+
+        // yield to event loop so that button disappears immediately
+        await new Promise(r => setTimeout(r, 0));
+
+        // important to hide to avoid stealing focus
+        document.querySelector('.plugin-editor-upload').style.display = 'none';
+
         Module.callMain([]);
       }
 
