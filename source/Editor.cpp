@@ -659,6 +659,19 @@ void Editor::OpenPlugin(const string &plugin)
 
 	currentPlugin = path;
 	currentPluginName = plugin;
+	pluginPaths.clear();
+	unimplementedNodes.clear();
+
+	effectEditor.Clear();
+	fleetEditor.Clear();
+	hazardEditor.Clear();
+	governmentEditor.Clear();
+	outfitEditor.Clear();
+	outfitterEditor.Clear();
+	shipEditor.Clear();
+	shipyardEditor.Clear();
+	systemEditor.Clear();
+	planetEditor.Clear();
 
 	GameData::baseEffects.clear();
 	GameData::baseFleets.clear();

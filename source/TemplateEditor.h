@@ -89,6 +89,14 @@ public:
 	const std::list<T> &Changes() const { return changes; }
 	const std::map<const T *, std::string> &Dirty() const { return dirty; }
 
+	void Clear()
+	{
+		searchBox.clear();
+		object = nullptr;
+		dirty.clear();
+		changes.clear();
+	}
+
 	// Saves the specified object.
 	void WriteToPlugin(const T *object, bool useDefault = true) { WriteToPlugin(object, useDefault, 0); }
 	template<typename U>
