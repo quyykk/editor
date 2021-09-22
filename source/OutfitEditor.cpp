@@ -655,6 +655,26 @@ void OutfitEditor::RenderOutfit()
 			object->isWeapon = true;
 			SetDirty();
 		}
+		if(ImGui::InputDoubleEx("firing discharge", &object->firingDischarge))
+		{
+			object->isWeapon = true;
+			SetDirty();
+		}
+		if(ImGui::InputDoubleEx("firing corrosion", &object->firingCorrosion))
+		{
+			object->isWeapon = true;
+			SetDirty();
+		}
+		if(ImGui::InputDoubleEx("firing leak", &object->firingLeak))
+		{
+			object->isWeapon = true;
+			SetDirty();
+		}
+		if(ImGui::InputDoubleEx("firing burn", &object->firingBurn))
+		{
+			object->isWeapon = true;
+			SetDirty();
+		}
 		if(ImGui::InputDoubleEx("relative firing energy", &object->relativeFiringEnergy))
 		{
 			object->isWeapon = true;
@@ -734,6 +754,26 @@ void OutfitEditor::RenderOutfit()
 			SetDirty();
 		}
 		if(ImGui::InputDoubleEx("slowing damage", &object->damage[Weapon::SLOWING_DAMAGE]))
+		{
+			object->isWeapon = true;
+			SetDirty();
+		}
+		if(ImGui::InputDoubleEx("discharge damage", &object->damage[Weapon::DISCHARGE_DAMAGE]))
+		{
+			object->isWeapon = true;
+			SetDirty();
+		}
+		if(ImGui::InputDoubleEx("corrosion damage", &object->damage[Weapon::CORROSION_DAMAGE]))
+		{
+			object->isWeapon = true;
+			SetDirty();
+		}
+		if(ImGui::InputDoubleEx("leak damage", &object->damage[Weapon::LEAK_DAMAGE]))
+		{
+			object->isWeapon = true;
+			SetDirty();
+		}
+		if(ImGui::InputDoubleEx("burn damage", &object->damage[Weapon::BURN_DAMAGE]))
 		{
 			object->isWeapon = true;
 			SetDirty();
@@ -1244,6 +1284,30 @@ void OutfitEditor::WriteToFile(DataWriter &writer, const Outfit *outfit)
 			writeWeapon();
 			writer.Write("firing disruption", outfit->firingDisruption);
 		}
+	if(!diff || outfit->firingDischarge != diff->firingDischarge)
+		if(outfit->firingDischarge || diff)
+		{
+			writeWeapon();
+			writer.Write("firing discharge", outfit->firingDischarge);
+		}
+	if(!diff || outfit->firingCorrosion != diff->firingCorrosion)
+		if(outfit->firingCorrosion || diff)
+		{
+			writeWeapon();
+			writer.Write("firing corrosion", outfit->firingCorrosion);
+		}
+	if(!diff || outfit->firingLeak != diff->firingLeak)
+		if(outfit->firingLeak || diff)
+		{
+			writeWeapon();
+			writer.Write("firing leak", outfit->firingLeak);
+		}
+	if(!diff || outfit->firingBurn != diff->firingBurn)
+		if(outfit->firingBurn || diff)
+		{
+			writeWeapon();
+			writer.Write("firing burn", outfit->firingBurn);
+		}
 	if(!diff || outfit->relativeFiringEnergy != diff->relativeFiringEnergy)
 		if(outfit->relativeFiringEnergy || diff)
 		{
@@ -1339,6 +1403,30 @@ void OutfitEditor::WriteToFile(DataWriter &writer, const Outfit *outfit)
 		{
 			writeWeapon();
 			writer.Write("slowing damage", outfit->damage[Weapon::SLOWING_DAMAGE]);
+		}
+	if(!diff || outfit->damage[Weapon::DISCHARGE_DAMAGE] != diff->damage[Weapon::DISCHARGE_DAMAGE])
+		if(outfit->damage[Weapon::DISCHARGE_DAMAGE] || diff)
+		{
+			writeWeapon();
+			writer.Write("discharge damage", outfit->damage[Weapon::DISCHARGE_DAMAGE]);
+		}
+	if(!diff || outfit->damage[Weapon::CORROSION_DAMAGE] != diff->damage[Weapon::CORROSION_DAMAGE])
+		if(outfit->damage[Weapon::CORROSION_DAMAGE] || diff)
+		{
+			writeWeapon();
+			writer.Write("corrosion damage", outfit->damage[Weapon::CORROSION_DAMAGE]);
+		}
+	if(!diff || outfit->damage[Weapon::LEAK_DAMAGE] != diff->damage[Weapon::LEAK_DAMAGE])
+		if(outfit->damage[Weapon::LEAK_DAMAGE] || diff)
+		{
+			writeWeapon();
+			writer.Write("leak damage", outfit->damage[Weapon::LEAK_DAMAGE]);
+		}
+	if(!diff || outfit->damage[Weapon::BURN_DAMAGE] != diff->damage[Weapon::BURN_DAMAGE])
+		if(outfit->damage[Weapon::BURN_DAMAGE] || diff)
+		{
+			writeWeapon();
+			writer.Write("burn damage", outfit->damage[Weapon::BURN_DAMAGE]);
 		}
 	if(!diff || outfit->damage[Weapon::RELATIVE_SHIELD_DAMAGE] != diff->damage[Weapon::RELATIVE_SHIELD_DAMAGE])
 		if(outfit->damage[Weapon::RELATIVE_SHIELD_DAMAGE] || diff)
