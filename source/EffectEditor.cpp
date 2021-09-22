@@ -74,6 +74,10 @@ void EffectEditor::Render()
 	if(IsDirty())
 		ImGui::PopStyleColor(3);
 
+	if(object && editor.HasPlugin() && IsDirty()
+			&& ImGui::IsWindowFocused() && ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(SDL_SCANCODE_S))
+		WriteToPlugin(object);
+
 	bool showNewEffect = false;
 	bool showRenameEffect = false;
 	bool showCloneEffect = false;

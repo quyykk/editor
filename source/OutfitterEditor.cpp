@@ -75,6 +75,10 @@ void OutfitterEditor::Render()
 	if(IsDirty())
 		ImGui::PopStyleColor(3);
 
+	if(object && editor.HasPlugin() && IsDirty()
+			&& ImGui::IsWindowFocused() && ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(SDL_SCANCODE_S))
+		WriteToPlugin(object);
+
 	bool showNewOutfitter = false;
 	bool showRenameOutfitter = false;
 	bool showCloneOutfitter = false;

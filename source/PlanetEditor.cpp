@@ -74,6 +74,10 @@ void PlanetEditor::Render()
 	if(IsDirty())
 		ImGui::PopStyleColor(3);
 
+	if(object && editor.HasPlugin() && IsDirty()
+			&& ImGui::IsWindowFocused() && ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(SDL_SCANCODE_S))
+		WriteToPlugin(object);
+
 	bool showNewPlanet = false;
 	bool showRenamePlanet = false;
 	bool showClonePlanet = false;
