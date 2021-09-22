@@ -97,7 +97,7 @@ lib/emcc/libendless-sky.a: $(OBJS_EXCEPT_MAIN)
 	@mkdir -p lib/emcc
 	emar rcs lib/emcc/libendless-sky.a $(OBJS_EXCEPT_MAIN)
 
-endless-sky.js endless-sky.wasm endless-sky.data: libjpeg-turbo-2.1.0/libturbojpeg.a lib/emcc/libendless-sky.a build/emcc/main.o
+endless-sky.js: libjpeg-turbo-2.1.0/libturbojpeg.a lib/emcc/libendless-sky.a build/emcc/main.o
 ifndef EMSCRIPTEN_ENV
 	$(error "em++ is not available, activate the emscripten env first")
 endif
@@ -105,7 +105,7 @@ endif
 
 dataversion.js: endless-sky.js
 	./hash-data.py endless-sky.data dataversion.js
-output/index.html: endless-sky.js endless-sky.wasm endless-sky.html favicon.ico endless-sky.data Ubuntu-Regular.ttf dataversion.js js/cached-resource.js js/plugins.js js/save-games.js
+output/index.html: endless-sky.js endless-sky.html favicon.ico Ubuntu-Regular.ttf dataversion.js js/cached-resource.js js/plugins.js js/save-games.js
 	rm -rf output
 	mkdir -p output
 	cp endless-sky.html output/index.html
