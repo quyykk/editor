@@ -595,54 +595,7 @@ void SystemEditor::RenderSystem()
 		ImGui::TreePop();
 	}
 
-	bool hazardOpen = ImGui::TreeNode("hazards");
-	if(ImGui::BeginPopupContextItem())
-	{
-		if(ImGui::Selectable("Add Hazard"))
-			object->hazards.emplace_back(&GameData::Hazards().begin()->second, 1);
-		ImGui::EndPopup();
-	}
-
-	if(hazardOpen)
-	{
-		index = 0;
-		int toRemove = -1;
-		for(auto &hazard : object->hazards)
-		{
-			ImGui::PushID(index);
-			bool open = ImGui::TreeNode("hazard", "hazard: %s %d", hazard.Get()->Name().c_str(), hazard.period);
-			if(ImGui::BeginPopupContextItem())
-			{
-				if(ImGui::Selectable("Remove"))
-					toRemove = index;
-				ImGui::EndPopup();
-			}
-
-			if(open)
-			{
-				static Hazard *selected;
-				string hazardName = hazard.Get() ? hazard.Get()->Name() : "";
-				if(ImGui::InputCombo("hazard", &hazardName, &selected, GameData::Hazards()))
-					if(selected)
-					{
-						hazard.event = selected;
-						SetDirty();
-					}
-				if(ImGui::InputInt("period", &hazard.period))
-					SetDirty();
-				ImGui::TreePop();
-			}
-			++index;
-			ImGui::PopID();
-		}
-
-		if(toRemove != -1)
-		{
-			object->hazards.erase(object->hazards.begin() + toRemove);
-			SetDirty();
-		}
-		ImGui::TreePop();
-	}
+	RenderHazards(object->hazards);
 
 	double pos[2] = {object->position.X(), object->Position().Y()};
 	if(ImGui::InputDouble2Ex("pos", pos, ImGuiInputTextFlags_EnterReturnsTrue))
@@ -851,6 +804,8 @@ void SystemEditor::RenderObject(StellarObject &object, int index, int &nested, b
 		if(ImGui::InputDoubleEx("offset", &object.offset))
 			SetDirty();
 
+		RenderHazards(object.hazards);
+
 		if(IsDirty())
 			this->object->SetDate(editor.Player().GetDate());
 
@@ -878,6 +833,60 @@ void SystemEditor::RenderObject(StellarObject &object, int index, int &nested, b
 			--nested;
 			ImGui::TreePop();
 		}
+	}
+}
+
+
+
+void SystemEditor::RenderHazards(std::vector<RandomEvent<Hazard>> &hazards)
+{
+	bool hazardOpen = ImGui::TreeNode("hazards");
+	if(ImGui::BeginPopupContextItem())
+	{
+		if(ImGui::Selectable("Add Hazard"))
+			hazards.emplace_back(&GameData::Hazards().begin()->second, 1);
+		ImGui::EndPopup();
+	}
+
+	if(hazardOpen)
+	{
+		int index = 0;
+		int toRemove = -1;
+		for(auto &hazard : hazards)
+		{
+			ImGui::PushID(index);
+			bool open = ImGui::TreeNode("hazard", "hazard: %s %d", hazard.Get()->Name().c_str(), hazard.period);
+			if(ImGui::BeginPopupContextItem())
+			{
+				if(ImGui::Selectable("Remove"))
+					toRemove = index;
+				ImGui::EndPopup();
+			}
+
+			if(open)
+			{
+				static Hazard *selected;
+				string hazardName = hazard.Get() ? hazard.Get()->Name() : "";
+				if(ImGui::InputCombo("hazard", &hazardName, &selected, GameData::Hazards()))
+					if(selected)
+					{
+						hazard.event = selected;
+						SetDirty();
+					}
+				if(ImGui::InputInt("period", &hazard.period))
+					SetDirty();
+				ImGui::TreePop();
+			}
+			++index;
+			ImGui::PopID();
+		}
+
+		if(toRemove != -1)
+		{
+			hazards.erase(hazards.begin() + toRemove);
+			SetDirty();
+		}
+		ImGui::TreePop();
 	}
 }
 
@@ -915,6 +924,8 @@ void SystemEditor::WriteObject(DataWriter &writer, const System *system, const S
 		writer.Write("period", 360. / object->Speed());
 	if(object->Offset())
 		writer.Write("offset", object->Offset());
+	for(const auto &hazard : object->hazards)
+		writer.Write("hazard", hazard.Name(), hazard.Period());
 	writer.EndChild();
 
 	for(i = 0; i < nested; ++i)

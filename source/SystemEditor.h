@@ -53,6 +53,7 @@ public:
 private:
 	void RenderSystem();
 	void RenderObject(StellarObject &object, int index, int &nested, bool &hovered, bool &add);
+	void RenderHazards(std::vector<RandomEvent<Hazard>> &hazards);
 
 	void WriteObject(DataWriter &writer, const System *system, const StellarObject *object, bool add = false);
 
