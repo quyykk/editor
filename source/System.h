@@ -13,7 +13,9 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #ifndef SYSTEM_H_
 #define SYSTEM_H_
 
+#include "Hazard.h"
 #include "Point.h"
+#include "RandomEvent.h"
 #include "Set.h"
 #include "StellarObject.h"
 
@@ -25,7 +27,6 @@ class DataNode;
 class Date;
 class Fleet;
 class Government;
-class Hazard;
 class Minable;
 class Planet;
 class Ship;
@@ -69,56 +70,6 @@ public:
 		const Minable *type = nullptr;
 		int count;
 		double energy;
-
-		friend class SystemEditor;
-	};
-	
-	class FleetProbability {
-	public:
-		FleetProbability(const Fleet *fleet, int period);
-		
-		const Fleet *Get() const;
-		int Period() const;
-		const std::string &Name() const;
-
-		bool operator==(const FleetProbability &rhs) const
-		{
-			return fleet == rhs.fleet
-				&& period == rhs.period;
-		}
-		bool operator!=(const FleetProbability &rhs) const
-		{
-			return !(*this == rhs);
-		}
-		
-	private:
-		const Fleet *fleet;
-		int period;
-
-		friend class SystemEditor;
-	};
-	
-	class HazardProbability {
-	public:
-		HazardProbability(const Hazard *hazard, int period);
-		
-		const Hazard *Get() const;
-		int Period() const;
-		const std::string &Name() const;
-
-		bool operator==(const HazardProbability &rhs) const
-		{
-			return hazard == rhs.hazard
-				&& period == rhs.period;
-		}
-		bool operator!=(const HazardProbability &rhs) const
-		{
-			return !(*this == rhs);
-		}
-		
-	private:
-		const Hazard *hazard;
-		int period;
 
 		friend class SystemEditor;
 	};
@@ -206,9 +157,9 @@ public:
 	double Exports(const std::string &commodity) const;
 	
 	// Get the probabilities of various fleets entering this system.
-	const std::vector<FleetProbability> &Fleets() const;
+	const std::vector<RandomEvent<Fleet>> &Fleets() const;
 	// Get the probabilities of various hazards in this system.
-	const std::vector<HazardProbability> &Hazards() const;
+	const std::vector<RandomEvent<Hazard>> &Hazards() const;
 	// Check how dangerous this system is (credits worth of enemy ships jumping
 	// in per frame).
 	double Danger() const;
@@ -261,8 +212,8 @@ private:
 	std::vector<StellarObject> objects;
 	std::vector<Asteroid> asteroids;
 	const Sprite *haze = nullptr;
-	std::vector<FleetProbability> fleets;
-	std::vector<HazardProbability> hazards;
+	std::vector<RandomEvent<Fleet>> fleets;
+	std::vector<RandomEvent<Hazard>> hazards;
 	double habitable = 1000.;
 	double asteroidBelt = 1500.;
 	double jumpRange = 0.;

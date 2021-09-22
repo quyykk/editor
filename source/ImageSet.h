@@ -14,6 +14,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #define IMAGE_SET_H_
 
 #include "ImageBuffer.h"
+#include "Mask.h"
 
 #include <cstddef>
 #include <map>

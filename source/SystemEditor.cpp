@@ -576,7 +576,7 @@ void SystemEditor::RenderSystem()
 				if(ImGui::InputCombo("fleet", &fleetName, &selected, GameData::Fleets()))
 					if(selected)
 					{
-						fleet.fleet = selected;
+						fleet.event = selected;
 						selected = nullptr;
 						SetDirty();
 					}
@@ -625,7 +625,7 @@ void SystemEditor::RenderSystem()
 				if(ImGui::InputCombo("hazard", &hazardName, &selected, GameData::Hazards()))
 					if(selected)
 					{
-						hazard.hazard = selected;
+						hazard.event = selected;
 						SetDirty();
 					}
 				if(ImGui::InputInt("period", &hazard.period))

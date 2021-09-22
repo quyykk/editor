@@ -165,3 +165,10 @@ double StellarObject::Offset() const
 {
 	return offset;
 }
+
+
+
+const vector<RandomEvent<Hazard>> &StellarObject::Hazards() const
+{
+	return hazards;
+}

@@ -20,6 +20,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Fleet.h"
 #include "GameData.h"
 #include "Minable.h"
+#include "RandomEvent.h"
 #include "Sound.h"
 #include "Sprite.h"
 #include "SpriteSet.h"
@@ -383,11 +384,11 @@ inline void AdditionalCalls(DataWriter &writer, const System::Asteroid &obj)
 	writer.WriteToken(obj.Count());
 	writer.WriteToken(obj.Energy());
 }
-inline void AdditionalCalls(DataWriter &writer, const System::FleetProbability &obj)
+inline void AdditionalCalls(DataWriter &writer, const RandomEvent<Fleet> &obj)
 {
 	writer.WriteToken(obj.Period());
 }
-inline void AdditionalCalls(DataWriter &writer, const System::HazardProbability &obj)
+inline void AdditionalCalls(DataWriter &writer, const RandomEvent<Hazard> &obj)
 {
 	writer.WriteToken(obj.Period());
 }
