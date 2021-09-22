@@ -211,22 +211,14 @@ void GovernmentEditor::RenderGovernment()
 		for(auto it = object->attitudeToward.begin(); it != object->attitudeToward.end(); ++it)
 		{
 			ImGui::PushID(index++);
+			static Government *selected;
 			string govName = it->first ? it->first->TrueName() : "";
-			if(ImGui::BeginCombo("##gov", govName.c_str()))
+			if(ImGui::InputCombo("government", &govName, &selected, GameData::Governments()))
 			{
-				for(const auto &gov : GameData::Governments())
-				{
-					const bool selected = it->first == &gov.second;
-					if(ImGui::Selectable(gov.second.TrueName().c_str(), selected))
-					{
-						toAdd = &gov.second;
-						toRemove = it;
-						SetDirty();
-					}
-					if(selected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
+				if(selected)
+					toAdd = selected;
+				toRemove = it;
+				SetDirty();
 			}
 
 			ImGui::SameLine();
@@ -247,20 +239,14 @@ void GovernmentEditor::RenderGovernment()
 		}
 
 		ImGui::Spacing();
-		if(ImGui::BeginCombo("add government", ""))
-		{
-			for(const auto &gov : GameData::Governments())
+		static Government *selected;
+		string name;
+		if(ImGui::InputCombo("add government", &name, &selected, GameData::Governments()))
+			if(selected)
 			{
-				if(object->attitudeToward.find(&gov.second) != object->attitudeToward.end())
-					continue;
-				if(ImGui::Selectable(gov.second.TrueName().c_str()))
-				{
-					object->attitudeToward.emplace(&gov.second, 0.);
-					SetDirty();
-				}
+				object->attitudeToward.emplace(selected, 0.);
+				SetDirty();
 			}
-			ImGui::EndCombo();
-		}
 		ImGui::TreePop();
 	}
 

@@ -571,24 +571,15 @@ void SystemEditor::RenderSystem()
 
 			if(open)
 			{
-				if(ImGui::BeginCombo("fleet", fleet.Get()->Name().c_str()))
-				{
-					int index = 0;
-					for(const auto &item : GameData::Fleets())
+				static Fleet *selected;
+				string fleetName = fleet.Get() ? fleet.Get()->Name() : "";
+				if(ImGui::InputCombo("fleet", &fleetName, &selected, GameData::Fleets()))
+					if(selected)
 					{
-						const bool selected = &item.second == fleet.Get();
-						if(ImGui::Selectable(item.first.c_str(), selected))
-						{
-							fleet.fleet = &item.second;
-							SetDirty();
-						}
-						++index;
-
-						if(selected)
-							ImGui::SetItemDefaultFocus();
+						fleet.fleet = selected;
+						selected = nullptr;
+						SetDirty();
 					}
-					ImGui::EndCombo();
-				}
 				if(ImGui::InputInt("period", &fleet.period))
 					SetDirty();
 				ImGui::TreePop();
@@ -629,24 +620,14 @@ void SystemEditor::RenderSystem()
 
 			if(open)
 			{
-				if(ImGui::BeginCombo("hazard", hazard.Get()->Name().c_str()))
-				{
-					int index = 0;
-					for(const auto &item : GameData::Hazards())
+				static Hazard *selected;
+				string hazardName = hazard.Get() ? hazard.Get()->Name() : "";
+				if(ImGui::InputCombo("hazard", &hazardName, &selected, GameData::Hazards()))
+					if(selected)
 					{
-						const bool selected = &item.second == hazard.Get();
-						if(ImGui::Selectable(item.first.c_str(), selected))
-						{
-							hazard.hazard = &item.second;
-							SetDirty();
-						}
-						++index;
-
-						if(selected)
-							ImGui::SetItemDefaultFocus();
+						hazard.hazard = selected;
+						SetDirty();
 					}
-					ImGui::EndCombo();
-				}
 				if(ImGui::InputInt("period", &hazard.period))
 					SetDirty();
 				ImGui::TreePop();
@@ -671,22 +652,13 @@ void SystemEditor::RenderSystem()
 	}
 
 	{
-		if(ImGui::BeginCombo("government", object->government ? object->government->TrueName().c_str() : ""))
+		static Government *selected;
+		string govName = object->government ? object->government->TrueName() : "";
+		if(ImGui::InputCombo("government", &govName, &selected, GameData::Governments()))
 		{
-			for(const auto &government : GameData::Governments())
-			{
-				const bool selected = &government.second == object->government;
-				if(ImGui::Selectable(government.first.c_str(), selected))
-				{
-					object->government = &government.second;
-					UpdateMap();
-					SetDirty();
-				}
-
-				if(selected)
-					ImGui::SetItemDefaultFocus();
-			}
-			ImGui::EndCombo();
+			object->government = selected;
+			UpdateMap();
+			SetDirty();
 		}
 	}
 

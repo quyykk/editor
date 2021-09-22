@@ -213,68 +213,26 @@ void FleetEditor::RenderFleet()
 {
 	ImGui::Text("name: %s", object->fleetName.c_str());
 
+	static Government *selected;
 	string govName = object->government ? object->government->TrueName() : "";
-	if(ImGui::BeginCombo("government", govName.c_str()))
+	if(ImGui::InputCombo("government", &govName, &selected, GameData::Governments()))
 	{
-		for(const auto &item : GameData::Governments())
-		{
-			const bool selected = &item.second == object->government;
-			if(ImGui::Selectable(item.first.c_str(), selected))
-			{
-				object->government = &item.second;
-				SetDirty();
-			}
-			if(selected)
-				ImGui::SetItemDefaultFocus();
-		}
-		if(ImGui::Selectable("[empty]"))
-		{
-			object->government = nullptr;
-			SetDirty();
-		}
-		ImGui::EndCombo();
+		object->government = selected;
+		SetDirty();
 	}
+
+	static Phrase *selectedPhrase;
 	string names = object->names ? object->names->Name() : "";
-	if(ImGui::BeginCombo("names", names.c_str()))
+	if(ImGui::InputCombo("names", &names, &selectedPhrase, GameData::Phrases()))
 	{
-		for(const auto &item : GameData::Phrases())
-		{
-			const bool selected = &item.second == object->names;
-			if(ImGui::Selectable(item.first.c_str(), selected))
-			{
-				object->names = &item.second;
-				SetDirty();
-			}
-			if(selected)
-				ImGui::SetItemDefaultFocus();
-		}
-		if(ImGui::Selectable("[empty]"))
-		{
-			object->names = nullptr;
-			SetDirty();
-		}
-		ImGui::EndCombo();
+		object->names = selectedPhrase;
+		SetDirty();
 	}
 	string fighterNames = object->fighterNames ? object->fighterNames->Name() : "";
-	if(ImGui::BeginCombo("fighters", fighterNames.c_str()))
+	if(ImGui::InputCombo("fighters", &fighterNames, &selectedPhrase, GameData::Phrases()))
 	{
-		for(const auto &item : GameData::Phrases())
-		{
-			const bool selected = &item.second == object->fighterNames;
-			if(ImGui::Selectable(item.first.c_str(), selected))
-			{
-				object->fighterNames = &item.second;
-				SetDirty();
-			}
-			if(selected)
-				ImGui::SetItemDefaultFocus();
-		}
-		if(ImGui::Selectable("[empty]"))
-		{
-			object->fighterNames = nullptr;
-			SetDirty();
-		}
-		ImGui::EndCombo();
+		object->fighterNames = selectedPhrase;
+		SetDirty();
 	}
 
 	if(ImGui::InputInt("cargo", &object->cargo))
@@ -304,27 +262,14 @@ void FleetEditor::RenderFleet()
 		for(auto it = object->outfitters.begin(); it != object->outfitters.end(); ++it)
 		{
 			ImGui::PushID(index++);
-			if(ImGui::BeginCombo("outfitter", (*it)->name.c_str()))
+			static Sale<Outfit> *selected;
+			string name = (*it)->name;
+			if(ImGui::InputCombo("outfitter", &name, &selected, GameData::Outfitters()))
 			{
-				for(const auto &item : GameData::Outfitters())
-				{
-					const bool selected = &item.second == *it;
-					if(ImGui::Selectable(item.first.c_str(), selected))
-					{
-						toAdd = &item.second;
-						toRemove = *it;
-						SetDirty();
-					}
-					if(selected)
-						ImGui::SetItemDefaultFocus();
-				}
-
-				if(ImGui::Selectable("[remove]"))
-				{
-					toRemove = *it;
-					SetDirty();
-				}
-				ImGui::EndCombo();
+				if(selected)
+					toAdd = selected;
+				toRemove = *it;
+				SetDirty();
 			}
 			ImGui::PopID();
 		}
@@ -332,16 +277,14 @@ void FleetEditor::RenderFleet()
 			object->outfitters.insert(toAdd);
 		if(toRemove)
 			object->outfitters.erase(toRemove);
-		if(ImGui::BeginCombo("add outfitter", ""))
-		{
-			for(const auto &item : GameData::Outfitters())
-				if(ImGui::Selectable(item.first.c_str()))
-				{
-					object->outfitters.insert(&item.second);
-					SetDirty();
-				}
-			ImGui::EndCombo();
-		}
+		static Sale<Outfit> *selected;
+		string name;
+		if(ImGui::InputCombo("add outfitter", &name, &selected, GameData::Outfitters()))
+			if(selected)
+			{
+				object->outfitters.insert(selected);
+				SetDirty();
+			}
 		ImGui::TreePop();
 	}
 	if(ImGui::TreeNode("personality"))

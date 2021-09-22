@@ -236,27 +236,14 @@ void PlanetEditor::RenderPlanet()
 		for(auto it = object->shipSales.begin(); it != object->shipSales.end(); ++it)
 		{
 			ImGui::PushID(index++);
-			if(ImGui::BeginCombo("shipyard", (*it)->name.c_str()))
+			static Sale<Ship> *selected;
+			string name = (*it)->name.c_str();
+			if(ImGui::InputCombo("shipyard", &name, &selected, GameData::Shipyards()))
 			{
-				for(const auto &item : GameData::Shipyards())
-				{
-					const bool selected = &item.second == *it;
-					if(ImGui::Selectable(item.first.c_str(), selected))
-					{
-						toAdd = &item.second;
-						toRemove = *it;
-						SetDirty();
-					}
-					if(selected)
-						ImGui::SetItemDefaultFocus();
-				}
-
-				if(ImGui::Selectable("[remove]"))
-				{
-					toRemove = *it;
-					SetDirty();
-				}
-				ImGui::EndCombo();
+				if(selected)
+					toAdd = selected;
+				toRemove = *it;
+				SetDirty();
 			}
 			ImGui::PopID();
 		}
@@ -264,16 +251,14 @@ void PlanetEditor::RenderPlanet()
 			object->shipSales.insert(toAdd);
 		if(toRemove)
 			object->shipSales.erase(toRemove);
-		if(ImGui::BeginCombo("add shipyard", ""))
-		{
-			for(const auto &item : GameData::Shipyards())
-				if(ImGui::Selectable(item.first.c_str()))
-				{
-					object->shipSales.insert(&item.second);
-					SetDirty();
-				}
-			ImGui::EndCombo();
-		}
+		static Sale<Ship> *selected;
+		string name;
+		if(ImGui::InputCombo("add shipyard", &name, &selected, GameData::Shipyards()))
+			if(selected)
+			{
+				object->shipSales.insert(selected);
+				SetDirty();
+			}
 		ImGui::TreePop();
 	}
 	if(ImGui::TreeNode("outfitters"))
@@ -284,27 +269,14 @@ void PlanetEditor::RenderPlanet()
 		for(auto it = object->outfitSales.begin(); it != object->outfitSales.end(); ++it)
 		{
 			ImGui::PushID(index++);
-			if(ImGui::BeginCombo("outfitter", (*it)->name.c_str()))
+			static Sale<Outfit> *selected;
+			string name = (*it)->name.c_str();
+			if(ImGui::InputCombo("outfitter", &name, &selected, GameData::Outfitters()))
 			{
-				for(const auto &item : GameData::Outfitters())
-				{
-					const bool selected = &item.second == *it;
-					if(ImGui::Selectable(item.first.c_str(), selected))
-					{
-						toAdd = &item.second;
-						toRemove = *it;
-						SetDirty();
-					}
-					if(selected)
-						ImGui::SetItemDefaultFocus();
-				}
-
-				if(ImGui::Selectable("[remove]"))
-				{
-					toRemove = *it;
-					SetDirty();
-				}
-				ImGui::EndCombo();
+				if(selected)
+					toAdd = selected;
+				toRemove = *it;
+				SetDirty();
 			}
 			ImGui::PopID();
 		}
@@ -312,16 +284,14 @@ void PlanetEditor::RenderPlanet()
 			object->outfitSales.insert(toAdd);
 		if(toRemove)
 			object->outfitSales.erase(toRemove);
-		if(ImGui::BeginCombo("add outfitter", ""))
-		{
-			for(const auto &item : GameData::Outfitters())
-				if(ImGui::Selectable(item.first.c_str()))
-				{
-					object->outfitSales.insert(&item.second);
-					SetDirty();
-				}
-			ImGui::EndCombo();
-		}
+		static Sale<Outfit> *selected;
+		string name;
+		if(ImGui::InputCombo("add outfitter", &name, &selected, GameData::Outfitters()))
+			if(selected)
+			{
+				object->outfitSales.insert(selected);
+				SetDirty();
+			}
 		ImGui::TreePop();
 	}
 
@@ -348,30 +318,22 @@ void PlanetEditor::RenderPlanet()
 				}
 
 				ImGui::PushID(index);
-				if(ImGui::BeginCombo("##fleets", (*it)->Name().c_str()))
-				{
-					for(const auto &item : GameData::Fleets())
+				static Fleet *selected;
+				string fleetName = (*it)->Name();
+				if(ImGui::InputCombo("fleet", &fleetName, &selected, GameData::Fleets()))
+					if(selected)
 					{
-						const bool selected = &item.second == *it;
-						if(ImGui::Selectable(item.first.c_str(), selected))
-						{
-							// We need to update every entry.
-							auto begin = it;
-							auto end = it + count;
-							while(begin != end)
-								*begin++ = &item.second;
-							SetDirty();
-						}
-
-						if(selected)
-							ImGui::SetItemDefaultFocus();
+						// We need to update every entry.
+						auto begin = it;
+						auto end = it + count;
+						while(begin != end)
+							*begin++ = selected;
+						SetDirty();
 					}
-					ImGui::EndCombo();
-				}
 
 				ImGui::SameLine();
 				int oldCount = count;
-				if(ImGui::InputInt("fleet", &count))
+				if(ImGui::InputInt("fleet count", &count))
 				{
 					modify[*it] = count - oldCount;
 					SetDirty();
@@ -438,29 +400,12 @@ void PlanetEditor::RenderPlanet()
 	}
 
 	{
-		if(ImGui::BeginCombo("government", object->government ? object->government->TrueName().c_str() : ""))
+		static Government *selected;
+		string govName = object->government ? object->government->TrueName() : "";
+		if(ImGui::InputCombo("government", &govName, &selected, GameData::Governments()))
 		{
-			int index = 0;
-			for(const auto &government : GameData::Governments())
-			{
-				const bool selected = &government.second == object->government;
-				if(ImGui::Selectable(government.first.c_str(), selected))
-				{
-					object->government = &government.second;
-					SetDirty();
-				}
-				++index;
-
-				if(selected)
-					ImGui::SetItemDefaultFocus();
-			}
-
-			if(ImGui::Selectable("[remove]"))
-			{
-				object->government = nullptr;
-				SetDirty();
-			}
-			ImGui::EndCombo();
+			object->government = selected;
+			SetDirty();
 		}
 	}
 

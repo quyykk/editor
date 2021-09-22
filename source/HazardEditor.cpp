@@ -209,66 +209,7 @@ void HazardEditor::RenderHazard()
 		SetDirty();
 	}
 
-	if(ImGui::TreeNode("environmental effects"))
-	{
-		int index = 0;
-		auto oldEffect = object->environmentalEffects.end();
-		const Effect *newEffect = nullptr;
-		for(auto it = object->environmentalEffects.begin(); it != object->environmentalEffects.end(); ++it)
-		{
-			ImGui::PushID(index++);
-			string effectName = it->first ? it->first->Name() : "";
-			if(ImGui::BeginCombo("effects", effectName.c_str()))
-			{
-				for(const auto &effect : GameData::Effects())
-				{
-					const bool selected = &effect.second == it->first;
-					if(ImGui::Selectable(effect.first.c_str(), selected))
-					{
-						oldEffect = it;
-						newEffect = &effect.second;
-						SetDirty();
-					}
-					if(selected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
-
-			ImGui::SameLine();
-			if(ImGui::InputInt("##count", &it->second))
-			{
-				if(!it->second)
-					oldEffect = it;
-				SetDirty();
-			}
-			ImGui::PopID();
-		}
-		if(oldEffect != object->environmentalEffects.end())
-		{
-			int count = oldEffect->second;
-			object->environmentalEffects.erase(oldEffect);
-			if(newEffect)
-				object->environmentalEffects[newEffect] += count;
-		}
-
-		ImGui::Spacing();
-		if(ImGui::BeginCombo("add effect", ""))
-		{
-			const Effect *toAdd = nullptr;
-			for(const auto &effect : GameData::Effects())
-				if(ImGui::Selectable(effect.first.c_str()))
-					toAdd = &effect.second;
-
-			if(toAdd)
-			{
-				++object->environmentalEffects[toAdd];
-				SetDirty();
-			}
-			ImGui::EndCombo();
-		}
-		ImGui::TreePop();
-	}
+	RenderEffect("environmental effects", object->environmentalEffects);
 
 	if(ImGui::TreeNode("weapon"))
 	{
