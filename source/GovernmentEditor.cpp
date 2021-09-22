@@ -176,6 +176,7 @@ void GovernmentEditor::Render()
 
 void GovernmentEditor::RenderGovernment()
 {
+	ImGui::Text("name: %s", object->name.c_str());
 	if(ImGui::InputText("display name", &object->displayName))
 		SetDirty();
 	if(ImGui::InputSwizzle("swizzle", &object->swizzle))
