@@ -657,21 +657,26 @@ void Editor::OpenPlugin(const string &plugin)
 	if(!Files::Exists(path))
 		return;
 
-	currentPlugin = path;
-	currentPluginName = plugin;
 	pluginPaths.clear();
 	unimplementedNodes.clear();
 
-	effectEditor.Clear();
-	fleetEditor.Clear();
-	hazardEditor.Clear();
-	governmentEditor.Clear();
-	outfitEditor.Clear();
-	outfitterEditor.Clear();
-	shipEditor.Clear();
-	shipyardEditor.Clear();
-	systemEditor.Clear();
-	planetEditor.Clear();
+	// Special case: If we didn't load a plugin yet don't discard changes.
+	if(!currentPlugin.empty())
+	{
+		effectEditor.Clear();
+		fleetEditor.Clear();
+		hazardEditor.Clear();
+		governmentEditor.Clear();
+		outfitEditor.Clear();
+		outfitterEditor.Clear();
+		shipEditor.Clear();
+		shipyardEditor.Clear();
+		systemEditor.Clear();
+		planetEditor.Clear();
+	}
+
+	currentPlugin = path;
+	currentPluginName = plugin;
 
 	GameData::baseEffects.clear();
 	GameData::baseFleets.clear();
