@@ -257,7 +257,19 @@ bool MapEditorPanel::Scroll(double dx, double dy)
 bool MapEditorPanel::Release(int x, int y)
 {
 	isDragging = false;
-	moveSystems = false;
+	if(moveSystems)
+	{
+		moveSystems = false;
+		for(auto &&system : selectedSystems)
+		{
+			auto oldNeighbors = system->VisibleNeighbors();
+			for(auto &&link : oldNeighbors)
+				GameData::UpdateSystem(const_cast<System *>(link));
+			GameData::UpdateSystem(const_cast<System *>(system));
+			for(auto &&link : system->VisibleNeighbors())
+				GameData::UpdateSystem(const_cast<System *>(link));
+		}
+	}
 
 	if(rclick)
 	{

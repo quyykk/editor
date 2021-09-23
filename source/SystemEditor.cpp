@@ -191,9 +191,9 @@ void SystemEditor::Render()
 					for(auto &&stellar : object->Objects())
 						if(stellar.planet)
 							const_cast<Planet *>(stellar.planet)->SetSystem(object);
+					GameData::UpdateSystem(object);
 					for(auto &&link : object->VisibleNeighbors())
 						GameData::UpdateSystem(const_cast<System *>(link));
-					GameData::UpdateSystem(object);
 				}
 				UpdateMap();
 			}
