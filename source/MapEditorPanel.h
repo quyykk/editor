@@ -90,6 +90,8 @@ protected:
 	// The cache must be updated when the coloring mode changes.
 	void UpdateCache();
 
+	void UpdateJumpDistance();
+
 
 private:
 	void DrawWormholes();

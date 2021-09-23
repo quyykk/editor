@@ -76,12 +76,7 @@ MapEditorPanel::MapEditorPanel(PlayerInfo &player, SystemEditor *systemEditor)
 	SetIsFullScreen(true);
 	SetInterruptible(false);
 
-	// Find out how far the player is able to jump. The range of the system
-	// takes priority over the range of the player's flagship.
-	double systemRange = selectedSystems.back()->JumpRange();
-	double playerRange = player.Flagship() ? player.Flagship()->JumpRange() : 0.;
-	if(systemRange || playerRange)
-		playerJumpDistance = systemRange ? systemRange : playerRange;
+	UpdateJumpDistance();
 
 	CenterOnSystem(true);
 	UpdateCache();
@@ -329,7 +324,7 @@ void MapEditorPanel::Select(const System *system)
 	if(!system)
 	{
 		selectedSystems.clear();
-		selectedSystems.push_back(player.GetSystem());
+		selectedSystems.push_back(player.GetSystem() ? player.GetSystem() : GameData::Systems().Get("Sol"));
 		return;
 	}
 
@@ -338,6 +333,7 @@ void MapEditorPanel::Select(const System *system)
 		selectedSystems.clear();
 	selectedSystems.push_back(system);
 	systemEditor->Select(selectedSystems.back());
+	UpdateJumpDistance();
 }
 
 
@@ -433,6 +429,18 @@ void MapEditorPanel::UpdateCache()
 				links.emplace_back(system->Position(), link->Position());
 			}
 	}
+}
+
+
+
+void MapEditorPanel::UpdateJumpDistance()
+{
+	// Find out how far the player is able to jump. The range of the system
+	// takes priority over the range of the player's flagship.
+	double systemRange = selectedSystems.back()->JumpRange();
+	double playerRange = player.Flagship() ? player.Flagship()->JumpRange() : 0.;
+	if(systemRange || playerRange)
+		playerJumpDistance = systemRange ? systemRange : playerRange;
 }
 
 

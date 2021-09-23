@@ -627,7 +627,12 @@ void SystemEditor::RenderSystem()
 	if(ImGui::InputDoubleEx("belt", &object->asteroidBelt))
 		SetDirty();
 	if(ImGui::InputDoubleEx("jump range", &object->jumpRange))
+	{
+		if(auto *panel = dynamic_cast<MapEditorPanel *>(editor.GetMenu().Top().get()))
+			panel->UpdateJumpDistance();
+		GameData::UpdateSystem(const_cast<System *>(object));
 		SetDirty();
+	}
 	if(object->jumpRange < 0.)
 		object->jumpRange = 0.;
 	string enterHaze = object->haze ? object->haze->Name() : "";
