@@ -197,39 +197,7 @@ void SystemEditor::Render()
 				UpdateMap();
 			}
 			if(ImGui::MenuItem("Delete", nullptr, false, alreadyDefined))
-			{
-				if(find_if(Changes().begin(), Changes().end(), [this](const System &system)
-							{
-								return system.name == object->name;
-							}) != Changes().end())
-				{
-					SetDirty("[deleted]");
-					DeleteFromChanges();
-				}
-				else
-					SetClean();
-				auto oldLinks = object->links;
-				for(auto &&link : oldLinks)
-				{
-					const_cast<System *>(link)->Unlink(object);
-					SetDirty(link);
-					GameData::UpdateSystem(const_cast<System *>(link));
-				}
-				for(auto &&stellar : object->Objects())
-					if(stellar.planet)
-						const_cast<Planet *>(stellar.planet)->RemoveSystem(object);
-
-				auto oldNeighbors = object->VisibleNeighbors();
-				GameData::Systems().Erase(object->name);
-				for(auto &&link : oldNeighbors)
-					GameData::UpdateSystem(const_cast<System *>(link));
-				object = nullptr;
-				if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
-					panel->Select(object);
-				if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
-					panel->Select(object);
-				UpdateMap();
-			}
+				Delete(object, true);
 			ImGui::EndMenu();
 		}
 		if(ImGui::BeginMenu("Tools"))
@@ -1094,6 +1062,14 @@ void SystemEditor::SaveCurrent()
 
 
 
+void SystemEditor::Delete(const std::vector<const System *> &systems)
+{
+	for(const auto &system : systems)
+		Delete(system, false);
+}
+
+
+
 void SystemEditor::UpdateMap() const
 {
 	if(auto *mapPanel = dynamic_cast<MapPanel*>(editor.GetUI().Top().get()))
@@ -1450,4 +1426,47 @@ const Sprite *SystemEditor::RandomGiantSprite()
 	const auto &giants = GameData::GiantSprites();
 	uniform_int_distribution<> randGiant(0, giants.size() - 1);
 	return giants[randGiant(gen)];
+}
+
+
+
+void SystemEditor::Delete(const System *system, bool safe)
+{
+	if(safe || !GameData::baseSystems.Has(system->name))
+	{
+		if(find_if(Changes().begin(), Changes().end(), [&system](const System &sys)
+					{
+						return sys.name == system->name;
+					}) != Changes().end())
+		{
+			SetDirty("[deleted]");
+			DeleteFromChanges();
+		}
+		else
+			SetClean();
+		auto oldLinks = system->links;
+		for(auto &&link : oldLinks)
+		{
+			const_cast<System *>(link)->Unlink(const_cast<System *>(system));
+			SetDirty(link);
+			GameData::UpdateSystem(const_cast<System *>(link));
+		}
+		for(auto &&stellar : system->Objects())
+			if(stellar.planet)
+				const_cast<Planet *>(stellar.planet)->RemoveSystem(system);
+
+		auto oldNeighbors = system->VisibleNeighbors();
+		GameData::Systems().Erase(system->name);
+		for(auto &&link : oldNeighbors)
+			GameData::UpdateSystem(const_cast<System *>(link));
+
+		auto newSystem = oldLinks.empty() ?
+			oldNeighbors.empty() ? nullptr : *oldNeighbors.begin()
+			: *oldLinks.begin();
+		if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
+			panel->Select(newSystem);
+		if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
+			panel->Select(newSystem);
+		UpdateMap();
+	}
 }

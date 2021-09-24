@@ -38,6 +38,7 @@ public:
 	void WriteToFile(DataWriter &writer, const System *system);
 
 	void SaveCurrent();
+	void Delete(const std::vector<const System *> &systems);
 
 	// Updates the given system's position by the given delta.
 	void UpdateSystemPosition(const System *system, Point dp);
@@ -71,6 +72,7 @@ private:
 	const Sprite *RandomMoonSprite();
 	const Sprite *RandomGiantSprite();
 
+	void Delete(const System *system, bool safe);
 
 private:
 	Point position;

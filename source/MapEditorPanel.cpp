@@ -160,6 +160,8 @@ bool MapEditorPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command
 		player.SetMapZoom(max(static_cast<int>(mapInterface->GetValue("min zoom")), player.MapZoom() - 1));
 	else if(key == 's' && (mod & KMOD_CTRL))
 		systemEditor->SaveCurrent();
+	else if(key == SDLK_DELETE)
+		systemEditor->Delete(selectedSystems);
 	else
 		return false;
 
@@ -327,6 +329,7 @@ void MapEditorPanel::Select(const System *system)
 	{
 		selectedSystems.clear();
 		selectedSystems.push_back(player.GetSystem() ? player.GetSystem() : GameData::Systems().Get("Sol"));
+		systemEditor->Select(selectedSystems.back());
 		return;
 	}
 
