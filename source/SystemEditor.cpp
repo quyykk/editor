@@ -404,10 +404,11 @@ void SystemEditor::RenderSystem()
 		static System *newLink = nullptr;
 		string addLink;
 		if(ImGui::InputCombo("add link", &addLink, &newLink, GameData::Systems()))
-		{
-			toAdd.insert(newLink);
-			newLink = nullptr;
-		}
+			if(newLink)
+			{
+				toAdd.insert(newLink);
+				newLink = nullptr;
+			}
 
 		if(toAdd.count(object))
 		{
