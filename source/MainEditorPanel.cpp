@@ -38,7 +38,6 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "PlayerInfo.h"
 #include "PointerShader.h"
 #include "Politics.h"
-#include "Preferences.h"
 #include "Radar.h"
 #include "RingShader.h"
 #include "Screen.h"
@@ -62,16 +61,24 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 using namespace std;
 
 
+namespace {
+	constexpr double ZOOMS[] = {.1, .15, .2, .25, .35, .50, .70, 1., 1.4, 2.};
+	constexpr size_t SIZE = sizeof(ZOOMS) / sizeof(double);
+}
+
+
 
 MainEditorPanel::MainEditorPanel(PlayerInfo &player, SystemEditor *systemEditor)
 	: player(player), systemEditor(systemEditor)
 {
+	date = player.GetDate().DaysSinceEpoch() * 60;
 	if(!systemEditor->Selected())
 		systemEditor->Select(player.GetSystem() ? player.GetSystem() : GameData::Systems().Get("Sol"));
 	Select(systemEditor->Selected());
 	SetIsFullScreen(true);
 	SetInterruptible(false);
 
+	UpdateSystem();
 	UpdateCache();
 }
 
@@ -79,7 +86,9 @@ MainEditorPanel::MainEditorPanel(PlayerInfo &player, SystemEditor *systemEditor)
 
 void MainEditorPanel::Step()
 {
-	double zoomTarget = Preferences::ViewZoom();
+	UpdateSystem();
+
+	double zoomTarget = ViewZoom();
 	if(zoom != zoomTarget)
 	{
 		static const double ZOOM_SPEED = .05;
@@ -94,6 +103,17 @@ void MainEditorPanel::Step()
 		else if(zoom > zoomTarget)
 			zoom = max(zoomTarget, zoom * (1. / (1. + zoomRatio)));
 	}
+
+	labels.clear();
+	for(const StellarObject &object : currentSystem->Objects())
+	{
+		if(!object.HasSprite() || !object.HasValidPlanet())
+			continue;
+
+		Point pos = object.Position() - center;
+		if(pos.Length() - object.Radius() < 600. / zoom)
+			labels.emplace_back(pos, object, currentSystem, zoom);
+	}
 }
 
 
@@ -102,6 +122,9 @@ void MainEditorPanel::Draw()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 	GameData::Background().Draw(center, Point(), zoom);
+	for(const PlanetLabel &label : labels)
+		label.Draw();
+
 	draw.Clear(step, zoom);
 	batchDraw.Clear(step, zoom);
 	draw.SetCenter(center);
@@ -115,6 +138,16 @@ void MainEditorPanel::Draw()
 				draw.AddUnblurred(object);
 			else
 				draw.Add(object);
+
+			if(object.Parent() == -1)
+				RingShader::Draw(-center * zoom, object.Distance() * zoom, object.Radius() * zoom, 1.f, Color(169.f / 255.f, 169.f / 255.f, 169.f / 255.f).Transparent(.1f));
+			else
+			{
+				const auto &parent = currentSystem->Objects()[object.Parent()];
+				RingShader::Draw((parent.Position() - center) * zoom,
+						object.Distance() * zoom, object.Radius() * zoom, 1.f,
+						Color(169.f / 255.f, 169.f / 255.f, 169.f / 255.f).Transparent(.1f));
+			}
 		}
 
 	asteroids.Step(newVisuals, newFlotsam, step);
@@ -139,7 +172,9 @@ void MainEditorPanel::Draw()
 		PointerShader::Unbind();
 	}
 
-	RingShader::Draw(-center * zoom, currentSystem->HabitableZone() * 1.25 * zoom, currentSystem->HabitableZone() * .75 * zoom, 1.f, Color(50.f / 255.f, 205.f / 255.f, 50.f / 255.f).Transparent(.1f));
+	RingShader::Draw(-center * zoom, currentSystem->HabitableZone() * zoom, 2.5f, 1.f, Color(50.f / 255.f, 205.f / 255.f, 50.f / 255.f).Transparent(.1f));
+	RingShader::Draw(-center * zoom, currentSystem->HabitableZone() * .5 * zoom, 2.5f, 1.f, Color(1.f, 140.f / 255.f, 0.f).Transparent(.1f));
+	RingShader::Draw(-center * zoom, currentSystem->HabitableZone() * 2 * zoom, 2.5f, 1.f, Color(0.f, 191.f / 255.f, 1.f).Transparent(.1f));
 
 	draw.Draw();
 	batchDraw.Draw();
@@ -167,9 +202,9 @@ bool MainEditorPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &comman
 			|| (key == 'w' && (mod & (KMOD_CTRL | KMOD_GUI))))
 		GetUI()->Pop(this);
 	else if(key == SDLK_PLUS || key == SDLK_KP_PLUS || key == SDLK_EQUALS)
-		Preferences::ZoomViewIn();
+		ZoomViewIn();
 	else if(key == SDLK_MINUS || key == SDLK_KP_MINUS)
-		Preferences::ZoomViewOut();
+		ZoomViewOut();
 	else
 		return false;
 
@@ -214,9 +249,9 @@ bool MainEditorPanel::Drag(double dx, double dy)
 bool MainEditorPanel::Scroll(double dx, double dy)
 {
 	if(dy < 0.)
-		Preferences::ZoomViewOut();
+		ZoomViewOut();
 	else if(dy > 0.)
-		Preferences::ZoomViewIn();
+		ZoomViewIn();
 	return true;
 }
 
@@ -248,6 +283,30 @@ void MainEditorPanel::Select(const System *system)
 
 
 
+void MainEditorPanel::UpdateSystem()
+{
+	++date;
+	double now = date / 60.;
+	auto &objects = const_cast<System *>(currentSystem)->objects;
+	for(StellarObject &object : objects)
+	{
+		// "offset" is used to allow binary orbits; the second object is offset
+		// by 180 degrees.
+		object.angle = Angle(now * object.speed + object.offset);
+		object.position = object.angle.Unit() * object.distance;
+
+		// Because of the order of the vector, the parent's position has always
+		// been updated before this loop reaches any of its children, so:
+		if(object.parent >= 0)
+			object.position += objects[object.parent].position;
+
+		if(object.position)
+			object.angle = Angle(object.position);
+	}
+}
+
+
+
 void MainEditorPanel::UpdateCache()
 {
 	GameData::SetHaze(currentSystem->Haze(), true);
@@ -260,4 +319,27 @@ void MainEditorPanel::UpdateCache()
 		else
 			asteroids.Add(a.Name(), a.Count(), a.Energy());
 	}
+}
+
+
+
+double MainEditorPanel::ViewZoom() const
+{
+	return ZOOMS[zoomIndex];
+}
+
+
+
+void MainEditorPanel::ZoomViewIn()
+{
+	if(zoomIndex < SIZE - 1)
+		++zoomIndex;
+}
+
+
+
+void MainEditorPanel::ZoomViewOut()
+{
+	if(zoomIndex > 0)
+		--zoomIndex;
 }

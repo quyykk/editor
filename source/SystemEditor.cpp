@@ -58,18 +58,10 @@ void SystemEditor::UpdateSystemPosition(const System *system, Point dp)
 void SystemEditor::UpdateStellarPosition(const StellarObject &object, Point dp, const System *system)
 {
 	auto &obj = const_cast<StellarObject &>(object);
-	double now = editor.Player().GetDate().DaysSinceEpoch();
-
 	auto newPos = obj.position + dp;
 	if(obj.parent != -1)
 		newPos -= this->object->objects[obj.parent].position;
-
 	obj.distance = newPos.Length();
-	Angle newAngle(newPos);
-
-	obj.speed = (newAngle.Degrees() - obj.offset) / now;
-	const_cast<System *>(system)->SetDate(editor.Player().GetDate());
-
 	SetDirty(this->object);
 }
 
@@ -790,9 +782,6 @@ void SystemEditor::RenderObject(StellarObject &object, int index, int &nested, b
 
 		RenderHazards(object.hazards);
 
-		if(IsDirty())
-			this->object->SetDate(editor.Player().GetDate());
-
 		if(index + 1 < static_cast<int>(this->object->objects.size()) && this->object->objects[index + 1].Parent() == index)
 		{
 			++nested; // If the next object is a child, don't close this tree node just yet.
@@ -1100,8 +1089,9 @@ void SystemEditor::UpdateMain() const
 
 void SystemEditor::Randomize()
 {
-	// Randomizes a star system. This code is adapted from
-	// the official ES map editor.
+	// Randomizes a star system.
+	// Code adapted from the official ES map editor under GPL 3.0.
+	// https://github.com/endless-sky/endless-sky-editor
 	constexpr int STAR_DISTANCE = 40;
 	static random_device rd;
 	static mt19937 gen(rd());
@@ -1252,7 +1242,6 @@ void SystemEditor::Randomize()
 		calcPeriod(planet, false);
 	}
 
-	object->SetDate(editor.Player().GetDate());
 	SetDirty();
 }
 
@@ -1261,7 +1250,8 @@ void SystemEditor::Randomize()
 void SystemEditor::RandomizeAsteroids()
 {
 	// Randomizes the asteroids in this system.
-	// Code adapted from the official ES map editor.
+	// Code adapted from the official ES map editor under GPL 3.0.
+	// https://github.com/endless-sky/endless-sky-editor
 	object->asteroids.erase(remove_if(object->asteroids.begin(), object->asteroids.end(),
 				[](const System::Asteroid &asteroid) { return !asteroid.Type(); }),
 			object->asteroids.end());
@@ -1311,7 +1301,8 @@ void SystemEditor::RandomizeAsteroids()
 void SystemEditor::RandomizeMinables()
 {
 	// Randomizes the minables in this system.
-	// Code adapted from the official ES map editor.
+	// Code adapted from the official ES map editor under GPL 3.0.
+	// https://github.com/endless-sky/endless-sky-editor
 	object->asteroids.erase(remove_if(object->asteroids.begin(), object->asteroids.end(),
 				[](const System::Asteroid &asteroid) { return asteroid.Type(); }),
 			object->asteroids.end());

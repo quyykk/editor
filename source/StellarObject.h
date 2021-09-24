@@ -96,6 +96,7 @@ private:
 	// Let System handle setting all the values of an Object.
 	friend class System;
 	friend class SystemEditor;
+	friend class MainEditorPanel;
 };
 
 

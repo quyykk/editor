@@ -238,6 +238,7 @@ private:
 	std::set<std::string> attributes;
 
 	friend class SystemEditor;
+	friend class MainEditorPanel;
 	friend class MapEditorPanel;
 };
 

@@ -18,10 +18,13 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 #include "AsteroidField.h"
 #include "BatchDrawList.h"
+#include "Date.h"
 #include "DrawList.h"
 #include "Color.h"
+#include "PlanetLabel.h"
 #include "Point.h"
 
+#include <cstdint>
 #include <map>
 #include <string>
 #include <utility>
@@ -76,14 +79,23 @@ protected:
 	int step = 0;
 	double zoom = 1.;
 
+	void UpdateSystem();
 	void UpdateCache();
+
+	double ViewZoom() const;
+	void ZoomViewIn();
+	void ZoomViewOut();
 
 
 private:
+	size_t zoomIndex = 4;
+	uint64_t date = 0;
+
 	bool isDragging = false;
 	bool moveStellars = false;
 	DrawList draw;
 	BatchDrawList batchDraw;
+	std::vector<PlanetLabel> labels;
 
 	friend class SystemEditor;
 };
