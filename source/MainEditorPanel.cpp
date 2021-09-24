@@ -97,12 +97,14 @@ void MainEditorPanel::Step()
 		// Define zoom speed bounds to prevent asymptotic behavior.
 		static const double MAX_SPEED = .05;
 		static const double MIN_SPEED = .002;
+		const Point anchor = -mouse / zoom - center;
 
 		double zoomRatio = max(MIN_SPEED, min(MAX_SPEED, abs(log2(zoom) - log2(zoomTarget)) * ZOOM_SPEED));
 		if(zoom < zoomTarget)
 			zoom = min(zoomTarget, zoom * (1. + zoomRatio));
 		else if(zoom > zoomTarget)
 			zoom = max(zoomTarget, zoom * (1. / (1. + zoomRatio)));
+		center = -mouse / zoom - anchor;
 	}
 
 	labels.clear();
@@ -255,6 +257,7 @@ bool MainEditorPanel::Scroll(double dx, double dy)
 		ZoomViewOut();
 	else if(dy > 0.)
 		ZoomViewIn();
+	mouse = UI::GetMouse();
 	return true;
 }
 

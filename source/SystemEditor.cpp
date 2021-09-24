@@ -194,7 +194,7 @@ void SystemEditor::Render()
 		}
 		if(ImGui::BeginMenu("Randomize"))
 		{
-			if(ImGui::MenuItem("Randomize Stellars (experimental)", nullptr, false, object))
+			if(ImGui::MenuItem("Randomize Stellars", nullptr, false, object))
 				Randomize();
 			if(ImGui::MenuItem("Randomize Asteroids", nullptr, false, object))
 				RandomizeAsteroids();
@@ -1159,7 +1159,7 @@ void SystemEditor::Randomize()
 		stellar1.speed = 360. / period;
 		stellar2.speed = 360. / period;
 
-		if(radius2 > radius1)
+		if(radius1 > radius2)
 			swap(stellar1, stellar2);
 		object->objects.push_back(stellar1);
 		object->objects.push_back(stellar2);

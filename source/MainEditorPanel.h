@@ -78,6 +78,7 @@ protected:
 	Point center;
 	int step = 0;
 	double zoom;
+	Point mouse;
 
 	void UpdateSystem();
 	void UpdateCache();
