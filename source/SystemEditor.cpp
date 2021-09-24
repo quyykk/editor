@@ -200,7 +200,7 @@ void SystemEditor::Render()
 				Delete(object, true);
 			ImGui::EndMenu();
 		}
-		if(ImGui::BeginMenu("Tools"))
+		if(ImGui::BeginMenu("Randomize"))
 		{
 			if(ImGui::MenuItem("Randomize Stellars (experimental)", nullptr, false, object))
 				Randomize();
@@ -208,6 +208,13 @@ void SystemEditor::Render()
 				RandomizeAsteroids();
 			if(ImGui::MenuItem("Randomize Minables", nullptr, false, object))
 				RandomizeMinables();
+			ImGui::Separator();
+			if(ImGui::MenuItem("Randomize All", nullptr, false, object))
+			{
+				RandomizeAsteroids();
+				RandomizeMinables();
+				Randomize();
+			}
 			ImGui::EndMenu();
 		}
 		ImGui::EndMenuBar();
