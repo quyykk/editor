@@ -37,6 +37,8 @@ public:
 	void AlwaysRender(bool showNewSystem = false);
 	void WriteToFile(DataWriter &writer, const System *system);
 
+	void SaveCurrent();
+
 	// Updates the given system's position by the given delta.
 	void UpdateSystemPosition(const System *system, Point dp);
 	// Updates the given stellar's position by the given delta.
