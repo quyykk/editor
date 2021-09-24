@@ -1102,10 +1102,10 @@ void SystemEditor::Randomize()
 	{
 		return stellar.sprite->Width() / 2. - 4.;
 	};
-	auto getMass = [&getRadius](const StellarObject &stellar)
+	auto getMass = [](const StellarObject &stellar)
 	{
-		constexpr double STAR_MASS_SCALE = .75;
-		const auto radius = getRadius(stellar);
+		constexpr double STAR_MASS_SCALE = .25;
+		const auto radius = stellar.Radius();
 		return radius * radius * STAR_MASS_SCALE;
 	};
 
@@ -1128,12 +1128,25 @@ void SystemEditor::Randomize()
 		StellarObject stellar1;
 		StellarObject stellar2;
 
+		stellar1.isStar = true;
+		stellar2.isStar = true;
+
 		stellar1.sprite = RandomStarSprite();
-		stellar2.sprite = RandomStarSprite();
+		do stellar2.sprite = RandomStarSprite();
+		while (stellar2.sprite == stellar1.sprite);
+
 		stellar2.offset = 180.;
 
 		double radius1 = getRadius(stellar1);
 		double radius2 = getRadius(stellar2);
+
+		// Make sure the 2 stars have similar radius.
+		while(fabs(radius1 - radius2) > 100.)
+		{
+			stellar1.sprite = RandomStarSprite();
+			radius1 = getRadius(stellar1);
+		}
+
 		double mass1 = getMass(stellar1);
 		double mass2 = getMass(stellar2);
 		mass = mass1 + mass2;
@@ -1146,6 +1159,8 @@ void SystemEditor::Randomize()
 		stellar1.speed = 360. / period;
 		stellar2.speed = 360. / period;
 
+		if(radius2 > radius1)
+			swap(stellar1, stellar2);
 		object->objects.push_back(stellar1);
 		object->objects.push_back(stellar2);
 	}
@@ -1154,7 +1169,7 @@ void SystemEditor::Randomize()
 	object->habitable = mass / HABITABLE_SCALE;
 
 	// Now we generate lots of planets with moons.
-	uniform_int_distribution<> randPlanetCount(2, 5);
+	uniform_int_distribution<> randPlanetCount(3, 6);
 	int planetCount = randPlanetCount(gen);
 	for(int i = 0; i < planetCount; ++i)
 	{
@@ -1198,6 +1213,7 @@ void SystemEditor::Randomize()
 
 		object->objects.emplace_back();
 		object->objects.back().sprite = planetSprite;
+		object->objects.back().isStation = !planetSprite->Name().compare(0, 14, "planet/station");
 		used.insert(planetSprite);
 		auto &planet = object->objects.back();
 
@@ -1213,8 +1229,10 @@ void SystemEditor::Randomize()
 		{
 			const auto radius = getRadius(stellar);
 			constexpr double PLANET_MASS_SCALE = .015;
-			stellar.speed = isMoon ? 360. / (radius * radius * radius * PLANET_MASS_SCALE)
+			const auto mass = isMoon ? radius * radius * radius * PLANET_MASS_SCALE
 				: object->habitable * HABITABLE_SCALE;
+
+			stellar.speed = 360. / sqrt(stellar.distance * stellar.distance * stellar.distance / mass);
 		};
 
 		double moonDistance = getRadius(object->objects.back());
@@ -1231,6 +1249,8 @@ void SystemEditor::Randomize()
 			used.insert(moonSprite);
 
 			object->objects.emplace_back();
+			object->objects.back().isMoon = true;
+			object->objects.back().isStation = !moonSprite->Name().compare(0, 14, "planet/station");
 			object->objects.back().sprite = moonSprite;
 			object->objects.back().parent = rootIndex;
 			object->objects.back().distance = moonDistance + getRadius(object->objects.back());

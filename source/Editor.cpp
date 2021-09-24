@@ -356,9 +356,11 @@ void Editor::RenderMain()
 		if(ImGui::BeginMenu("Tools"))
 		{
 			if(ImGui::MenuItem("Open Map Editor"))
-				menu.Push(new MapEditorPanel(player, &systemEditor));
+				if(!dynamic_cast<MapEditorPanel *>(menu.Top().get()))
+					menu.Push(new MapEditorPanel(player, &systemEditor));
 			if(ImGui::MenuItem("Open In-System Editor"))
-				menu.Push(new MainEditorPanel(player, &systemEditor));
+				if(!dynamic_cast<MainEditorPanel *>(menu.Top().get()))
+					menu.Push(new MainEditorPanel(player, &systemEditor));
 			if(ImGui::MenuItem("Reload Plugin Resources", nullptr, false, HasPlugin()))
 				ReloadPluginResources();
 			ImGui::EndMenu();

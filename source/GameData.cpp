@@ -473,6 +473,10 @@ double GameData::Progress()
 					Files::LogError("Warning: image \"" + pair.first + "\" is referred to, but has no pixels.");
 				else if(!pair.first.compare(0, 7, "planet/"))
 				{
+					// Ignore ringworlds.
+					if(pair.first.find("ringworld") != string::npos)
+						continue;
+
 					auto radius = pair.second.Width() / 2. - 4.;
 					if(radius <= 50.)
 						moonSprites.push_back(&pair.second);

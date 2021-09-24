@@ -77,7 +77,7 @@ protected:
 
 	Point center;
 	int step = 0;
-	double zoom = 1.;
+	double zoom;
 
 	void UpdateSystem();
 	void UpdateCache();

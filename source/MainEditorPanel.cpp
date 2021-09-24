@@ -71,6 +71,7 @@ namespace {
 MainEditorPanel::MainEditorPanel(PlayerInfo &player, SystemEditor *systemEditor)
 	: player(player), systemEditor(systemEditor)
 {
+	zoom = ViewZoom();
 	date = player.GetDate().DaysSinceEpoch() * 60;
 	if(!systemEditor->Selected())
 		systemEditor->Select(player.GetSystem() ? player.GetSystem() : GameData::Systems().Get("Sol"));
@@ -139,6 +140,8 @@ void MainEditorPanel::Draw()
 			else
 				draw.Add(object);
 
+			if(object.IsStar())
+				continue;
 			if(object.Parent() == -1)
 				RingShader::Draw(-center * zoom, object.Distance() * zoom, object.Radius() * zoom, 1.f, Color(169.f / 255.f, 169.f / 255.f, 169.f / 255.f).Transparent(.1f));
 			else
