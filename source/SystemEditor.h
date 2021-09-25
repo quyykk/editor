@@ -66,6 +66,7 @@ private:
 	void Randomize();
 	void RandomizeAsteroids();
 	void RandomizeMinables();
+	void GenerateTrades();
 
 	const Sprite *RandomStarSprite();
 	const Sprite *RandomPlanetSprite(bool recalculate = false);

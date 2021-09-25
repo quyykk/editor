@@ -209,6 +209,12 @@ void SystemEditor::Render()
 			}
 			ImGui::EndMenu();
 		}
+		if(ImGui::BeginMenu("Tools"))
+		{
+			if(ImGui::MenuItem("Generate Trades", nullptr, false, object))
+				GenerateTrades();
+			ImGui::EndMenu();
+		}
 		ImGui::EndMenuBar();
 	}
 
@@ -1395,6 +1401,40 @@ void SystemEditor::RandomizeMinables()
 	}
 
 	UpdateMain();
+	SetDirty();
+}
+
+
+
+void SystemEditor::GenerateTrades()
+{
+	static random_device rd;
+	static mt19937 gen(rd());
+	for(const auto &commodity : GameData::Commodities())
+	{
+		double average = 0.;
+		for(const auto &link : object->links)
+		{
+			auto it = link->trade.find(commodity.name);
+			average += it != link->trade.end() ? it->second.base : 0;
+		}
+		if(object->links.size())
+			average /= object->links.size();
+
+		// This system doesn't have any neighbors with the given commodity so we generate
+		// a random price for it.
+		if(average == 0.)
+		{
+			uniform_int_distribution<> rand(commodity.low, commodity.high);
+			average = rand(gen);
+		}
+		const int maxDeviation = (commodity.high - commodity.low) / 8;
+		uniform_int_distribution<> rand(
+				max<int>(commodity.low, average - maxDeviation),
+				min<int>(commodity.high, average + maxDeviation));
+		object->trade[commodity.name].SetBase(rand(gen));
+	}
+
 	SetDirty();
 }
 
