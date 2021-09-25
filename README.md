@@ -1,6 +1,6 @@
 # Editor
 
-This is a proof of concept plugin editor for Endless Sky. It uses [Dear ImGui](https://github.com/ocornut/imgui) to render the UI on top of the game and as such it is technically a fork. Make sure to check out the Wiki for more information!
+This is a proof of concept plugin editor for Endless Sky. It uses [Dear ImGui](https://github.com/ocornut/imgui) to render the UI on top of the game and as such it is technically a fork. Make sure to check out the [Wiki](https://github.com/quyykk/editor/wiki) for more information!
 
 - Create, load and save plugins.
 - Modify game objects and see the result immediately<sup>1</sup>.
