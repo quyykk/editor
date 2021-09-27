@@ -741,7 +741,7 @@ void SystemEditor::RenderObject(StellarObject &object, int index, int &nested, b
 	ImGui::PushID(index);
 	if(ImGui::BeginPopupContextItem())
 	{
-		if(ImGui::MenuItem("Add Child"))
+		if(ImGui::MenuItem("Add Child", nullptr, false, object.parent == -1))
 			add = true;
 		if(ImGui::MenuItem("Remove"))
 			hovered = true;
