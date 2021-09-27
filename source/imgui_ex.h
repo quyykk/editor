@@ -35,6 +35,7 @@ namespace ImGui
 	IMGUI_API bool InputDouble2Ex(const char *label, double *v, ImGuiInputTextFlags flags = 0);
 	IMGUI_API bool InputInt64Ex(const char *label, int64_t *v, ImGuiInputTextFlags flags = 0);
 	IMGUI_API bool InputSizeTEx(const char *label, size_t *v, ImGuiInputTextFlags flags = 0);
+	IMGUI_API bool IsInputFocused(const char *id);
 
 	template <typename T>
 	IMGUI_API bool InputCombo(const char *label, std::string *input, T **element, const Set<T> &elements);

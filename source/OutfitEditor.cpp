@@ -286,8 +286,8 @@ void OutfitEditor::RenderOutfit()
 	if(ImGui::TreeNode("attributes"))
 	{
 		for(auto &it : object->attributes)
-			if(it.second)
-				if(ImGui::InputDoubleEx(it.first, &it.second, ImGuiInputTextFlags_EnterReturnsTrue))
+			if(it.second || ImGui::IsInputFocused(it.first))
+				if(ImGui::InputDoubleEx(it.first, &it.second))
 					SetDirty();
 
 		ImGui::Spacing();

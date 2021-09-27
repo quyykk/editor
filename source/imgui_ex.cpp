@@ -57,6 +57,13 @@ namespace ImGui
 
 
 
+	IMGUI_API bool IsInputFocused(const char *id)
+	{
+		return GetCurrentWindow()->GetID(id) == GetFocusID() && GetIO().WantTextInput;
+	}
+
+
+
 	IMGUI_API bool InputSwizzle(const char *label, int *swizzle, bool allowNoSwizzle)
 	{
 		constexpr int count = 29;

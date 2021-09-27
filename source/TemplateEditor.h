@@ -225,9 +225,10 @@ bool TemplateEditor<T>::RenderElement(Body *sprite, const std::string &name)
 			SetDirty();
 
 		double value = sprite->frameRate * 60.;
-		if(ImGui::InputDoubleEx("frame rate", &value, ImGuiInputTextFlags_EnterReturnsTrue))
+		if(ImGui::InputDoubleEx("frame rate", &value))
 		{
-			sprite->frameRate = value / 60.;
+			if(value)
+				sprite->frameRate = value / 60.;
 			SetDirty();
 		}
 

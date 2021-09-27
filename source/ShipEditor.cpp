@@ -337,10 +337,10 @@ void ShipEditor::RenderShip()
 		if(ImGui::InputDoubleEx("hit force", &object->baseAttributes.damage[Weapon::HIT_FORCE]))
 			SetDirty();
 		for(auto &it : object->baseAttributes.attributes)
-			if(it.second)
+			if(it.second || ImGui::IsInputFocused(it.first))
 			{
 				value = it.second;
-				if(ImGui::InputDoubleEx(it.first, &value, ImGuiInputTextFlags_EnterReturnsTrue))
+				if(ImGui::InputDoubleEx(it.first, &value))
 				{
 					it.second = value;
 					object->attributes.attributes[it.first] = value;

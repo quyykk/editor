@@ -226,12 +226,10 @@ void GovernmentEditor::RenderGovernment()
 			}
 
 			ImGui::SameLine();
-			if(ImGui::InputDoubleEx("##count", &it->second, ImGuiInputTextFlags_EnterReturnsTrue))
-			{
-				if(!it->second)
-					toRemove = it;
+			if(ImGui::InputDoubleEx("###count", &it->second))
 				SetDirty();
-			}
+			if(!it->second && ImGui::IsItemDeactivatedAfterEdit())
+				toRemove = it;
 			ImGui::PopID();
 		}
 		if(toRemove != object->attitudeToward.end())
