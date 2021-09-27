@@ -477,7 +477,7 @@ void LoadPanel::SnapshotCallback(const string &name)
 void LoadPanel::WriteSnapshot(const string &sourceFile, const string &snapshotName)
 {
 	// Copy the autosave to a new, named file.
-	Files::Copy(sourceFile, snapshotName);
+	player.Save(snapshotName);
 	if(Files::Exists(snapshotName))
 	{
 		UpdateLists();

@@ -73,6 +73,7 @@ public:
 	bool LoadRecent();
 	// Save this player (using the Identifier() as the file name).
 	void Save() const;
+	void Save(const std::string &path) const;
 	void PartialLoad();
 	
 	// Get the root filename used for this player's saved game files. (If there
@@ -284,7 +285,6 @@ private:
 	void CreateMissions();
 	void StepMissions(UI *ui);
 	void Autosave() const;
-	void Save(const std::string &path) const;
 	
 	// Check for and apply any punitive actions from planetary security.
 	void Fine(UI *ui);
