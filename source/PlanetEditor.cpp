@@ -53,6 +53,13 @@ PlanetEditor::PlanetEditor(Editor &editor, bool &show) noexcept
 
 
 
+void PlanetEditor::Select(const Planet *planet)
+{
+	object = const_cast<Planet *>(planet);
+}
+
+
+
 void PlanetEditor::Render()
 {
 	if(IsDirty())

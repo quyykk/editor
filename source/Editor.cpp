@@ -348,7 +348,7 @@ void Editor::RenderMain()
 			{
 				auto *panel = dynamic_cast<MapEditorPanel *>(menu.Top().get());
 				if(!panel && !dynamic_cast<MainEditorPanel *>(menu.Top().get()))
-					menu.Push(new MapEditorPanel(player, &systemEditor));
+					menu.Push(new MapEditorPanel(player, &planetEditor, &systemEditor));
 			}
 			ImGui::MenuItem("Planet Editor", nullptr, &showPlanetMenu);
 			ImGui::EndMenu();
@@ -357,10 +357,10 @@ void Editor::RenderMain()
 		{
 			if(ImGui::MenuItem("Open Map Editor"))
 				if(!dynamic_cast<MapEditorPanel *>(menu.Top().get()))
-					menu.Push(new MapEditorPanel(player, &systemEditor));
+					menu.Push(new MapEditorPanel(player, &planetEditor, &systemEditor));
 			if(ImGui::MenuItem("Open In-System Editor"))
 				if(!dynamic_cast<MainEditorPanel *>(menu.Top().get()))
-					menu.Push(new MainEditorPanel(player, &systemEditor));
+					menu.Push(new MainEditorPanel(player, &planetEditor, &systemEditor));
 			if(ImGui::MenuItem("Reload Plugin Resources", nullptr, false, HasPlugin()))
 				ReloadPluginResources();
 			ImGui::EndMenu();

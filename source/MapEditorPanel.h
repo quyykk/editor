@@ -26,6 +26,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 class Angle;
 class Government;
+class PlanetEditor;
 class PlayerInfo;
 class System;
 class SystemEditor;
@@ -35,7 +36,7 @@ class SystemEditor;
 // This class provides a limited version of the MapPanel which you can edit.
 class MapEditorPanel : public Panel {
 public:
-	explicit MapEditorPanel(PlayerInfo &player, SystemEditor *systemEditor);
+	explicit MapEditorPanel(PlayerInfo &player, PlanetEditor *planetEditor, SystemEditor *systemEditor);
 
 	virtual void Step() override;
 	virtual void Draw() override;
@@ -71,6 +72,7 @@ protected:
 
 protected:
 	PlayerInfo &player;
+	PlanetEditor *planetEditor;
 	SystemEditor *systemEditor;
 
 	// The (non-null) system which is currently selected.

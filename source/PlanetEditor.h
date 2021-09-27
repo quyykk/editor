@@ -30,6 +30,8 @@ class PlanetEditor : public TemplateEditor<Planet> {
 public:
 	PlanetEditor(Editor &editor, bool &show) noexcept;
 
+	void Select(const Planet *planet);
+
 	void Render();
 	void WriteToFile(DataWriter &writer, const Planet *planet);
 

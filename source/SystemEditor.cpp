@@ -729,7 +729,14 @@ void SystemEditor::RenderObject(StellarObject &object, int index, int &nested, b
 	if(object.parent != -1 && !nested)
 		return;
 
-	bool isOpen = ImGui::TreeNode("object", "object %s", object.GetPlanet() ? object.GetPlanet()->TrueName().c_str() : "");
+	string selectedString = &object == selectedObject ? "(selected)"
+		: selectedObject && selectedObject->parent != -1
+			&& &object == &this->object->objects[selectedObject->parent] ? "(child selected)"
+		: "";
+	string planetString = object.GetPlanet() ? object.GetPlanet()->TrueName() : "";
+	if(!planetString.empty() && !selectedString.empty())
+		planetString += ' ';
+	bool isOpen = ImGui::TreeNode("object", "object %s%s", planetString.c_str(), selectedString.c_str());
 
 	ImGui::PushID(index);
 	if(ImGui::BeginPopupContextItem())

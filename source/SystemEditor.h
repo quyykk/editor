@@ -51,6 +51,7 @@ public:
 
 	const System *Selected() const { return object; }
 	void Select(const System *system) { object = const_cast<System *>(system); }
+	void Select(const StellarObject *object) { selectedObject = object; }
 
 
 private:
@@ -78,6 +79,7 @@ private:
 private:
 	Point position;
 	bool createNewSystem = false;
+	const StellarObject *selectedObject = nullptr;
 };
 
 

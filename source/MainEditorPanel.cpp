@@ -35,6 +35,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Mission.h"
 #include "MissionPanel.h"
 #include "Planet.h"
+#include "PlanetEditor.h"
 #include "PlayerInfo.h"
 #include "PointerShader.h"
 #include "Politics.h"
@@ -68,8 +69,8 @@ namespace {
 
 
 
-MainEditorPanel::MainEditorPanel(PlayerInfo &player, SystemEditor *systemEditor)
-	: player(player), systemEditor(systemEditor)
+MainEditorPanel::MainEditorPanel(PlayerInfo &player, PlanetEditor *planetEditor, SystemEditor *systemEditor)
+	: player(player), planetEditor(planetEditor), systemEditor(systemEditor)
 {
 	zoom = ViewZoom();
 	date = player.GetDate().DaysSinceEpoch() * 60;
@@ -228,10 +229,13 @@ bool MainEditorPanel::Click(int x, int y, int clicks)
 		if(click.Distance(it.Position()) < it.Radius())
 		{
 			currentObject = &it;
+			systemEditor->Select(currentObject);
+			if(currentObject->planet)
+				planetEditor->Select(currentObject->planet);
 			moveStellars = true;
 			return true;
 		}
-	currentObject = nullptr;
+	systemEditor->Select(currentObject = nullptr);
 	moveStellars = false;
 	return true;
 }

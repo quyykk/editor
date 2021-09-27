@@ -33,6 +33,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 class Angle;
 class Government;
 class PlayerInfo;
+class PlanetEditor;
 class StellarObject;
 class System;
 class SystemEditor;
@@ -42,7 +43,7 @@ class SystemEditor;
 // This class provides a limited version of the MainPanel which you can edit.
 class MainEditorPanel : public Panel {
 public:
-	explicit MainEditorPanel(PlayerInfo &player, SystemEditor *systemEditor);
+	explicit MainEditorPanel(PlayerInfo &player, PlanetEditor *planetEditor, SystemEditor *systemEditor);
 
 	virtual void Step() override;
 	virtual void Draw() override;
@@ -66,6 +67,7 @@ protected:
 
 protected:
 	PlayerInfo &player;
+	PlanetEditor *planetEditor;
 	SystemEditor *systemEditor;
 
 	// The (non-null) system which is currently selected.

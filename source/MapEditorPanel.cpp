@@ -35,6 +35,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Mission.h"
 #include "MissionPanel.h"
 #include "Planet.h"
+#include "PlanetEditor.h"
 #include "PlayerInfo.h"
 #include "PointerShader.h"
 #include "Politics.h"
@@ -65,8 +66,8 @@ namespace {
 
 
 
-MapEditorPanel::MapEditorPanel(PlayerInfo &player, SystemEditor *systemEditor)
-	: player(player), systemEditor(systemEditor),
+MapEditorPanel::MapEditorPanel(PlayerInfo &player, PlanetEditor *planetEditor, SystemEditor *systemEditor)
+	: player(player), planetEditor(planetEditor), systemEditor(systemEditor),
 	playerJumpDistance(System::DEFAULT_NEIGHBOR_DISTANCE)
 {
 	if(!systemEditor->Selected())
@@ -185,7 +186,7 @@ bool MapEditorPanel::Click(int x, int y, int clicks)
 			// On triple click we enter the system.
 			if(clicks == 3)
 			{
-				GetUI()->Push(new MainEditorPanel(player, systemEditor));
+				GetUI()->Push(new MainEditorPanel(player, planetEditor, systemEditor));
 				moveSystems = false;
 			}
 			break;
