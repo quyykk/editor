@@ -1412,26 +1412,31 @@ void SystemEditor::GenerateTrades()
 	static mt19937 gen(rd());
 	for(const auto &commodity : GameData::Commodities())
 	{
-		double average = 0.;
+		int average = 0;
+		int size = 0;
 		for(const auto &link : object->links)
 		{
 			auto it = link->trade.find(commodity.name);
-			average += it != link->trade.end() ? it->second.base : 0;
+			if(it != link->trade.end())
+			{
+				average += it->second.base;
+				++size;
+			}
 		}
-		if(object->links.size())
-			average /= object->links.size();
+		if(size)
+			average /= size;
 
 		// This system doesn't have any neighbors with the given commodity so we generate
 		// a random price for it.
-		if(average == 0.)
+		if(!average)
 		{
 			uniform_int_distribution<> rand(commodity.low, commodity.high);
 			average = rand(gen);
 		}
 		const int maxDeviation = (commodity.high - commodity.low) / 8;
 		uniform_int_distribution<> rand(
-				max<int>(commodity.low, average - maxDeviation),
-				min<int>(commodity.high, average + maxDeviation));
+				max(commodity.low, average - maxDeviation),
+				min(commodity.high, average + maxDeviation));
 		object->trade[commodity.name].SetBase(rand(gen));
 	}
 
