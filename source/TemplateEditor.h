@@ -48,6 +48,7 @@ void AddNode(Editor &editor, const std::string &file, const std::string &key, co
 template <typename T> constexpr const char *defaultFileFor() = delete;
 template <> constexpr const char *defaultFileFor<Effect>() { return "effects.txt"; }
 template <> constexpr const char *defaultFileFor<Fleet>() { return "fleets.txt"; }
+template <> constexpr const char *defaultFileFor<Galaxy>() { return "map.txt"; }
 template <> constexpr const char *defaultFileFor<Hazard>() { return "hazards.txt"; }
 template <> constexpr const char *defaultFileFor<Government>() { return "governments.txt"; }
 template <> constexpr const char *defaultFileFor<Outfit>() { return "outfits.txt"; }
@@ -60,6 +61,7 @@ template <> constexpr const char *defaultFileFor<System>() { return "map.txt"; }
 template <typename T> constexpr const char *keyFor() = delete;
 template <> constexpr const char *keyFor<Effect>() { return "effect"; }
 template <> constexpr const char *keyFor<Fleet>() { return "fleet"; }
+template <> constexpr const char *keyFor<Galaxy>() { return "galaxy"; }
 template <> constexpr const char *keyFor<Hazard>() { return "hazard"; }
 template <> constexpr const char *keyFor<Government>() { return "government"; }
 template <> constexpr const char *keyFor<Outfit>() { return "outfit"; }

@@ -54,7 +54,8 @@ using namespace std;
 
 Editor::Editor(PlayerInfo &player, UI &menu, UI &ui) noexcept
 	: player(player), menu(menu), ui(ui),
-	effectEditor(*this, showEffectMenu), fleetEditor(*this, showFleetMenu), hazardEditor(*this, showHazardMenu),
+	effectEditor(*this, showEffectMenu), fleetEditor(*this, showFleetMenu), galaxyEditor(*this, showGalaxyMenu),
+	hazardEditor(*this, showHazardMenu),
 	governmentEditor(*this, showGovernmentMenu), outfitEditor(*this, showOutfitMenu), outfitterEditor(*this, showOutfitterMenu),
 	planetEditor(*this, showPlanetMenu), shipEditor(*this, showShipMenu), shipyardEditor(*this, showShipyardMenu),
 	systemEditor(*this, showSystemMenu)
@@ -80,6 +81,7 @@ void Editor::SaveAll()
 	// Commit to any unsaved changes.
 	effectEditor.WriteAll();
 	fleetEditor.WriteAll();
+	galaxyEditor.WriteAll();
 	hazardEditor.WriteAll();
 	governmentEditor.WriteAll();
 	outfitEditor.WriteAll();
@@ -100,6 +102,7 @@ void Editor::WriteAll()
 
 	const auto &effects = effectEditor.Changes();
 	const auto &fleets = fleetEditor.Changes();
+	const auto &galaxies = galaxyEditor.Changes();
 	const auto &hazards = hazardEditor.Changes();
 	const auto &governments = governmentEditor.Changes();
 	const auto &outfits = outfitEditor.Changes();
@@ -208,6 +211,15 @@ void Editor::WriteAll()
 				else
 					continue;
 			}
+			else if(type == "galaxy")
+			{
+				auto it = find_if(galaxies.begin(), galaxies.end(),
+						[&toSearch](const Galaxy &g) { return g.Name() == toSearch; });
+				if(it != galaxies.end())
+					galaxyEditor.WriteToFile(writer, &*it);
+				else
+					continue;
+			}
 			else
 			{
 				// If we are here then we encountered an object to save that we don't support yet.
@@ -238,7 +250,7 @@ bool Editor::HasUnsavedChanges() const
 		!hazardEditor.Dirty().empty()
 		|| !effectEditor.Dirty().empty()
 		|| !fleetEditor.Dirty().empty()
-		|| !fleetEditor.Dirty().empty()
+		|| !galaxyEditor.Dirty().empty()
 		|| !governmentEditor.Dirty().empty()
 		|| !outfitEditor.Dirty().empty()
 		|| !outfitterEditor.Dirty().empty()
@@ -296,6 +308,8 @@ void Editor::RenderMain()
 		effectEditor.Render();
 	if(showFleetMenu)
 		fleetEditor.Render();
+	if(showGalaxyMenu)
+		galaxyEditor.Render();
 	if(showHazardMenu)
 		hazardEditor.Render();
 	if(showGovernmentMenu)
@@ -338,6 +352,7 @@ void Editor::RenderMain()
 		{
 			ImGui::MenuItem("Effect Editor", nullptr, &showEffectMenu);
 			ImGui::MenuItem("Fleet Editor", nullptr, &showFleetMenu);
+			ImGui::MenuItem("Galaxy Editor", nullptr, &showGalaxyMenu);
 			ImGui::MenuItem("Hazard Editor", nullptr, &showHazardMenu);
 			ImGui::MenuItem("Government Editor", nullptr, &showGovernmentMenu);
 			ImGui::MenuItem("Outfit Editor", nullptr, &showOutfitMenu);
@@ -368,6 +383,7 @@ void Editor::RenderMain()
 
 		const auto &dirtyEffects = effectEditor.Dirty();
 		const auto &dirtyFleets = fleetEditor.Dirty();
+		const auto &dirtyGalaxies = galaxyEditor.Dirty();
 		const auto &dirtyHazards = hazardEditor.Dirty();
 		const auto &dirtyGovernments = governmentEditor.Dirty();
 		const auto &dirtyOutfits = outfitEditor.Dirty();
@@ -393,6 +409,13 @@ void Editor::RenderMain()
 			{
 				for(auto &&f : dirtyFleets)
 					ImGui::MenuItem(f.second.c_str(), nullptr, false, false);
+				ImGui::EndMenu();
+			}
+
+			if(!dirtyGalaxies.empty() && ImGui::BeginMenu("Galaxies"))
+			{
+				for(auto &&g : dirtyGalaxies)
+					ImGui::MenuItem(g.second.c_str(), nullptr, false, false);
 				ImGui::EndMenu();
 			}
 
@@ -667,6 +690,7 @@ void Editor::OpenPlugin(const string &plugin)
 	{
 		effectEditor.Clear();
 		fleetEditor.Clear();
+		galaxyEditor.Clear();
 		hazardEditor.Clear();
 		governmentEditor.Clear();
 		outfitEditor.Clear();
@@ -682,6 +706,7 @@ void Editor::OpenPlugin(const string &plugin)
 
 	GameData::baseEffects.clear();
 	GameData::baseFleets.clear();
+	GameData::baseGalaxies.clear();
 	GameData::baseHazards.clear();
 	GameData::baseGovernments.clear();
 	GameData::baseOutfits.clear();
@@ -735,6 +760,8 @@ void Editor::OpenPlugin(const string &plugin)
 				shipyardEditor.WriteToPlugin(GameData::Shipyards().Get(value), false);
 			else if(key == "effect")
 				effectEditor.WriteToPlugin(GameData::Effects().Get(value), false);
+			else if(key == "galaxy")
+				galaxyEditor.WriteToPlugin(GameData::Galaxies().Get(value), false);
 			else
 				unimplementedNodes.emplace(std::make_pair(key, value), node);
 

@@ -143,6 +143,13 @@ const System *MapEditorPanel::Selected() const
 
 
 
+void MapEditorPanel::Select(const Galaxy *galaxy)
+{
+	center = -galaxy->Position();
+}
+
+
+
 bool MapEditorPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool isNewPress)
 {
 	const Interface *mapInterface = GameData::Interfaces().Get("map");

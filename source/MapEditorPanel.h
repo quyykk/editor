@@ -25,6 +25,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include <vector>
 
 class Angle;
+class Galaxy;
 class Government;
 class PlanetEditor;
 class PlayerInfo;
@@ -45,6 +46,7 @@ public:
 	virtual bool AllowFastForward() const override;
 
 	const System *Selected() const;
+	void Select(const Galaxy *galaxy);
 
 
 protected:

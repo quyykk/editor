@@ -170,6 +170,7 @@ namespace {
 
 Set<Effect> GameData::baseEffects;
 Set<Fleet> GameData::baseFleets;
+Set<Galaxy> GameData::baseGalaxies;
 Set<Hazard> GameData::baseHazards;
 Set<Government> GameData::baseGovernments;
 Set<Outfit> GameData::baseOutfits;
@@ -249,6 +250,7 @@ bool GameData::BeginLoad(const char * const *argv)
 	
 	baseEffects = effects;
 	baseFleets = fleets;
+	baseGalaxies = galaxies;
 	baseHazards = hazards;
 	baseGovernments = governments;
 	baseOutfits = outfits;
@@ -287,6 +289,7 @@ void GameData::LoadData(const string *ignore, bool debugMode)
 {
 	auto &effects = ignore ? baseEffects : ::effects; 
 	auto &fleets = ignore ? baseFleets : ::fleets;
+	auto &galaxies = ignore ? baseGalaxies : ::galaxies;
 	auto &hazards = ignore ? baseHazards : ::hazards; 
 	auto &governments = ignore ? baseGovernments : ::governments;
 	auto &outfits = ignore ? baseOutfits : ::outfits;
@@ -310,6 +313,7 @@ void GameData::LoadData(const string *ignore, bool debugMode)
 					debugMode,
 					effects,
 					fleets,
+					galaxies,
 					hazards,
 					governments,
 					outfits,
@@ -724,6 +728,7 @@ void GameData::AddPurchase(const System &system, const string &commodity, int to
 void GameData::Change(const DataNode &node, bool initialLoad)
 {
 	auto &fleets = initialLoad ? ::fleets : baseFleets;
+	auto &galaxies = initialLoad ? ::galaxies : baseGalaxies;
 	auto &governments = initialLoad ?  ::governments : baseGovernments;
 	auto &outfitSales = initialLoad ? ::outfitSales : baseOutfitSales;
 	auto &shipSales = initialLoad ? ::shipSales : baseShipSales;
@@ -1184,6 +1189,7 @@ void GameData::LoadFile(
 		bool debugMode,
 		Set<Effect> &effects,
 		Set<Fleet> &fleets,
+		Set<Galaxy> &galaxies,
 		Set<Hazard> &hazards,
 		Set<Government> &governments,
 		Set<Outfit> &outfits,

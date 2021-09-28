@@ -15,6 +15,8 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 #include "Point.h"
 
+#include <string>
+
 class DataNode;
 class Sprite;
 
@@ -27,13 +29,18 @@ class Galaxy {
 public:
 	void Load(const DataNode &node);
 	
+	const std::string &Name() const;
 	const Point &Position() const;
 	const Sprite *GetSprite() const;
 	
 	
 private:
+	std::string name;
+
 	Point position;
 	const Sprite *sprite = nullptr;
+
+	friend class GalaxyEditor;
 };
 
 #endif

@@ -169,6 +169,7 @@ private:
 			bool debugMode,
 			Set<Effect> &effects,
 			Set<Fleet> &fleets,
+			Set<Galaxy> &galaxies,
 			Set<Hazard> &hazards,
 			Set<Government> &governments,
 			Set<Outfit> &outfits,
@@ -185,6 +186,7 @@ private:
 
 	static Set<Effect> baseEffects;
 	static Set<Fleet> baseFleets;
+	static Set<Galaxy> baseGalaxies;
 	static Set<Hazard> baseHazards;
 	static Set<Government> baseGovernments;
 	static Set<Outfit> baseOutfits;
@@ -199,6 +201,7 @@ private:
 	friend class Editor;
 	friend class EffectEditor;
 	friend class FleetEditor;
+	friend class GalaxyEditor;
 	friend class HazardEditor;
 	friend class GovernmentEditor;
 	friend class OutfitEditor;

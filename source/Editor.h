@@ -15,6 +15,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 #include "EffectEditor.h"
 #include "FleetEditor.h"
+#include "GalaxyEditor.h"
 #include "HazardEditor.h"
 #include "GovernmentEditor.h"
 #include "OutfitEditor.h"
@@ -94,6 +95,7 @@ private:
 
 	EffectEditor effectEditor;
 	FleetEditor fleetEditor;
+	GalaxyEditor galaxyEditor;
 	HazardEditor hazardEditor;
 	GovernmentEditor governmentEditor;
 	OutfitEditor outfitEditor;
@@ -109,6 +111,7 @@ private:
 	bool showConfirmationDialog = false;
 	bool showEffectMenu = false;
 	bool showFleetMenu = false;
+	bool showGalaxyMenu = false;
 	bool showHazardMenu = false;
 	bool showGovernmentMenu = false;
 	bool showOutfitMenu = false;
