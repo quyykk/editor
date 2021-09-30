@@ -237,6 +237,13 @@ void Fleet::Load(const DataNode &node)
 
 
 
+void Fleet::SetName(const string &name)
+{
+	fleetName = name;
+}
+
+
+
 const string &Fleet::Name() const
 {
 	return fleetName;

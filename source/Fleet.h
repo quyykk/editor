@@ -48,6 +48,7 @@ public:
 	
 	void Load(const DataNode &node);
 
+	void SetName(const std::string &name);
 	const std::string &Name() const;
 	
 	// Determine if this fleet template uses well-defined data.

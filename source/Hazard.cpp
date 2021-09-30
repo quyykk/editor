@@ -71,6 +71,13 @@ bool Hazard::IsValid() const
 
 
 
+void Hazard::SetName(const string &name)
+{
+	this->name = name;
+}
+
+
+
 // The name of the hazard in the data files.
 const string &Hazard::Name() const
 {

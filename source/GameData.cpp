@@ -376,7 +376,7 @@ void GameData::CheckReferences()
 		// Rather than disable the whole fleet due to these non-instantiable variants, remove them.
 		it.second.RemoveInvalidVariants();
 		if(!it.second.IsValid() && !deferred["fleet"].count(it.first))
-			Warn("fleet", it.first);
+			NameAndWarn("fleet", it);
 	}
 	// Government names are used in mission NPC blocks and LocationFilters.
 	for(auto &&it : governments)
@@ -432,9 +432,9 @@ void GameData::CheckReferences()
 		if(it.second.Name().empty() && !NameIfDeferred(deferred["system"], it))
 			NameAndWarn("system", it);
 	// Hazards are never serialized.
-	for(const auto &it : hazards)
+	for(auto &&it : hazards)
 		if(!it.second.IsValid())
-			Warn("hazard", it.first);
+			NameAndWarn("hazard", it);
 }
 
 
