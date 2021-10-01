@@ -1156,7 +1156,8 @@ void SystemEditor::Randomize()
 		// Make sure the 2 stars have similar radius.
 		while(fabs(radius1 - radius2) > 100.)
 		{
-			stellar1.sprite = RandomStarSprite();
+			do stellar1.sprite = RandomStarSprite();
+			while (stellar1.sprite == stellar2.sprite);
 			radius1 = getRadius(stellar1);
 		}
 
