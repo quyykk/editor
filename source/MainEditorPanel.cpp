@@ -113,10 +113,7 @@ void MainEditorPanel::Step()
 	{
 		if(!object.HasSprite() || !object.HasValidPlanet())
 			continue;
-
-		Point pos = object.Position() - center;
-		if(pos.Length() - object.Radius() < 600. / zoom)
-			labels.emplace_back(pos, object, currentSystem, zoom);
+		labels.emplace_back(object.Position() - center, object, currentSystem, zoom);
 	}
 }
 
