@@ -44,6 +44,7 @@ public:
 	
 	// Get the radius of this planet, i.e. how close you must be to land.
 	double Radius() const;
+	double RealRadius() const;
 	
 	// Determine if this object represents a planet with valid data.
 	bool HasValidPlanet() const;

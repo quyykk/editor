@@ -54,6 +54,13 @@ double StellarObject::Radius() const
 
 
 
+double StellarObject::RealRadius() const
+{
+	return HasSprite() ? .5 * min(Width(), Height()) : 100.;
+}
+
+
+
 bool StellarObject::HasValidPlanet() const
 {
 	return planet && planet->IsValid();

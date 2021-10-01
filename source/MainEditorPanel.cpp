@@ -110,11 +110,8 @@ void MainEditorPanel::Step()
 
 	labels.clear();
 	for(const StellarObject &object : currentSystem->Objects())
-	{
-		if(!object.HasSprite() || !object.HasValidPlanet())
-			continue;
-		labels.emplace_back(object.Position() - center, object, currentSystem, zoom, true);
-	}
+		if(object.planet)
+			labels.emplace_back(object.Position() - center, object, currentSystem, zoom, true);
 }
 
 
@@ -132,6 +129,7 @@ void MainEditorPanel::Draw()
 	batchDraw.SetCenter(center);
 
 	for(const auto &object : currentSystem->Objects())
+	{
 		if(object.HasSprite())
 		{
 			// Don't apply motion blur to very large planets and stars.
@@ -139,19 +137,20 @@ void MainEditorPanel::Draw()
 				draw.AddUnblurred(object);
 			else
 				draw.Add(object);
-
-			if(object.IsStar())
-				continue;
-			if(object.Parent() == -1)
-				RingShader::Draw(-center * zoom, object.Distance() * zoom, object.Radius() * zoom, 1.f, Color(169.f / 255.f, 169.f / 255.f, 169.f / 255.f).Transparent(.1f));
-			else
-			{
-				const auto &parent = currentSystem->Objects()[object.Parent()];
-				RingShader::Draw((parent.Position() - center) * zoom,
-						object.Distance() * zoom, object.Radius() * zoom, 1.f,
-						Color(169.f / 255.f, 169.f / 255.f, 169.f / 255.f).Transparent(.1f));
-			}
 		}
+
+		if(object.IsStar())
+			continue;
+		if(object.Parent() == -1)
+			RingShader::Draw(-center * zoom, object.Distance() * zoom, object.Radius() * zoom, 1.f, Color(169.f / 255.f, 169.f / 255.f, 169.f / 255.f).Transparent(.1f));
+		else
+		{
+			const auto &parent = currentSystem->Objects()[object.Parent()];
+			RingShader::Draw((parent.Position() - center) * zoom,
+					object.Distance() * zoom, object.Radius() * zoom, 1.f,
+					Color(169.f / 255.f, 169.f / 255.f, 169.f / 255.f).Transparent(.1f));
+		}
+	}
 
 	asteroids.Step(newVisuals, newFlotsam, step);
 	asteroids.Draw(draw, center, zoom);
@@ -169,7 +168,7 @@ void MainEditorPanel::Draw()
 		PointerShader::Bind();
 		for(int i = 0; i < 5; ++i)
 		{
-			PointerShader::Add((currentObject->Position() - center) * zoom, a.Unit(), 12.f, 14.f, -currentObject->Radius() * zoom, Radar::GetColor(Radar::FRIENDLY));
+			PointerShader::Add((currentObject->Position() - center) * zoom, a.Unit(), 12.f, 14.f, -currentObject->RealRadius() * zoom, Radar::GetColor(Radar::FRIENDLY));
 			a += da;
 		}
 		PointerShader::Unbind();
@@ -199,6 +198,13 @@ const System *MainEditorPanel::Selected() const
 
 
 
+void MainEditorPanel::DeselectObject()
+{
+	currentObject = nullptr;
+}
+
+
+
 bool MainEditorPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool isNewPress)
 {
 	if(command.Has(Command::MAP) || key == 'd' || key == SDLK_ESCAPE
@@ -208,6 +214,8 @@ bool MainEditorPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &comman
 		ZoomViewIn();
 	else if(key == SDLK_MINUS || key == SDLK_KP_MINUS)
 		ZoomViewOut();
+	else if(key == SDLK_DELETE && currentObject)
+		systemEditor->Delete(*currentObject);
 	else
 		return false;
 
@@ -223,7 +231,7 @@ bool MainEditorPanel::Click(int x, int y, int clicks)
 	if(!currentSystem || !currentSystem->IsValid())
 		return false;
 	for(const auto &it : currentSystem->Objects())
-		if(click.Distance(it.Position()) < it.Radius())
+		if(click.Distance(it.Position()) < it.RealRadius())
 		{
 			currentObject = &it;
 			systemEditor->Select(currentObject);
@@ -285,6 +293,7 @@ void MainEditorPanel::Select(const System *system)
 	if(!system)
 		return;
 	currentSystem = system;
+	currentObject = nullptr;
 	UpdateCache();
 }
 

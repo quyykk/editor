@@ -94,6 +94,35 @@ void SystemEditor::CreateNewSystem(Point position)
 
 
 
+void SystemEditor::Delete(const StellarObject &stellar)
+{
+	auto it = find(object->objects.begin(), object->objects.end(), stellar);
+	assert(it != object->objects.end() && "stellar doesn't belong to the current system");
+
+	if(auto *planet = stellar.planet)
+		const_cast<Planet *>(planet)->RemoveSystem(object);
+	SetDirty();
+	auto index = it - object->objects.begin();
+	auto next = object->objects.erase(it);
+	size_t removed = 1;
+	// Remove any child objects too.
+	while(next != object->objects.end() && next->Parent() == index)
+	{
+		next = object->objects.erase(next);
+		++removed;
+	}
+
+	// Recalculate every parent index.
+	for(auto it = next; it != object->objects.end(); ++it)
+		if(it->parent >= index)
+			it->parent -= removed;
+	if(auto *panel = dynamic_cast<MainEditorPanel *>(editor.GetMenu().Top().get()))
+		panel->DeselectObject();
+	selectedObject = nullptr;
+}
+
+
+
 void SystemEditor::Render()
 {
 	if(IsDirty())
@@ -689,25 +718,7 @@ void SystemEditor::RenderSystem()
 		ImGui::TreePop();
 
 		if(selected != object->objects.end())
-		{
-			if(auto *planet = selected->GetPlanet())
-				const_cast<Planet *>(planet)->RemoveSystem(object);
-			SetDirty();
-			auto index = selected - object->objects.begin();
-			auto next = object->objects.erase(selected);
-			size_t removed = 1;
-			// Remove any child objects too.
-			while(next != object->objects.end() && next->Parent() == index)
-			{
-				next = object->objects.erase(next);
-				++removed;
-			}
-
-			// Recalculate every parent index.
-			for(auto it = next; it != object->objects.end(); ++it)
-				if(it->parent >= index)
-					it->parent -= removed;
-		}
+			Delete(*selected);
 		else if(selectedToAdd != object->objects.end())
 		{
 			SetDirty();

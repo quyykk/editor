@@ -48,6 +48,7 @@ public:
 	void ToggleLink(const System *system);
 	// Create a new system at the specified position.
 	void CreateNewSystem(Point position);
+	void Delete(const StellarObject &stellar);
 
 	const System *Selected() const { return object; }
 	void Select(const System *system) { object = const_cast<System *>(system); }

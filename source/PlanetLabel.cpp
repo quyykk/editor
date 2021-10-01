@@ -41,7 +41,7 @@ namespace {
 
 
 PlanetLabel::PlanetLabel(const Point &position, const StellarObject &object, const System *system, double zoom, bool alwaysVisisble)
-	: position(position * zoom), radius(object.Radius() * zoom)
+	: position(position * zoom), radius(object.RealRadius() * zoom)
 {
 	const Planet &planet = *object.GetPlanet();
 	name = planet.Name();

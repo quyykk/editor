@@ -52,6 +52,7 @@ public:
 	virtual bool AllowFastForward() const override;
 
 	const System *Selected() const;
+	void DeselectObject();
 
 
 protected:
