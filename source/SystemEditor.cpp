@@ -1183,7 +1183,7 @@ void SystemEditor::Randomize()
 	object->habitable = mass / HABITABLE_SCALE;
 
 	// Now we generate lots of planets with moons.
-	uniform_int_distribution<> randPlanetCount(3, 6);
+	uniform_int_distribution<> randPlanetCount(4, 6);
 	int planetCount = randPlanetCount(gen);
 	for(int i = 0; i < planetCount; ++i)
 	{
