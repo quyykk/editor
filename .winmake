@@ -98,7 +98,7 @@ ifeq ($(needs_tarball),true)
 # Download / Unpack the tarball, and mark it as up-to-date (vs. the packaged-on date).
 scons-local-%.tar.gz:
 	@echo "No system installation of SCons, downloading version $(SCONS_VERSION)"
-	curl -sSf -L https://sourceforge.net/projects/scons/files/scons-local/$(SCONS_VERSION)/$@/download?use_mirror=jztkft > $@
+	curl -sSf -L http://sourceforge.net/projects/scons/files/scons-local/$(SCONS_VERSION)/$@ > $@
 	@touch $@
 scons-local: scons-local-$(SCONS_VERSION).tar.gz
 	@echo "Unpacking tarball into $@"
