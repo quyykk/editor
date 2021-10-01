@@ -1154,11 +1154,27 @@ void SystemEditor::Randomize()
 		double radius2 = getRadius(stellar2);
 
 		// Make sure the 2 stars have similar radius.
-		while(fabs(radius1 - radius2) > 100.)
+		// If we fail to find a candidate, swap the other star.
+		int attempts = 25;
+		while(fabs(radius1 - radius2) > 100. && attempts)
 		{
 			do stellar1.sprite = RandomStarSprite();
 			while (stellar1.sprite == stellar2.sprite);
 			radius1 = getRadius(stellar1);
+			--attempts;
+		}
+		if(!attempts)
+		{
+			// Try again but this time we swap the other star.
+			// If we still don't find a candidate, we abort.
+			attempts = 25;
+			while(fabs(radius1 - radius2) > 100. && attempts)
+			{
+				do stellar2.sprite = RandomStarSprite();
+				while (stellar2.sprite == stellar1.sprite);
+				radius2 = getRadius(stellar2);
+				--attempts;
+			}
 		}
 
 		double mass1 = getMass(stellar1);
@@ -1229,7 +1245,6 @@ void SystemEditor::Randomize()
 		object->objects.back().sprite = planetSprite;
 		object->objects.back().isStation = !planetSprite->Name().compare(0, 14, "planet/station");
 		used.insert(planetSprite);
-		auto &planet = object->objects.back();
 
 		uniform_int_distribution<> oneOrTwo(1, 2);
 		uniform_int_distribution<> threeOrFive(3, 5);
@@ -1272,11 +1287,15 @@ void SystemEditor::Randomize()
 			moonDistance += 2. * getRadius(object->objects.back());
 		}
 
-		planet.distance = distance + moonDistance;
-		calcPeriod(planet, false);
+		object->objects[rootIndex].distance = distance + moonDistance;
+		calcPeriod(object->objects[rootIndex], false);
 	}
 
 	SetDirty();
+
+	// Update the new objects' positions here to avoid a flicker.
+	if(auto *panel = dynamic_cast<MainEditorPanel *>(editor.GetMenu().Top().get()))
+		panel->Step();
 }
 
 
