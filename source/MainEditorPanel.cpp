@@ -113,7 +113,7 @@ void MainEditorPanel::Step()
 	{
 		if(!object.HasSprite() || !object.HasValidPlanet())
 			continue;
-		labels.emplace_back(object.Position() - center, object, currentSystem, zoom);
+		labels.emplace_back(object.Position() - center, object, currentSystem, zoom, true);
 	}
 }
 
