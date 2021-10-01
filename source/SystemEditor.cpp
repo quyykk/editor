@@ -956,7 +956,7 @@ void SystemEditor::WriteToFile(DataWriter &writer, const System *system)
 		else if(diff)
 			writer.Write("remove", "music");
 	}
-	WriteDiff(writer, "link", system->links, diff ? &diff->links : nullptr);
+	WriteDiff(writer, "link", system->links, diff ? &diff->links : nullptr, false, true, false, true);
 	if(!diff || system->hidden != diff->hidden)
 	{
 		if(system->hidden)
