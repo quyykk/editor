@@ -223,8 +223,8 @@ void GalaxyEditor::WriteToFile(DataWriter &writer, const Galaxy *galaxy)
 	writer.BeginChild();
 
 	if(!diff || (diff && (galaxy->position.X() != diff->position.X() || galaxy->position.Y() != diff->position.Y())))
-		if(object->position || diff)
-			writer.Write("pos", object->position.X(), object->position.Y());
+		if(galaxy->position || diff)
+			writer.Write("pos", galaxy->position.X(), galaxy->position.Y());
 	if(!diff || galaxy->sprite != diff->sprite)
 		if(galaxy->sprite)
 			writer.Write("sprite", galaxy->sprite->Name());
