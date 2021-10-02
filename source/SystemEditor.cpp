@@ -1185,6 +1185,13 @@ void SystemEditor::Randomize()
 		return radius * radius * STAR_MASS_SCALE;
 	};
 
+	if(auto *panel = dynamic_cast<MainEditorPanel *>(editor.GetMenu().Top().get()))
+		panel->DeselectObject();
+	selectedObject = nullptr;
+
+	for(auto &stellar : object->objects)
+		if(stellar.planet)
+			const_cast<Planet *>(stellar.planet)->RemoveSystem(object);
 	object->objects.clear();
 
 	// First we generate the (or 2) star(s).
