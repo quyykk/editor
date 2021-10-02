@@ -144,6 +144,7 @@ void GovernmentEditor::Render()
 			{
 				auto *newGov = const_cast<Government *>(GameData::Governments().Get(name));
 				newGov->name = name;
+				newGov->displayName = name;
 				object = newGov;
 				SetDirty();
 			});
@@ -153,6 +154,7 @@ void GovernmentEditor::Render()
 				editor.RenameObject(keyFor<Government>(), object->TrueName(), name);
 				GameData::Governments().Rename(object->TrueName(), name);
 				object->name = name;
+				object->displayName = name;
 				WriteToPlugin(object, false);
 				SetDirty();
 			});
@@ -163,6 +165,7 @@ void GovernmentEditor::Render()
 				object = clone;
 
 				object->name = name;
+				object->displayName = name;
 				SetDirty();
 			});
 
