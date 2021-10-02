@@ -94,10 +94,18 @@ void SystemEditor::CreateNewSystem(Point position)
 
 
 
-void SystemEditor::Delete(const StellarObject &stellar)
+void SystemEditor::Delete(const StellarObject &stellar, bool selectedObject)
 {
 	auto it = find(object->objects.begin(), object->objects.end(), stellar);
 	assert(it != object->objects.end() && "stellar doesn't belong to the current system");
+
+	int selectedIndex = -1;
+	if(this->selectedObject)
+	{
+		auto it = find(object->objects.begin(), object->objects.end(), *this->selectedObject);
+		if(it != object->objects.end())
+			selectedIndex = it - object->objects.begin();
+	}
 
 	if(auto *planet = stellar.planet)
 		const_cast<Planet *>(planet)->RemoveSystem(object);
@@ -116,9 +124,22 @@ void SystemEditor::Delete(const StellarObject &stellar)
 	for(auto it = next; it != object->objects.end(); ++it)
 		if(it->parent >= index)
 			it->parent -= removed;
-	if(auto *panel = dynamic_cast<MainEditorPanel *>(editor.GetMenu().Top().get()))
-		panel->DeselectObject();
-	selectedObject = nullptr;
+
+	if(selectedObject)
+	{
+		if(auto *panel = dynamic_cast<MainEditorPanel *>(editor.GetMenu().Top().get()))
+			panel->DeselectObject();
+		this->selectedObject = nullptr;
+	}
+	else if(selectedIndex > -1)
+	{
+		if(selectedIndex > next - object->objects.begin())
+			selectedIndex -= removed;
+		const auto &obj = *(object->objects.begin() + selectedIndex);
+		if(auto *panel = dynamic_cast<MainEditorPanel *>(editor.GetMenu().Top().get()))
+			panel->SelectObject(obj);
+		this->selectedObject = &obj;
+	}
 }
 
 
@@ -686,7 +707,21 @@ void SystemEditor::RenderSystem()
 	}
 	if(openAddObject)
 	{
+		int selectedIndex = -1;
+		if(this->selectedObject)
+		{
+			auto it = find(object->objects.begin(), object->objects.end(), *this->selectedObject);
+			if(it != object->objects.end())
+				selectedIndex = it - object->objects.begin();
+		}
 		object->objects.emplace_back();
+		if(selectedIndex > -1)
+		{
+			const auto &obj = *(object->objects.begin() + selectedIndex);
+			if(auto *panel = dynamic_cast<MainEditorPanel *>(editor.GetMenu().Top().get()))
+				panel->SelectObject(obj);
+			this->selectedObject = &obj;
+		}
 		SetDirty();
 	}
 
@@ -718,17 +753,34 @@ void SystemEditor::RenderSystem()
 		ImGui::TreePop();
 
 		if(selected != object->objects.end())
-			Delete(*selected);
+			Delete(*selected, false);
 		else if(selectedToAdd != object->objects.end())
 		{
-			SetDirty();
-			auto it = object->objects.emplace(selectedToAdd + 1);
-			it->parent = selectedToAdd - object->objects.begin();
+			int selectedIndex = -1;
+			if(this->selectedObject)
+			{
+				auto it = find(object->objects.begin(), object->objects.end(), *this->selectedObject);
+				if(it != object->objects.end())
+					selectedIndex = it - object->objects.begin();
+			}
 
-			int newParent = it->parent;
+			SetDirty();
+			const int parent = selectedToAdd - object->objects.begin();
+			auto it = object->objects.emplace(selectedToAdd + 1);
+			it->parent = parent;
+
+			auto nextObj = it;
 			for(++it; it != object->objects.end(); ++it)
-				if(it->parent >= newParent)
+				if(it->parent > parent)
 					++it->parent;
+
+			// Recalculate selected object if necessary.
+			if(selectedIndex >= nextObj - object->objects.begin())
+				++selectedIndex;
+			const auto &obj = *(object->objects.begin() + selectedIndex);
+			if(auto *panel = dynamic_cast<MainEditorPanel *>(editor.GetMenu().Top().get()))
+				panel->SelectObject(obj);
+			this->selectedObject = &obj;
 		}
 	}
 }

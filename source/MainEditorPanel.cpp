@@ -205,6 +205,13 @@ void MainEditorPanel::DeselectObject()
 
 
 
+void MainEditorPanel::SelectObject(const StellarObject &stellar)
+{
+	currentObject = &stellar;
+}
+
+
+
 bool MainEditorPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool isNewPress)
 {
 	if(command.Has(Command::MAP) || key == 'd' || key == SDLK_ESCAPE
@@ -215,7 +222,7 @@ bool MainEditorPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &comman
 	else if(key == SDLK_MINUS || key == SDLK_KP_MINUS)
 		ZoomViewOut();
 	else if(key == SDLK_DELETE && currentObject)
-		systemEditor->Delete(*currentObject);
+		systemEditor->Delete(*currentObject, true);
 	else
 		return false;
 
