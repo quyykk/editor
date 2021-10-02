@@ -123,7 +123,14 @@ private:
 	int swizzle = 0;
 	Color color;
 	
-	std::map<const Government *, double> attitudeToward;
+	struct GovSortyByName
+	{
+		bool operator()(const Government *lhs, const Government *rhs) const
+		{
+			return lhs->name < rhs->name;
+		}
+	};
+	std::map<const Government *, double, GovSortyByName> attitudeToward;
 	double initialPlayerReputation = 0.;
 	std::map<int, double> penaltyFor;
 	double bribe = 0.;
