@@ -116,6 +116,8 @@ void SystemEditor::Delete(const StellarObject &stellar, bool selectedObject)
 	// Remove any child objects too.
 	while(next != object->objects.end() && next->Parent() == index)
 	{
+		if(next->planet)
+			const_cast<Planet *>(next->planet)->RemoveSystem(object);
 		next = object->objects.erase(next);
 		++removed;
 	}
