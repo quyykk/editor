@@ -161,7 +161,7 @@ void EffectEditor::Render()
 				*clone = *object;
 				object = clone;
 
-				object->name = searchBox;
+				object->name = name;
 				SetDirty();
 			});
 
