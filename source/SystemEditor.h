@@ -51,7 +51,7 @@ public:
 	void Delete(const StellarObject &stellar, bool selectedObject);
 
 	const System *Selected() const { return object; }
-	void Select(const System *system) { object = const_cast<System *>(system); }
+	void Select(const System *system) { object = const_cast<System *>(system); selectedObject = nullptr; }
 	void Select(const StellarObject *object) { selectedObject = object; }
 
 
