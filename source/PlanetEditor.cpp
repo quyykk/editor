@@ -383,16 +383,12 @@ void PlanetEditor::RenderPlanet()
 	}
 
 
-	static string landscapeName;
-	static Sprite *landscape = nullptr;
+	string landscapeName;
 	if(object->landscape)
 		landscapeName = object->landscape->Name();
-	if(ImGui::InputCombo("landscape", &landscapeName, &landscape, SpriteSet::GetSprites()))
+	if(ImGui::InputCombo("landscape", &landscapeName, &object->landscape, SpriteSet::GetSprites()))
 	{
-		object->landscape = landscape;
 		GameData::Preload(object->landscape);
-		landscape = nullptr;
-		landscapeName.clear();
 		SetDirty();
 	}
 	if(ImGui::InputText("music", &object->music, ImGuiInputTextFlags_EnterReturnsTrue))
