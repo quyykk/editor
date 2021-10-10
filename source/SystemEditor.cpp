@@ -177,6 +177,8 @@ void SystemEditor::Render()
 
 	if(ImGui::IsWindowFocused() && ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(SDL_SCANCODE_S))
 		SaveCurrent();
+	if(ImGui::IsWindowFocused() && ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(SDL_SCANCODE_R))
+		Randomize();
 
 	bool showNewSystem = false;
 	bool showRenameSystem = false;
