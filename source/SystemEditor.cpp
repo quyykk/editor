@@ -1318,7 +1318,11 @@ void SystemEditor::Randomize()
 		const Sprite *planetSprite;
 		do {
 			if(isSmall)
-				planetSprite = RandomMoonSprite();
+			{
+				// We might have a station here, which we do not want.
+				do planetSprite = RandomMoonSprite();
+				while (planetSprite->Name().find("station") != string::npos);
+			}
 			else if(isTerrestrial)
 				planetSprite = isHabitable ? RandomPlanetSprite() : RandomPlanetSprite();
 			else
