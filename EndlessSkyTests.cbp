@@ -49,7 +49,6 @@
 			<Add option="-std=c++11" />
 			<Add option="-Werror" />
 			<Add option="-Wold-style-cast" />
-			<Add option="-fno-rtti" />
 			<Add directory="tests/include" />
 			<Add directory="C:/dev64/include" />
 		</Compiler>
