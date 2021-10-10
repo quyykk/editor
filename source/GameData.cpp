@@ -477,12 +477,16 @@ double GameData::Progress()
 					Files::LogError("Warning: image \"" + pair.first + "\" is referred to, but has no pixels.");
 				else if(!pair.first.compare(0, 7, "planet/"))
 				{
-					// Ignore ringworlds.
+					// Ignore ringworlds and wormholes.
 					if(pair.first.find("ringworld") != string::npos)
+						continue;
+					if(pair.first.find("wormhole") != string::npos)
 						continue;
 
 					auto radius = pair.second.Width() / 2. - 4.;
-					if(radius <= 50.)
+
+					// Sort the sprites based on radius. Stations are always moons.
+					if(radius <= 50. || pair.first.find("station") != string::npos)
 						moonSprites.push_back(&pair.second);
 					else if(radius >= 120.)
 						giantSprites.push_back(&pair.second);
