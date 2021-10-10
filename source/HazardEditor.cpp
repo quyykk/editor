@@ -241,6 +241,8 @@ void HazardEditor::RenderHazard()
 			SetDirty();
 		if(ImGui::InputDoubleEx("relative heat damage", &object->damage[Weapon::RELATIVE_HEAT_DAMAGE]))
 			SetDirty();
+		if(ImGui::InputDoubleEx("relative energy damage", &object->damage[Weapon::RELATIVE_ENERGY_DAMAGE]))
+			SetDirty();
 		if(ImGui::InputDoubleEx("piecing", &object->piercing))
 		{
 			object->piercing = max(0., object->piercing);
@@ -407,6 +409,12 @@ void HazardEditor::WriteToFile(DataWriter &writer, const Hazard *hazard)
 		{
 			writeRoot();
 			writer.Write("relative heat damage", hazard->damage[Weapon::RELATIVE_HEAT_DAMAGE]);
+		}
+	if(!diff || hazard->damage[Weapon::RELATIVE_ENERGY_DAMAGE] != diff->damage[Weapon::RELATIVE_ENERGY_DAMAGE])
+		if(hazard->damage[Weapon::RELATIVE_ENERGY_DAMAGE] || diff)
+		{
+			writeRoot();
+			writer.Write("relative energy damage", hazard->damage[Weapon::RELATIVE_ENERGY_DAMAGE]);
 		}
 	if(!diff || hazard->piercing != diff->piercing)
 		if(hazard->piercing || diff)
