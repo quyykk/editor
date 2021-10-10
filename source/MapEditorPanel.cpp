@@ -222,6 +222,15 @@ bool MapEditorPanel::RClick(int x, int y)
 
 
 
+bool MapEditorPanel::MClick(int x, int y)
+{
+	// A middle click on nothing clones the current system.
+	systemEditor->CloneSystem(click);
+	return true;
+}
+
+
+
 bool MapEditorPanel::Drag(double dx, double dy)
 {
 	isDragging = true;

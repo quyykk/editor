@@ -34,7 +34,7 @@ public:
 	SystemEditor(Editor &editor, bool &show) noexcept;
 
 	void Render();
-	void AlwaysRender(bool showNewSystem = false);
+	void AlwaysRender(bool showNewSystem = false, bool showCloneSystem = false);
 	void WriteToFile(DataWriter &writer, const System *system);
 
 	void SaveCurrent();
@@ -48,6 +48,8 @@ public:
 	void ToggleLink(const System *system);
 	// Create a new system at the specified position.
 	void CreateNewSystem(Point position);
+	// Clones a new system at the specified position.
+	void CloneSystem(Point position);
 	void Delete(const StellarObject &stellar, bool selectedObject);
 
 	const System *Selected() const { return object; }
@@ -80,6 +82,7 @@ private:
 private:
 	Point position;
 	bool createNewSystem = false;
+	bool cloneSystem = false;
 	const StellarObject *selectedObject = nullptr;
 };
 

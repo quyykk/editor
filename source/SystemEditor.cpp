@@ -94,6 +94,14 @@ void SystemEditor::CreateNewSystem(Point position)
 
 
 
+void SystemEditor::CloneSystem(Point position)
+{
+	this->position = position;
+	cloneSystem = true;
+}
+
+
+
 void SystemEditor::Delete(const StellarObject &stellar, bool selectedObject)
 {
 	auto it = find(object->objects.begin(), object->objects.end(), stellar);
@@ -272,9 +280,7 @@ void SystemEditor::Render()
 
 	if(showRenameSystem)
 		ImGui::OpenPopup("Rename System");
-	if(showCloneSystem)
-		ImGui::OpenPopup("Clone System");
-	AlwaysRender(showNewSystem);
+	AlwaysRender(showNewSystem, showCloneSystem);
 	ImGui::BeginSimpleRenameModal("Rename System", [this](const string &name)
 			{
 				DeleteFromChanges();
@@ -284,28 +290,6 @@ void SystemEditor::Render()
 				WriteToPlugin(object, false);
 				UpdateMap();
 				SetDirty();
-			});
-	ImGui::BeginSimpleCloneModal("Clone System", [this](const string &name)
-			{
-				auto *clone = const_cast<System *>(GameData::Systems().Get(name));
-				*clone = *object;
-				object = clone;
-
-				object->name = name;
-				object->position += Point(25., 25.);
-				object->objects.clear();
-				object->links.clear();
-				object->attributes.insert("uninhabited");
-				editor.Player().Seen(*object);
-				GameData::UpdateSystem(object);
-				for(auto &&link : object->VisibleNeighbors())
-					GameData::UpdateSystem(const_cast<System *>(link));
-				UpdateMap();
-				SetDirty();
-				if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
-					panel->Select(object);
-				if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
-					panel->Select(object);
 			});
 
 	if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
@@ -331,7 +315,7 @@ void SystemEditor::Render()
 
 
 
-void SystemEditor::AlwaysRender(bool showNewSystem)
+void SystemEditor::AlwaysRender(bool showNewSystem, bool showCloneSystem)
 {
 	if(showNewSystem || createNewSystem)
 		ImGui::OpenPopup("New System");
@@ -357,6 +341,32 @@ void SystemEditor::AlwaysRender(bool showNewSystem)
 					panel->Select(object);
 			});
 	createNewSystem &= ImGui::IsPopupOpen("New System");
+
+	if(showCloneSystem || cloneSystem)
+		ImGui::OpenPopup("Clone System");
+	ImGui::BeginSimpleCloneModal("Clone System", [this](const string &name)
+			{
+				auto *clone = const_cast<System *>(GameData::Systems().Get(name));
+				*clone = *object;
+				object = clone;
+
+				object->name = name;
+				object->position += Point(25., 25.);
+				object->objects.clear();
+				object->links.clear();
+				object->attributes.insert("uninhabited");
+				editor.Player().Seen(*object);
+				GameData::UpdateSystem(object);
+				for(auto &&link : object->VisibleNeighbors())
+					GameData::UpdateSystem(const_cast<System *>(link));
+				UpdateMap();
+				SetDirty();
+				if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
+					panel->Select(object);
+				if(auto *panel = dynamic_cast<MainEditorPanel*>(editor.GetMenu().Top().get()))
+					panel->Select(object);
+			});
+	cloneSystem &= ImGui::IsPopupOpen("Clone System");
 }
 
 

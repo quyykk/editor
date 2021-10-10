@@ -61,6 +61,8 @@ bool UI::Handle(const SDL_Event &event)
 				if(!handled)
 					handled = (*it)->Click(x, y, event.button.clicks);
 			}
+			else if(event.button.button == 2)
+				handled = (*it)->MClick(x, y);
 			else if(event.button.button == 3)
 				handled = (*it)->RClick(x, y);
 		}

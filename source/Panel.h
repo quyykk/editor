@@ -70,6 +70,7 @@ protected:
 	virtual bool KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, bool isNewPress);
 	virtual bool Click(int x, int y, int clicks);
 	virtual bool RClick(int x, int y);
+	virtual bool MClick(int x, int y);
 	virtual bool Hover(int x, int y);
 	virtual bool Drag(double dx, double dy);
 	virtual bool Release(int x, int y);
