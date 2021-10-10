@@ -1289,7 +1289,10 @@ void GameData::LoadFile(
 		else if(key == "star" && node.Size() >= 2 && initialLoad)
 		{
 			const Sprite *sprite = SpriteSet::Get(node.Token(1));
-			stars.push_back(sprite);
+
+			// Ignore novas.
+			if(node.Token(1).find("nova") == string::npos)
+				stars.push_back(sprite);
 			for(const DataNode &child : node)
 			{
 				if(child.Token(0) == "power" && child.Size() >= 2)
