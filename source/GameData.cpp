@@ -477,10 +477,12 @@ double GameData::Progress()
 					Files::LogError("Warning: image \"" + pair.first + "\" is referred to, but has no pixels.");
 				else if(!pair.first.compare(0, 7, "planet/"))
 				{
-					// Ignore ringworlds and wormholes.
+					// Ignore ringworlds, panels and wormholes.
 					if(pair.first.find("ringworld") != string::npos)
 						continue;
 					if(pair.first.find("wormhole") != string::npos)
+						continue;
+					if(pair.first.find("panels") != string::npos)
 						continue;
 
 					auto radius = pair.second.Width() / 2. - 4.;
