@@ -415,6 +415,11 @@ void SystemEditor::RenderSystem()
 			object->attributes.insert(move(addAttribute));
 			SetDirty();
 		}
+		if(!addAttribute.empty() && !ImGui::IsInputFocused("##system"))
+		{
+			object->attributes.insert(move(addAttribute));
+			SetDirty();
+		}
 		ImGui::TreePop();
 	}
 
