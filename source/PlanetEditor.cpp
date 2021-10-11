@@ -236,6 +236,12 @@ void PlanetEditor::RenderPlanet()
 				addAttribute.clear();
 				SetDirty();
 			}
+		if(!addAttribute.empty() && !ImGui::IsInputFocused("##planet"))
+		{
+			object->attributes.insert(addAttribute);
+			addAttribute.clear();
+			SetDirty();
+		}
 		ImGui::TreePop();
 	}
 
