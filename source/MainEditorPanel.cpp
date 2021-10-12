@@ -226,7 +226,7 @@ bool MainEditorPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &comman
 	else if(key == 's' && (mod & KMOD_CTRL))
 		systemEditor->SaveCurrent();
 	else if(key == 'r' && (mod & KMOD_CTRL))
-		systemEditor->Randomize();
+		systemEditor->RandomizeAll();
 	else
 		return false;
 

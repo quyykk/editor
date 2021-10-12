@@ -169,7 +169,7 @@ bool MapEditorPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command
 	else if(key == 's' && (mod & KMOD_CTRL))
 		systemEditor->SaveCurrent();
 	else if(key == 'r' && (mod & KMOD_CTRL))
-		systemEditor->Randomize();
+		systemEditor->RandomizeAll();
 	else if(key == SDLK_DELETE)
 		systemEditor->Delete(selectedSystems);
 	else

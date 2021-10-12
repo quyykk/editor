@@ -56,7 +56,7 @@ public:
 	void Select(const System *system) { object = const_cast<System *>(system); selectedObject = nullptr; }
 	void Select(const StellarObject *object) { selectedObject = object; }
 
-	void Randomize();
+	void RandomizeAll();
 
 
 private:
@@ -69,6 +69,7 @@ private:
 	void UpdateMap() const;
 	void UpdateMain() const;
 
+	void Randomize();
 	void RandomizeAsteroids();
 	void RandomizeMinables();
 	void GenerateTrades();

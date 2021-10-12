@@ -264,11 +264,7 @@ void SystemEditor::Render()
 				RandomizeMinables();
 			ImGui::Separator();
 			if(ImGui::MenuItem("Randomize All", nullptr, false, object))
-			{
-				RandomizeAsteroids();
-				RandomizeMinables();
-				Randomize();
-			}
+				RandomizeAll();
 			ImGui::EndMenu();
 		}
 		if(ImGui::BeginMenu("Tools"))
@@ -1157,6 +1153,13 @@ void SystemEditor::Delete(const std::vector<const System *> &systems)
 {
 	for(const auto &system : systems)
 		Delete(system, false);
+}
+
+
+void SystemEditor::RandomizeAll() {
+	RandomizeAsteroids();
+	RandomizeMinables();
+	Randomize();
 }
 
 
