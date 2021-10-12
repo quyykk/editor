@@ -622,7 +622,7 @@ void SystemEditor::RenderSystem()
 						selected = nullptr;
 						SetDirty();
 					}
-				if(ImGui::InputInt("period", &fleet.period))
+				if(ImGui::InputInt("period", &fleet.period, 100, 1000))
 					SetDirty();
 				ImGui::TreePop();
 			}
