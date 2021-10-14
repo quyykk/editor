@@ -392,7 +392,8 @@ void PlanetEditor::RenderPlanet()
 	string landscapeName;
 	if(object->landscape)
 		landscapeName = object->landscape->Name();
-	if(ImGui::InputCombo("landscape", &landscapeName, &object->landscape, SpriteSet::GetSprites()))
+	if(ImGui::InputCombo("landscape", &landscapeName, &object->landscape, SpriteSet::GetSprites(),
+				[](const string &name) { return !name.compare(0, 5, "land/"); }))
 	{
 		GameData::Preload(object->landscape);
 		SetDirty();

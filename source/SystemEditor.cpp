@@ -851,7 +851,8 @@ void SystemEditor::RenderObject(StellarObject &object, int index, int &nested, b
 		spriteName.clear();
 		if(object.sprite)
 			spriteName = object.sprite->Name();
-		if(ImGui::InputCombo("sprite", &spriteName, &sprite, SpriteSet::GetSprites()))
+		if(ImGui::InputCombo("sprite", &spriteName, &sprite, SpriteSet::GetSprites(),
+					[](const string &name) { return !name.compare(0, 7, "planet/"); }))
 		{
 			object.sprite = sprite;
 			sprite = nullptr;

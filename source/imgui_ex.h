@@ -22,6 +22,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 #include <algorithm>
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -38,9 +39,9 @@ namespace ImGui
 	IMGUI_API bool IsInputFocused(const char *id);
 
 	template <typename T>
-	IMGUI_API bool InputCombo(const char *label, std::string *input, T **element, const Set<T> &elements);
+	IMGUI_API bool InputCombo(const char *label, std::string *input, T **element, const Set<T> &elements, std::function<bool(const std::string &)> sort = {});
 	template <typename T>
-	IMGUI_API bool InputCombo(const char *label, std::string *input, const T **element, const Set<T> &elements);
+	IMGUI_API bool InputCombo(const char *label, std::string *input, const T **element, const Set<T> &elements, std::function<bool(const std::string &)> sort = {});
 
 	IMGUI_API bool InputSwizzle(const char *label, int *swizzle, bool allowNoSwizzle = false);
 
@@ -71,7 +72,7 @@ bool IsValid(const T &obj, decltype(obj.TrueName(), void()) *)
 
 
 template <typename T>
-IMGUI_API bool ImGui::InputCombo(const char *label, std::string *input, T **element, const Set<T> &elements)
+IMGUI_API bool ImGui::InputCombo(const char *label, std::string *input, T **element, const Set<T> &elements, std::function<bool(const std::string &)> sort)
 {
 	ImGuiWindow *window = GetCurrentWindow();
 	const auto callback = [](ImGuiInputTextCallbackData *data)
@@ -126,7 +127,7 @@ IMGUI_API bool ImGui::InputCombo(const char *label, std::string *input, T **elem
 		std::vector<const std::string *> strings;
 		strings.reserve(elements.size());
 		for(auto it = elements.begin(); it != elements.end(); ++it)
-			if(IsValid(it->second, 0))
+			if(IsValid(it->second, 0) && (!sort || sort(it->first)))
 				strings.push_back(&it->first);
 
 		std::vector<std::pair<double, const char *>> weights;
@@ -210,9 +211,9 @@ IMGUI_API bool ImGui::InputCombo(const char *label, std::string *input, T **elem
 
 
 template <typename T>
-IMGUI_API bool ImGui::InputCombo(const char *label, std::string *input, const T **element, const Set<T> &elements)
+IMGUI_API bool ImGui::InputCombo(const char *label, std::string *input, const T **element, const Set<T> &elements, std::function<bool(const std::string &)> sort)
 {
-	return InputCombo(label, input, const_cast<T **>(element), elements);
+	return InputCombo(label, input, const_cast<T **>(element), elements, sort);
 }
 
 
