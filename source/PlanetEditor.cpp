@@ -400,9 +400,9 @@ void PlanetEditor::RenderPlanet()
 	if(ImGui::InputText("music", &object->music, ImGuiInputTextFlags_EnterReturnsTrue))
 		SetDirty();
 
-	if(ImGui::InputTextMultiline("description", &object->description, ImVec2(), ImGuiInputTextFlags_EnterReturnsTrue))
+	if(ImGui::InputTextMultiline("description", &object->description))
 		SetDirty();
-	if(ImGui::InputTextMultiline("spaceport", &object->spaceport, ImVec2(), ImGuiInputTextFlags_EnterReturnsTrue))
+	if(ImGui::InputTextMultiline("spaceport", &object->spaceport))
 	{
 		SetDirty();
 

@@ -821,7 +821,7 @@ void ShipEditor::RenderShip()
 	RenderEffect("explode", object->explosionEffects);
 	RenderEffect("final explode", object->finalExplosions);
 
-	if(ImGui::InputTextMultiline("description", &object->description, ImVec2(), ImGuiInputTextFlags_EnterReturnsTrue))
+	if(ImGui::InputTextMultiline("description", &object->description))
 		SetDirty();
 }
 
