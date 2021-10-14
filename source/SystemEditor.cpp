@@ -715,6 +715,8 @@ void SystemEditor::RenderSystem()
 					object->trade.erase(it);
 				else if(value)
 					object->trade[commodity.name].SetBase(value);
+				if(auto *panel = dynamic_cast<MapEditorPanel*>(editor.GetMenu().Top().get()))
+					panel->UpdateCache();
 				SetDirty();
 			}
 			ImGui::PopID();

@@ -125,6 +125,57 @@ void MapEditorPanel::Draw()
 	DrawLinks();
 	DrawSystems();
 	DrawNames();
+
+	// Draw the commodity panel.
+	Point uiPoint(Screen::Left() + 100., Screen::Top() + 205.);
+
+	tradeY = uiPoint.Y() - 95.;
+	const Sprite *tradeSprite = SpriteSet::Get("ui/map trade");
+	SpriteShader::Draw(tradeSprite, uiPoint);
+	uiPoint.X() -= 90.;
+	uiPoint.Y() -= 97.;
+
+	const System *first = selectedSystems.front();
+	const System *second = selectedSystems.back();
+	for(const Trade::Commodity &commodity : GameData::Commodities())
+	{
+		const Font &font = FontSet::Get(14);
+		const Color &dim = *GameData::Colors().Get("dim");
+		const Color &medium = *GameData::Colors().Get("medium");
+
+		bool isSelected = false;
+		if(static_cast<unsigned>(this->commodity) < GameData::Commodities().size())
+			isSelected = (&commodity == &GameData::Commodities()[this->commodity]);
+		const Color &color = isSelected ? medium : dim;
+
+		font.Draw(commodity.name, uiPoint, color);
+
+		string price;
+
+		int value = second->Trade(commodity.name);
+		int localValue = first->Trade(commodity.name);
+		if(!value)
+			price = "----";
+		else if(first == second || !localValue)
+			price = to_string(value);
+		else
+		{
+			value -= localValue;
+			price += "(";
+			if(value > 0)
+				price += '+';
+			price += to_string(value);
+			price += ")";
+		}
+
+		const auto alignRight = Layout(140, Alignment::RIGHT, Truncate::BACK);
+		font.Draw({price, alignRight}, uiPoint, color);
+
+		if(isSelected)
+			PointerShader::Draw(uiPoint + Point(0., 7.), Point(1., 0.), 10.f, 10.f, 0.f, color);
+
+		uiPoint.Y() += 20.;
+	}
 }
 
 
@@ -172,6 +223,22 @@ bool MapEditorPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command
 		systemEditor->RandomizeAll();
 	else if(key == SDLK_DELETE)
 		systemEditor->Delete(selectedSystems);
+	else if(key == SDLK_DOWN)
+	{
+		if(commodity < 0 || commodity == 9)
+			commodity = 0;
+		else
+			++commodity;
+		UpdateCache();
+	}
+	else if(key == SDLK_UP)
+	{
+		if(commodity <= 0)
+			commodity = 9;
+		else
+			--commodity;
+		UpdateCache();
+	}
 	else
 		return false;
 
@@ -182,6 +249,16 @@ bool MapEditorPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command
 
 bool MapEditorPanel::Click(int x, int y, int clicks)
 {
+	if(x < Screen::Left() + 160 && y >= tradeY && y < tradeY + 200)
+	{
+		auto oldCommodity = commodity;
+		commodity = (y - tradeY) / 20;
+		if(commodity == oldCommodity)
+			commodity = -1;
+		UpdateCache();
+		return true;
+	}
+
 	// Figure out if a system was clicked on.
 	click = Point(x, y) / Zoom() - center;
 	for(const auto &it : GameData::Systems())
@@ -446,11 +523,27 @@ void MapEditorPanel::UpdateCache()
 			if(link < system)
 			{
 				// Only draw links between two systems if both are
-				// valid . Also, avoid drawing twice by only drawing in the
+				// valid. Also, avoid drawing twice by only drawing in the
 				// direction of increasing pointer values.
 				if(!link->IsValid())
 					continue;
-				links.emplace_back(system->Position(), link->Position());
+
+				Link renderLink;
+				renderLink.first = system->Position();
+				renderLink.second = link->Position();
+				// The color of the link is highlighted in red if the trade difference
+				// is too big.
+				renderLink.color = GameData::Colors().Get("map link")->Transparent(.5);
+				if(commodity != -1)
+				{
+					const auto &name = GameData::Commodities()[commodity].name;
+					int difference = abs(it.second.Trade(name) - link->Trade(name));
+					double value = (difference - 60) / 60.;
+					if(value >= 1.)
+						renderLink.color = Color(220.f / 255.f, 20.f / 255.f, 60.f / 255.f, 0.5f);
+				}
+
+				links.emplace_back(move(renderLink));
 			}
 	}
 }
@@ -541,7 +634,7 @@ void MapEditorPanel::DrawLinks()
 		from -= unit;
 		to += unit;
 
-		LineShader::Draw(from, to, MapPanel::LINK_WIDTH, GameData::Colors().Get("map link")->Transparent(.5));
+		LineShader::Draw(from, to, MapPanel::LINK_WIDTH, link.color);
 	}
 }
 

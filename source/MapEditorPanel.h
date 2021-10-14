@@ -107,11 +107,19 @@ private:
 
 
 private:
-	std::vector<std::pair<Point, Point>> links;
+	struct Link {
+		Point first;
+		Point second;
+		Color color;
+	};
+	std::vector<Link> links;
 	Point click;
 	bool isDragging = false;
 	bool rclick = false;
 	bool moveSystems = false;
+
+	int commodity = -1;
+	int tradeY = 0;
 
 	friend class SystemEditor;
 };
