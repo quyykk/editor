@@ -687,7 +687,6 @@ void SystemEditor::RenderSystem()
 	string enterHaze = object->haze ? object->haze->Name() : "";
 	if(ImGui::InputCombo("haze", &enterHaze, &object->haze, SpriteSet::GetSprites()))
 	{
-		enterHaze = object->haze->Name();
 		UpdateMain();
 		SetDirty();
 	}
