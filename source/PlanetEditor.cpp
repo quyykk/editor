@@ -28,6 +28,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Government.h"
 #include "Hazard.h"
 #include "MainPanel.h"
+#include "MainEditorPanel.h"
 #include "MapPanel.h"
 #include "Minable.h"
 #include "Planet.h"
@@ -152,6 +153,13 @@ void PlanetEditor::Render()
 				newPlanet->name = name;
 				newPlanet->isDefined = true;
 				object = newPlanet;
+
+				// If the in system editor is open and a stellar object without a planet is selected,
+				// then we assign the new planet to that stellar.
+				if(auto *panel = dynamic_cast<MainEditorPanel *>(editor.GetMenu().Top().get()))
+					if(auto *stellar = panel->SelectedObject())
+						if(!stellar->planet)
+							const_cast<StellarObject *>(stellar)->planet = object;
 				SetDirty();
 			});
 	ImGui::BeginSimpleRenameModal("Rename Planet", [this](const string &name)

@@ -54,6 +54,7 @@ public:
 	const System *Selected() const;
 	void DeselectObject();
 	void SelectObject(const StellarObject &stellar);
+	const StellarObject *SelectedObject() { return currentObject; }
 
 
 protected:
