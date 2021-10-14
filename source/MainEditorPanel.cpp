@@ -174,9 +174,9 @@ void MainEditorPanel::Draw()
 		PointerShader::Unbind();
 	}
 
-	RingShader::Draw(-center * zoom, currentSystem->HabitableZone() * zoom, 2.5f, 1.f, Color(50.f / 255.f, 205.f / 255.f, 50.f / 255.f).Transparent(.1f));
-	RingShader::Draw(-center * zoom, currentSystem->HabitableZone() * .5 * zoom, 2.5f, 1.f, Color(1.f, 140.f / 255.f, 0.f).Transparent(.1f));
-	RingShader::Draw(-center * zoom, currentSystem->HabitableZone() * 2 * zoom, 2.5f, 1.f, Color(0.f, 191.f / 255.f, 1.f).Transparent(.1f));
+	RingShader::Draw(-center * zoom, currentSystem->HabitableZone() * zoom, 2.5f, 1.f, Color(50.f / 255.f, 205.f / 255.f, 50.f / 255.f).Transparent(.3f));
+	RingShader::Draw(-center * zoom, currentSystem->HabitableZone() * .5 * zoom, 2.5f, 1.f, Color(1.f, 140.f / 255.f, 0.f).Transparent(.3f));
+	RingShader::Draw(-center * zoom, currentSystem->HabitableZone() * 2 * zoom, 2.5f, 1.f, Color(0.f, 191.f / 255.f, 1.f).Transparent(.3f));
 
 	draw.Draw();
 	batchDraw.Draw();
