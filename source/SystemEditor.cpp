@@ -39,6 +39,17 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 using namespace std;
 
 
+namespace {
+
+constexpr double HABITABLE_SCALE = 1.25;
+double getMass(const StellarObject &stellar)
+{
+	constexpr double STAR_MASS_SCALE = .25;
+	const auto radius = stellar.Radius();
+	return radius * radius * STAR_MASS_SCALE;
+}
+
+}
 
 SystemEditor::SystemEditor(Editor &editor, bool &show) noexcept
 	: TemplateEditor<System>(editor, show)
@@ -846,16 +857,30 @@ void SystemEditor::RenderObject(StellarObject &object, int index, int &nested, b
 			}
 			SetDirty();
 		}
-		static Sprite *sprite = nullptr;
-		static string spriteName;
-		spriteName.clear();
+		Sprite *sprite = nullptr;
+		string spriteName;
 		if(object.sprite)
 			spriteName = object.sprite->Name();
 		if(ImGui::InputCombo("sprite", &spriteName, &sprite, SpriteSet::GetSprites(),
-					[](const string &name) { return !name.compare(0, 7, "planet/"); }))
+					[](const string &name) { return !name.compare(0, 7, "planet/")
+					    || !name.compare(0, 5, "star/"); }))
 		{
 			object.sprite = sprite;
-			sprite = nullptr;
+
+			// If this is a star, update the system's habitable zone.
+			if(&this->object->objects.front() == &object)
+			{
+				// Heuritisc to detect binary systems.
+				double mass = getMass(object);
+				if(this->object->objects.size() > 1) {
+					bool hasStarSprite = this->object->objects[1].sprite
+						&& this->object->objects[1].sprite->Name().compare(0, 5, "star/");
+					bool isClose = abs(this->object->objects[1].distance - object.distance) < 200;
+					if(hasStarSprite || isClose)
+						mass += getMass(this->object->objects[1]);
+				}
+				this->object->habitable = mass / HABITABLE_SCALE;
+			}
 			SetDirty();
 		}
 
@@ -1201,12 +1226,6 @@ void SystemEditor::Randomize()
 	{
 		return stellar.sprite->Width() / 2. - 4.;
 	};
-	auto getMass = [](const StellarObject &stellar)
-	{
-		constexpr double STAR_MASS_SCALE = .25;
-		const auto radius = stellar.Radius();
-		return radius * radius * STAR_MASS_SCALE;
-	};
 
 	if(auto *panel = dynamic_cast<MainEditorPanel *>(editor.GetMenu().Top().get()))
 		panel->DeselectObject();
@@ -1288,7 +1307,6 @@ void SystemEditor::Randomize()
 		object->objects.push_back(stellar2);
 	}
 
-	constexpr double HABITABLE_SCALE = 1.25;
 	object->habitable = mass / HABITABLE_SCALE;
 
 	// Now we generate lots of planets with moons.
