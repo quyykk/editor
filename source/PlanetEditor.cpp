@@ -372,16 +372,14 @@ void PlanetEditor::RenderPlanet()
 			}
 
 			// Now add the ability to add fleets.
-			if(ImGui::BeginCombo("##fleets", ""))
-			{
-				for(const auto &item : GameData::Fleets())
-					if(ImGui::Selectable(item.first.c_str()))
-					{
-						object->defenseFleets.emplace_back(&item.second);
-						SetDirty();
-					}
-				ImGui::EndCombo();
-			}
+			static Fleet *newFleet = nullptr;
+			string addFleet;
+			if(ImGui::InputCombo("add fleet", &addFleet, &newFleet, GameData::Fleets()))
+				if(newFleet)
+				{
+					object->defenseFleets.emplace_back(newFleet);
+					SetDirty();
+				}
 
 			ImGui::TreePop();
 		}
