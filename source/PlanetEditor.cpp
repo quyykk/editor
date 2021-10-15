@@ -159,7 +159,10 @@ void PlanetEditor::Render()
 				if(auto *panel = dynamic_cast<MainEditorPanel *>(editor.GetMenu().Top().get()))
 					if(auto *stellar = panel->SelectedObject())
 						if(!stellar->planet)
+						{
 							const_cast<StellarObject *>(stellar)->planet = object;
+							newPlanet->SetSystem(panel->Selected());
+						}
 				SetDirty();
 			});
 	ImGui::BeginSimpleRenameModal("Rename Planet", [this](const string &name)
