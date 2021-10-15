@@ -235,7 +235,7 @@ IMGUI_API void ImGui::BeginSimpleModal(const char *id, const char *label, const 
 		SameLine();
 		if(name.empty())
 			PushDisabled();
-		if(Button(button) || create)
+		if((Button(button) || create) && !name.empty())
 		{
 			std::forward<F &&>(f)(name);
 			CloseCurrentPopup();
