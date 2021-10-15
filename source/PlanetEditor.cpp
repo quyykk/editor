@@ -328,9 +328,20 @@ void PlanetEditor::RenderPlanet()
 		if(ImGui::InputInt("tribute", &object->tribute))
 			SetDirty();
 		if(ImGui::InputInt("threshold", &object->defenseThreshold))
+		{
+			if(object->defenseThreshold < 0)
+				object->defenseThreshold = 0;
 			SetDirty();
-		ImGui::Text("Corresponds to a combat rating level of: %d",
-				static_cast<int>(log(max<int64_t>(1, object->defenseThreshold))));
+		}
+
+		int rank = static_cast<int>(log(max<int64_t>(1, object->defenseThreshold)));
+		if(ImGui::InputInt("threshold rank", &rank))
+		{
+			if(rank < 0)
+				rank = 0;
+			object->defenseThreshold = static_cast<int>(exp(rank)) + 1;
+			SetDirty();
+		}
 
 		if(ImGui::TreeNode("fleets"))
 		{
