@@ -1363,9 +1363,9 @@ void SystemEditor::Randomize()
 		used.insert(planetSprite);
 
 		uniform_int_distribution<> oneOrTwo(1, 2);
-		uniform_int_distribution<> threeOrFive(3, 5);
+		uniform_int_distribution<> twoOrFour(2, 4);
 
-		const int randMoon = isTerrestrial ? oneOrTwo(gen) : threeOrFive(gen);
+		const int randMoon = isTerrestrial ? oneOrTwo(gen) : twoOrFour(gen);
 		int moonCount = uniform_int_distribution<>(0, randMoon - 1)(gen);
 		if(getRadius(object->objects.back()) < 70.)
 			moonCount = 0;
@@ -1381,10 +1381,10 @@ void SystemEditor::Randomize()
 		};
 
 		double moonDistance = getRadius(object->objects.back());
-		int randomMoonSpace = 50.;
+		int randomMoonSpace = 75.;
 		for(int i = 0; i < moonCount; ++i)
 		{
-			uniform_int_distribution<> randMoonDist(10., randomMoonSpace);
+			uniform_int_distribution<> randMoonDist(30., randomMoonSpace);
 			moonDistance += randMoonDist(gen);
 			randomMoonSpace += 20.;
 
