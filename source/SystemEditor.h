@@ -16,6 +16,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "System.h"
 #include "TemplateEditor.h"
 
+#include <random>
 #include <set>
 #include <string>
 #include <list>
@@ -86,6 +87,9 @@ private:
 	bool createNewSystem = false;
 	bool cloneSystem = false;
 	const StellarObject *selectedObject = nullptr;
+
+	std::random_device rd;
+	std::mt19937 gen;
 };
 
 

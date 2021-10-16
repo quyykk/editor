@@ -52,7 +52,7 @@ double getMass(const StellarObject &stellar)
 }
 
 SystemEditor::SystemEditor(Editor &editor, bool &show) noexcept
-	: TemplateEditor<System>(editor, show)
+	: TemplateEditor<System>(editor, show), gen(rd())
 {
 }
 
@@ -1218,8 +1218,6 @@ void SystemEditor::Randomize()
 	// Code adapted from the official ES map editor under GPL 3.0.
 	// https://github.com/endless-sky/endless-sky-editor
 	constexpr int STAR_DISTANCE = 40;
-	static random_device rd;
-	static mt19937 gen(rd());
 	static uniform_int_distribution<> randStarNum(0, 2);
 	static uniform_int_distribution<> randStarDist(0, STAR_DISTANCE);
 
@@ -1425,9 +1423,6 @@ void SystemEditor::RandomizeAsteroids()
 				[](const System::Asteroid &asteroid) { return !asteroid.Type(); }),
 			object->asteroids.end());
 
-	static random_device rd;
-	static mt19937 gen(rd());
-
 	uniform_int_distribution<> rand(0, 21);
 	const int total = rand(gen) * rand(gen) + 1;
 	const double energy = (rand(gen) + 10) * (rand(gen) + 10) * .01;
@@ -1475,9 +1470,6 @@ void SystemEditor::RandomizeMinables()
 	object->asteroids.erase(remove_if(object->asteroids.begin(), object->asteroids.end(),
 				[](const System::Asteroid &asteroid) { return asteroid.Type(); }),
 			object->asteroids.end());
-
-	static random_device rd;
-	static mt19937 gen(rd());
 
 	uniform_int_distribution<> randBelt(1000, 2000);
 	object->asteroidBelt = randBelt(gen);
@@ -1551,8 +1543,6 @@ void SystemEditor::RandomizeMinables()
 
 void SystemEditor::GenerateTrades()
 {
-	static random_device rd;
-	static mt19937 gen(rd());
 	for(const auto &commodity : GameData::Commodities())
 	{
 		int average = 0;
@@ -1590,9 +1580,6 @@ void SystemEditor::GenerateTrades()
 
 const Sprite *SystemEditor::RandomStarSprite()
 {
-	static random_device rd;
-	static mt19937 gen(rd());
-
 	const auto &stars = GameData::Stars();
 	uniform_int_distribution<> randStar(0, stars.size() - 1);
 	return stars[randStar(gen)];
@@ -1602,9 +1589,6 @@ const Sprite *SystemEditor::RandomStarSprite()
 
 const Sprite *SystemEditor::RandomPlanetSprite(bool recalculate)
 {
-	static random_device rd;
-	static mt19937 gen(rd());
-
 	const auto &planets = GameData::PlanetSprites();
 	uniform_int_distribution<> randPlanet(0, planets.size() - 1);
 	return planets[randPlanet(gen)];
@@ -1614,9 +1598,6 @@ const Sprite *SystemEditor::RandomPlanetSprite(bool recalculate)
 
 const Sprite *SystemEditor::RandomMoonSprite()
 {
-	static random_device rd;
-	static mt19937 gen(rd());
-
 	const auto &moons = GameData::MoonSprites();
 	uniform_int_distribution<> randMoon(0, moons.size() - 1);
 	return moons[randMoon(gen)];
@@ -1626,9 +1607,6 @@ const Sprite *SystemEditor::RandomMoonSprite()
 
 const Sprite *SystemEditor::RandomGiantSprite()
 {
-	static random_device rd;
-	static mt19937 gen(rd());
-
 	const auto &giants = GameData::GiantSprites();
 	uniform_int_distribution<> randGiant(0, giants.size() - 1);
 	return giants[randGiant(gen)];
