@@ -1317,7 +1317,7 @@ void SystemEditor::Randomize()
 		int space = RANDOM_SPACE;
 		for(const auto &stellar : object->objects)
 			if(!stellar.isStar && stellar.parent == -1)
-				space += RANDOM_SPACE / 2;
+				space += space / 2;
 
 		int distance = object->objects.back().distance;
 		if(object->objects.back().sprite)
@@ -1325,7 +1325,7 @@ void SystemEditor::Randomize()
 		if(object->objects.back().parent != -1)
 			distance += object->objects[object->objects.back().parent].distance;
 
-		uniform_int_distribution<> randSpace(0, space);
+		uniform_int_distribution<> randSpace(RANDOM_SPACE, space);
 		const int addSpace = randSpace(gen);
 		distance += (addSpace * addSpace) * .01 + 50.;
 
