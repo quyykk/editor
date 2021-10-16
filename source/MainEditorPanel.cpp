@@ -241,16 +241,27 @@ bool MainEditorPanel::Click(int x, int y, int clicks)
 	auto click = Point(x, y) / zoom + center;
 	if(!currentSystem || !currentSystem->IsValid())
 		return false;
+	double dist = numeric_limits<double>::max();
+	const StellarObject *selected = nullptr;
 	for(const auto &it : currentSystem->Objects())
-		if(click.Distance(it.Position()) < it.RealRadius())
+	{
+		const double clickDist = click.Distance(it.Position());
+		if(clickDist < it.RealRadius() && clickDist < dist)
 		{
-			currentObject = &it;
-			systemEditor->Select(currentObject);
-			if(currentObject->planet)
-				planetEditor->Select(currentObject->planet);
-			moveStellars = true;
-			return true;
+			dist = clickDist;
+			selected = &it;
 		}
+	}
+	if(selected)
+	{
+		currentObject = selected;
+		systemEditor->Select(currentObject);
+		if(currentObject->planet)
+			planetEditor->Select(currentObject->planet);
+		moveStellars = true;
+		return true;
+	}
+
 	systemEditor->Select(currentObject = nullptr);
 	moveStellars = false;
 	return true;
