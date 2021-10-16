@@ -360,7 +360,7 @@ void SystemEditor::AlwaysRender(bool showNewSystem, bool showCloneSystem)
 				object = clone;
 
 				object->name = name;
-				object->position += Point(25., 25.);
+				object->position = cloneSystem ? position : object->position + Point(25., 25.);
 				object->objects.clear();
 				object->links.clear();
 				object->attributes.insert("uninhabited");
