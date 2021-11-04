@@ -187,6 +187,7 @@
 		DFAAE2AA1FD4A27B0072C0A8 /* ImageSet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DFAAE2A81FD4A27B0072C0A8 /* ImageSet.cpp */; };
 		E7A341F1BA8EA3C621DBDD8A /* imgui_widgets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6CA462F875959D20742EE32 /* imgui_widgets.cpp */; };
 		EFDC4ED1B4FCABA5385C8BC4 /* HazardEditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 525C41C886218280F1C6496F /* HazardEditor.cpp */; };
+		ED5E4F2ABA89E9DE00603E69 /* TestContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A3134EC4B1CCA5546A10C3EF /* TestContext.cpp */; };
 		F55745BDBC50E15DCEB2ED5B /* layout.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 9BCF4321AF819E944EC02FB9 /* layout.hpp */; settings = {ATTRIBUTES = (Project, ); }; };
 /* End PBXBuildFile section */
 
@@ -283,6 +284,8 @@
 		A4484A25B3920B2841D453EA /* ShipEditor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ShipEditor.cpp; path = source/ShipEditor.cpp; sourceTree = "<group>"; };
 		A617493A883D3AD87CB42830 /* imgui_impl_sdl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imgui_impl_sdl.cpp; path = source/imgui_impl_sdl.cpp; sourceTree = "<group>"; };
 		A6CA462F875959D20742EE32 /* imgui_widgets.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imgui_widgets.cpp; path = source/imgui_widgets.cpp; sourceTree = "<group>"; };
+		A2A948EE929342C8F84C65D1 /* TestContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TestContext.h; path = source/TestContext.h; sourceTree = "<group>"; };
+		A3134EC4B1CCA5546A10C3EF /* TestContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TestContext.cpp; path = source/TestContext.cpp; sourceTree = "<group>"; };
 		A90633FD1EE602FD000DA6C0 /* LogbookPanel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LogbookPanel.cpp; path = source/LogbookPanel.cpp; sourceTree = "<group>"; };
 		A90633FE1EE602FD000DA6C0 /* LogbookPanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LogbookPanel.h; path = source/LogbookPanel.h; sourceTree = "<group>"; };
 		A90C15D71D5BD55700708F3A /* Minable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Minable.cpp; path = source/Minable.cpp; sourceTree = "<group>"; };
@@ -924,6 +927,8 @@
 				6833448DAEB9861D28445DD5 /* GameAction.h */,
 				CE0D4641B11B0FB149B17252 /* GalaxyEditor.cpp */,
 				D3DB48ECB4C5FC4485F3D322 /* GalaxyEditor.h */,
+				A2A948EE929342C8F84C65D1 /* TestContext.h */,
+				A3134EC4B1CCA5546A10C3EF /* TestContext.cpp */,
 			);
 			name = source;
 			sourceTree = "<group>";
@@ -1286,6 +1291,7 @@
 				03DC4253AA8390FE0A8FB4EA /* MaskManager.cpp in Sources */,
 				87D6407E8B579EB502BFBCE5 /* GameAction.cpp in Sources */,
 				62834FDEA739CA850634415A /* GalaxyEditor.cpp in Sources */,
+				ED5E4F2ABA89E9DE00603E69 /* TestContext.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
