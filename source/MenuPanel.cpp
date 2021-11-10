@@ -14,6 +14,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 #include "Command.h"
 #include "ConversationPanel.h"
+#include "Dialog.h"
 #include "Editor.h"
 #include "Files.h"
 #include "text/Font.h"
@@ -170,7 +171,11 @@ bool MenuPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, boo
 	else if(key == 'p')
 		GetUI()->Push(new PreferencesPanel());
 	else if(key == 'l')
-		GetUI()->Push(new LoadPanel(player, gamePanels));
+	{
+		// Disabled for now, because it is buggy.
+		// GetUI()->Push(new LoadPanel(player, gamePanels));
+		GetUI()->Push(new Dialog("Sorry, reloading save files is a bit buggy right now so it is disabled. If you want to switch save files open normal ES and switch then reopen the editor."));
+	}
 	else if(key == 'n' && (!player.IsLoaded() || player.IsDead()))
 	{
 		// If no player is loaded, the "Enter Ship" button becomes "New Pilot."
