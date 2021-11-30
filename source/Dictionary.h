@@ -36,6 +36,8 @@ public:
 	double Get(const char *key) const;
 	double Get(const std::string &key) const;
 
+	void Remove(const char *key);
+
 	const DictionaryBase &AsBase() const { return *this; }
 	
 	// Expose certain functions from the underlying vector:

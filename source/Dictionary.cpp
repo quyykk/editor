@@ -89,3 +89,12 @@ double Dictionary::Get(const string &key) const
 {
 	return Get(key.c_str());
 }
+
+
+
+void Dictionary::Remove(const char *key)
+{
+	auto pos = Search(key, *this);
+	if(pos.second)
+		erase(begin() + pos.first);
+}

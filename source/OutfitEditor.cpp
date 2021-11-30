@@ -286,9 +286,12 @@ void OutfitEditor::RenderOutfit()
 	if(ImGui::TreeNode("attributes"))
 	{
 		for(auto &it : object->attributes)
-			if(it.second || ImGui::IsInputFocused(it.first))
-				if(ImGui::InputDoubleEx(it.first, &it.second))
-					SetDirty();
+		{
+			if(ImGui::InputDoubleEx(it.first, &it.second))
+				SetDirty();
+			if(!it.second && !ImGui::IsInputFocused(it.first))
+				object->attributes.Remove(it.first);
+		}
 
 		ImGui::Spacing();
 		static string addAttribute;
@@ -296,7 +299,6 @@ void OutfitEditor::RenderOutfit()
 		static double value = 0.;
 		if(ImGui::InputDoubleEx("add attribute value", &value, ImGuiInputTextFlags_EnterReturnsTrue))
 		{
-			object->Set(addAttribute.c_str(), value);
 			object->Set(addAttribute.c_str(), value);
 			addAttribute.clear();
 			value = 0.;
