@@ -290,8 +290,8 @@ void OutfitEditor::RenderOutfit()
 		auto UpdateShipAttributes = [this](const char *attr, double diff)
 		{
 			for(auto &ship : editor.Player().Ships())
-				if(ship->OutfitCount(object))
-					ship->attributes.attributes.Update(attr, diff);
+				if(auto count = ship->OutfitCount(object))
+					ship->attributes.attributes.Update(attr, diff * count);
 		};
 		for(auto &it : object->attributes)
 		{
