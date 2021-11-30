@@ -285,10 +285,21 @@ void OutfitEditor::RenderOutfit()
 
 	if(ImGui::TreeNode("attributes"))
 	{
+		// When an outfit is modified, any ship that has that outfit installed
+		// also need to be updated.
+		auto UpdateShipAttributes = [this](const char *attr, double diff)
+		{
+			for(auto &ship : editor.Player().Ships())
+				ship->attributes.attributes.Update(attr, diff);
+		};
 		for(auto &it : object->attributes)
 		{
+			auto oldValue = it.second;
 			if(ImGui::InputDoubleEx(it.first, &it.second))
+			{
+				UpdateShipAttributes(it.first, it.second - oldValue);
 				SetDirty();
+			}
 			if(!it.second && !ImGui::IsInputFocused(it.first))
 				object->attributes.Remove(it.first);
 		}
@@ -300,6 +311,7 @@ void OutfitEditor::RenderOutfit()
 		if(ImGui::InputDoubleEx("add attribute value", &value, ImGuiInputTextFlags_EnterReturnsTrue))
 		{
 			object->Set(addAttribute.c_str(), value);
+			UpdateShipAttributes(addAttribute.c_str(), value);
 			addAttribute.clear();
 			value = 0.;
 			SetDirty();

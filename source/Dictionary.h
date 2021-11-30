@@ -37,6 +37,7 @@ public:
 	double Get(const std::string &key) const;
 
 	void Remove(const char *key);
+	void Update(const char *key, double diff);
 
 	const DictionaryBase &AsBase() const { return *this; }
 	

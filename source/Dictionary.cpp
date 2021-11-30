@@ -98,3 +98,14 @@ void Dictionary::Remove(const char *key)
 	if(pos.second)
 		erase(begin() + pos.first);
 }
+
+
+
+void Dictionary::Update(const char *key, double diff)
+{
+	auto pos = Search(key, *this);
+	auto it = pos.second ?
+		begin() + pos.first : insert(begin() + pos.first, make_pair(Intern(key), 0.));
+
+	it->second += diff;
+}
