@@ -812,7 +812,7 @@ void OutfitEditor::RenderOutfit()
 			object->isWeapon = true;
 			SetDirty();
 		}
-		if(ImGui::InputDoubleEx("piecing", &object->piercing))
+		if(ImGui::InputDoubleEx("piercing", &object->piercing))
 		{
 			object->piercing = max(0., object->piercing);
 			object->isWeapon = true;
