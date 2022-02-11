@@ -274,13 +274,24 @@ bool MapEditorPanel::Click(int x, int y, int clicks)
 	for(const auto &it : GameData::Systems())
 		if(it.second.IsValid() && click.Distance(it.second.Position()) < 10.)
 		{
-			if(find(selectedSystems.begin(), selectedSystems.end(), &it.second) != selectedSystems.end())
-				moveSystems = true;
+			auto selectedIt = find(selectedSystems.begin(), selectedSystems.end(), &it.second);
+			if(selectedIt != selectedSystems.end())
+			{
+				if(SDL_GetModState() & KMOD_SHIFT)
+				{
+					// If shift was clicked, we remove the system from the selection but only
+					// if this wasn't the only selected system.
+					if(selectedSystems.size() > 1)
+						selectedSystems.erase(selectedIt);
+				}
+				else
+					moveSystems = true;
+			}
 			else
 				Select(&it.second);
 
 			// On triple click we enter the system.
-			if(clicks == 3)
+			if(clicks == 3 && moveSystems)
 			{
 				GetUI()->Push(new MainEditorPanel(player, planetEditor, systemEditor));
 				moveSystems = false;
