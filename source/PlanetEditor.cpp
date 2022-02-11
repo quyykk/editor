@@ -476,8 +476,6 @@ void PlanetEditor::WriteToFile(DataWriter &writer, const Planet *planet)
 	diffAttributes.erase("shipyard");
 	diffAttributes.erase("outfitter");
 	WriteDiff(writer, "attributes", planetAttributes, diff ? &diffAttributes : nullptr, true);
-	WriteDiff(writer, "shipyard", planet->shipSales, diff ? &diff->shipSales : nullptr, false, true, true, true);
-	WriteDiff(writer, "outfitter", planet->outfitSales, diff ? &diff->outfitSales : nullptr, false, true, true, true);
 
 	if((!diff || planet->landscape != diff->landscape) && planet->landscape)
 		writer.Write("landscape", planet->landscape->Name());
@@ -535,6 +533,8 @@ void PlanetEditor::WriteToFile(DataWriter &writer, const Planet *planet)
 		else if(diff)
 			writer.Write("remove", "government");
 	}
+	WriteDiff(writer, "shipyard", planet->shipSales, diff ? &diff->shipSales : nullptr, false, true, true, true);
+	WriteDiff(writer, "outfitter", planet->outfitSales, diff ? &diff->outfitSales : nullptr, false, true, true, true);
 	if(!diff || planet->requiredReputation != diff->requiredReputation)
 	{
 		if(planet->requiredReputation)
