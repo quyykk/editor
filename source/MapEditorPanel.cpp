@@ -176,6 +176,16 @@ void MapEditorPanel::Draw()
 
 		uiPoint.Y() += 20.;
 	}
+
+	// Draw the select drag rectangle.
+	if(selectSystems)
+	{
+		const Color &dragColor = *GameData::Colors().Get("drag select");
+		LineShader::Draw(dragSource, Point(dragSource.X(), dragPoint.Y()), .8f, dragColor);
+		LineShader::Draw(Point(dragSource.X(), dragPoint.Y()), dragPoint, .8f, dragColor);
+		LineShader::Draw(dragPoint, Point(dragPoint.X(), dragSource.Y()), .8f, dragColor);
+		LineShader::Draw(Point(dragPoint.X(), dragSource.Y()), dragSource, .8f, dragColor);
+	}
 }
 
 
@@ -275,9 +285,17 @@ bool MapEditorPanel::Click(int x, int y, int clicks)
 				GetUI()->Push(new MainEditorPanel(player, planetEditor, systemEditor));
 				moveSystems = false;
 			}
-			break;
+			return true;
 		}
 
+	// If no system was clicked and this was a shift click, we start the select multiple systems
+	// drag rectangle.
+	if(SDL_GetModState() & KMOD_SHIFT)
+	{
+		selectSystems = true;
+		dragSource = Point(x, y);
+		dragPoint = dragSource;
+	}
 	return true;
 }
 
@@ -319,6 +337,8 @@ bool MapEditorPanel::Drag(double dx, double dy)
 			systemEditor->UpdateSystemPosition(system, Point(dx, dy) / Zoom());
 		UpdateCache();
 	}
+	else if(selectSystems)
+		dragPoint += Point(dx, dy);
 	else
 	{
 		center += Point(dx, dy) / Zoom();
@@ -364,6 +384,22 @@ bool MapEditorPanel::Release(int x, int y)
 			for(auto &&link : system->VisibleNeighbors())
 				GameData::UpdateSystem(const_cast<System *>(link));
 		}
+	}
+	if(selectSystems)
+	{
+		selectSystems = false;
+
+		auto copy = selectedSystems;
+		selectedSystems.clear();
+
+		auto rect = Rectangle::WithCorners(dragSource / Zoom() - center, dragPoint / Zoom() - center);
+		for(const auto &it : GameData::Systems())
+			if(it.second.IsValid() && rect.Contains(it.second.Position()))
+				Select(&it.second, /*appendSelection=*/true);
+
+		// If no systems were selected then restore the previous selection.
+		if(selectedSystems.empty())
+			selectedSystems = std::move(copy);
 	}
 
 	if(rclick)
@@ -419,7 +455,7 @@ Color MapEditorPanel::UninhabitedColor()
 
 
 
-void MapEditorPanel::Select(const System *system)
+void MapEditorPanel::Select(const System *system, bool appendSelection)
 {
 	if(!system)
 	{
@@ -430,7 +466,7 @@ void MapEditorPanel::Select(const System *system)
 	}
 
 	// Pressing shift selects multiple systems.
-	if(!(SDL_GetModState() & KMOD_SHIFT))
+	if(!(SDL_GetModState() & KMOD_SHIFT) && !appendSelection)
 		selectedSystems.clear();
 	selectedSystems.push_back(system);
 	systemEditor->Select(selectedSystems.back());

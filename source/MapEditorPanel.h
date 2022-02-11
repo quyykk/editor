@@ -64,7 +64,7 @@ protected:
 	static Color GovernmentColor(const Government *government);
 	static Color UninhabitedColor();
 
-	void Select(const System *system);
+	void Select(const System *system, bool appendSelection = false);
 	void Find(const std::string &name);
 
 	double Zoom() const;
@@ -117,6 +117,10 @@ private:
 	bool isDragging = false;
 	bool rclick = false;
 	bool moveSystems = false;
+
+	bool selectSystems = false;
+	Point dragSource;
+	Point dragPoint;
 
 	int commodity = -1;
 	int tradeY = 0;
