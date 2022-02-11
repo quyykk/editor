@@ -1034,6 +1034,13 @@ void SystemEditor::WriteToFile(DataWriter &writer, const System *system)
 	writer.Write("system", system->name);
 	writer.BeginChild();
 
+	if(!diff || system->hidden != diff->hidden)
+	{
+		if(system->hidden)
+			writer.Write("hidden");
+		else if(diff)
+			writer.Write("remove", "hidden");
+	}
 	if((!diff && system->hasPosition) || (diff && (system->hasPosition != diff->hasPosition || system->position != diff->position)))
 		writer.Write("pos", system->position.X(), system->position.Y());
 	if(!diff || system->government != diff->government)
@@ -1043,6 +1050,13 @@ void SystemEditor::WriteToFile(DataWriter &writer, const System *system)
 		else if(diff)
 			writer.Write("remove", "government");
 	}
+
+	auto systemAttributes = system->attributes;
+	auto diffAttributes = diff ? diff->attributes : system->attributes;
+	systemAttributes.erase("uninhabited");
+	diffAttributes.erase("uninhabited");
+	WriteDiff(writer, "attributes", systemAttributes, diff ? &diffAttributes : nullptr, true);
+
 	if(!diff || system->music != diff->music)
 	{
 		if(!system->music.empty())
@@ -1050,41 +1064,6 @@ void SystemEditor::WriteToFile(DataWriter &writer, const System *system)
 		else if(diff)
 			writer.Write("remove", "music");
 	}
-	WriteDiff(writer, "link", system->links, diff ? &diff->links : nullptr, false, true, false, true);
-	if(!diff || system->hidden != diff->hidden)
-	{
-		if(system->hidden)
-			writer.Write("hidden");
-		else if(diff)
-			writer.Write("remove", "hidden");
-	}
-
-	auto asteroids = system->asteroids;
-	asteroids.erase(std::remove_if(asteroids.begin(), asteroids.end(), [](const System::Asteroid &a) { return a.Type(); }), asteroids.end());
-	auto minables = system->asteroids;
-	minables.erase(std::remove_if(minables.begin(), minables.end(), [](const System::Asteroid &a) { return !a.Type(); }), minables.end());
-	auto diffAsteroids = diff ? diff->asteroids : system->asteroids;
-	diffAsteroids.erase(std::remove_if(diffAsteroids.begin(), diffAsteroids.end(), [](const System::Asteroid &a) { return a.Type(); }), diffAsteroids.end());
-	auto diffMinables = diff ? diff->asteroids : system->asteroids;
-	diffMinables.erase(std::remove_if(diffMinables.begin(), diffMinables.end(), [](const System::Asteroid &a) { return !a.Type(); }), diffMinables.end());
-	WriteDiff(writer, "asteroids", asteroids, diff ? &diffAsteroids : nullptr);
-	WriteDiff(writer, "minables", minables, diff ? &diffMinables : nullptr);
-
-	if(!diff || system->haze != diff->haze)
-	{
-		if(system->haze)
-			writer.Write("haze", system->haze->Name());
-		else if(diff)
-			writer.Write("remove", "haze");
-	}
-	WriteDiff(writer, "fleet", system->fleets, diff ? &diff->fleets : nullptr);
-	WriteDiff(writer, "hazard", system->hazards, diff ? &diff->hazards : nullptr);
-	if((!diff && system->habitable != 1000.) || (diff && system->habitable != diff->habitable))
-		writer.Write("habitable", system->habitable);
-	if((!diff && system->asteroidBelt != 1500.) || (diff && system->asteroidBelt != diff->asteroidBelt))
-		writer.Write("belt", system->asteroidBelt);
-	if((!diff && system->jumpRange)|| (diff && system->jumpRange != diff->jumpRange))
-		writer.Write("jump range", system->jumpRange);
 	if(!diff || system->extraHyperArrivalDistance != diff->extraHyperArrivalDistance
 			|| system->extraJumpArrivalDistance != diff->extraJumpArrivalDistance)
 	{
@@ -1102,6 +1081,34 @@ void SystemEditor::WriteToFile(DataWriter &writer, const System *system)
 			writer.EndChild();
 		}
 	}
+	if((!diff && system->habitable != 1000.) || (diff && system->habitable != diff->habitable))
+		writer.Write("habitable", system->habitable);
+	if((!diff && system->asteroidBelt != 1500.) || (diff && system->asteroidBelt != diff->asteroidBelt))
+		writer.Write("belt", system->asteroidBelt);
+	if((!diff && system->jumpRange)|| (diff && system->jumpRange != diff->jumpRange))
+		writer.Write("jump range", system->jumpRange);
+
+	if(!diff || system->haze != diff->haze)
+	{
+		if(system->haze)
+			writer.Write("haze", system->haze->Name());
+		else if(diff)
+			writer.Write("remove", "haze");
+	}
+
+	WriteDiff(writer, "link", system->links, diff ? &diff->links : nullptr, false, true, false, true);
+
+	auto asteroids = system->asteroids;
+	asteroids.erase(std::remove_if(asteroids.begin(), asteroids.end(), [](const System::Asteroid &a) { return a.Type(); }), asteroids.end());
+	auto minables = system->asteroids;
+	minables.erase(std::remove_if(minables.begin(), minables.end(), [](const System::Asteroid &a) { return !a.Type(); }), minables.end());
+	auto diffAsteroids = diff ? diff->asteroids : system->asteroids;
+	diffAsteroids.erase(std::remove_if(diffAsteroids.begin(), diffAsteroids.end(), [](const System::Asteroid &a) { return a.Type(); }), diffAsteroids.end());
+	auto diffMinables = diff ? diff->asteroids : system->asteroids;
+	diffMinables.erase(std::remove_if(diffMinables.begin(), diffMinables.end(), [](const System::Asteroid &a) { return !a.Type(); }), diffMinables.end());
+	WriteDiff(writer, "asteroids", asteroids, diff ? &diffAsteroids : nullptr);
+	WriteDiff(writer, "minables", minables, diff ? &diffMinables : nullptr);
+
 	if(!diff || system->trade != diff->trade)
 	{
 		auto trades = system->trade;
@@ -1130,12 +1137,8 @@ void SystemEditor::WriteToFile(DataWriter &writer, const System *system)
 			for(auto &&trade : trades)
 				writer.Write("trade", trade.first, trade.second.base);
 	}
-
-	auto systemAttributes = system->attributes;
-	auto diffAttributes = diff ? diff->attributes : system->attributes;
-	systemAttributes.erase("uninhabited");
-	diffAttributes.erase("uninhabited");
-	WriteDiff(writer, "attributes", systemAttributes, diff ? &diffAttributes : nullptr, true);
+	WriteDiff(writer, "fleet", system->fleets, diff ? &diff->fleets : nullptr);
+	WriteDiff(writer, "hazard", system->hazards, diff ? &diff->hazards : nullptr);
 
 	if(!diff || system->objects != diff->objects)
 	{
