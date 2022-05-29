@@ -332,6 +332,7 @@ bool MapEditorPanel::RClick(int x, int y)
 
 bool MapEditorPanel::MClick(int x, int y)
 {
+	Point click = Point(x, y) / Zoom() - center;
 	// A middle click on nothing clones the current system.
 	systemEditor->CloneSystem(click);
 	return true;
