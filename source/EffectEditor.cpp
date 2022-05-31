@@ -141,6 +141,9 @@ void EffectEditor::Render()
 		ImGui::OpenPopup("Clone Effect");
 	ImGui::BeginSimpleNewModal("New Effect", [this](const string &name)
 			{
+				if(GameData::Effects().Find(name))
+					return;
+
 				auto *newEffect = const_cast<Effect *>(GameData::Effects().Get(name));
 				newEffect->name = name;
 				object = newEffect;
@@ -148,6 +151,9 @@ void EffectEditor::Render()
 			});
 	ImGui::BeginSimpleRenameModal("Rename Effect", [this](const string &name)
 			{
+				if(GameData::Effects().Find(name))
+					return;
+
 				DeleteFromChanges();
 				editor.RenameObject(keyFor<Effect>(), object->name, name);
 				GameData::Effects().Rename(object->name, name);
@@ -157,6 +163,9 @@ void EffectEditor::Render()
 			});
 	ImGui::BeginSimpleCloneModal("Clone Effect", [this](const string &name)
 			{
+				if(GameData::Effects().Find(name))
+					return;
+
 				auto *clone = const_cast<Effect *>(GameData::Effects().Get(name));
 				*clone = *object;
 				object = clone;

@@ -292,6 +292,9 @@ void SystemEditor::Render()
 	AlwaysRender(showNewSystem, showCloneSystem);
 	ImGui::BeginSimpleRenameModal("Rename System", [this](const string &name)
 			{
+				if(GameData::Systems().Find(name))
+					return;
+
 				DeleteFromChanges();
 				editor.RenameObject(keyFor<System>(), object->name, name);
 				GameData::Systems().Rename(object->name, name);
@@ -330,6 +333,9 @@ void SystemEditor::AlwaysRender(bool showNewSystem, bool showCloneSystem)
 		ImGui::OpenPopup("New System");
 	ImGui::BeginSimpleNewModal("New System", [this](const string &name)
 			{
+				if(GameData::Systems().Find(name))
+					return;
+
 				auto *newSystem = const_cast<System *>(GameData::Systems().Get(name));
 
 				newSystem->name = name;
@@ -355,6 +361,9 @@ void SystemEditor::AlwaysRender(bool showNewSystem, bool showCloneSystem)
 		ImGui::OpenPopup("Clone System");
 	ImGui::BeginSimpleCloneModal("Clone System", [this](const string &name)
 			{
+				if(GameData::Systems().Find(name))
+					return;
+
 				auto *clone = const_cast<System *>(GameData::Systems().Get(name));
 				*clone = *object;
 				object = clone;

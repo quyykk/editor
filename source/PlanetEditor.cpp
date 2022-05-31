@@ -149,6 +149,9 @@ void PlanetEditor::Render()
 		ImGui::OpenPopup("Clone Planet");
 	ImGui::BeginSimpleNewModal("New Planet", [this](const string &name)
 			{
+				if(GameData::Planets().Find(name))
+					return;
+
 				auto *newPlanet = const_cast<Planet *>(GameData::Planets().Get(name));
 				newPlanet->name = name;
 				newPlanet->isDefined = true;
@@ -167,6 +170,9 @@ void PlanetEditor::Render()
 			});
 	ImGui::BeginSimpleRenameModal("Rename Planet", [this](const string &name)
 			{
+				if(GameData::Planets().Find(name))
+					return;
+
 				DeleteFromChanges();
 				editor.RenameObject(keyFor<Planet>(), object->name, name);
 				GameData::Planets().Rename(object->name, name);
@@ -176,6 +182,9 @@ void PlanetEditor::Render()
 			});
 	ImGui::BeginSimpleCloneModal("Clone Planet", [this](const string &name)
 			{
+				if(GameData::Planets().Find(name))
+					return;
+
 				auto *clone = const_cast<Planet *>(GameData::Planets().Get(name));
 				*clone = *object;
 				object = clone;

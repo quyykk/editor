@@ -167,6 +167,9 @@ void ShipEditor::Render()
 		ImGui::OpenPopup("Clone Variant");
 	ImGui::BeginSimpleNewModal("New Ship", [this](const string &name)
 			{
+				if(GameData::Ships().Find(name))
+					return;
+
 				auto *newShip = const_cast<Ship *>(GameData::Ships().Get(name));
 				newShip->modelName = name;
 				newShip->isDefined = true;
@@ -175,6 +178,9 @@ void ShipEditor::Render()
 			});
 	ImGui::BeginSimpleRenameModal("Rename Ship", [this](const string &name)
 			{
+				if(GameData::Ships().Find(name))
+					return;
+
 				DeleteFromChanges();
 				editor.RenameObject(keyFor<Ship>(), object->TrueName(), name);
 				GameData::Ships().Rename(object->TrueName(), name);
@@ -187,6 +193,9 @@ void ShipEditor::Render()
 			});
 	ImGui::BeginSimpleCloneModal("Clone Model", [this](const string &name)
 			{
+				if(GameData::Ships().Find(name))
+					return;
+
 				auto *clone = const_cast<Ship *>(GameData::Ships().Get(name));
 				*clone = *object;
 				object = clone;

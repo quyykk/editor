@@ -166,6 +166,9 @@ void OutfitEditor::Render()
 		ImGui::OpenPopup("Clone Outfit");
 	ImGui::BeginSimpleNewModal("New Outfit", [this](const string &name)
 			{
+				if(GameData::Outfits().Find(name))
+					return;
+
 				auto *newOutfit = const_cast<Outfit *>(GameData::Outfits().Get(name));
 				newOutfit->name = name;
 				newOutfit->isDefined = true;
@@ -174,6 +177,9 @@ void OutfitEditor::Render()
 			});
 	ImGui::BeginSimpleRenameModal("Rename Outfit", [this](const string &name)
 			{
+				if(GameData::Outfits().Find(name))
+					return;
+
 				DeleteFromChanges();
 				editor.RenameObject(keyFor<Outfit>(), object->name, name);
 				GameData::Outfits().Rename(object->name, name);
@@ -183,6 +189,9 @@ void OutfitEditor::Render()
 			});
 	ImGui::BeginSimpleCloneModal("Clone Outfit", [this](const string &name)
 			{
+				if(GameData::Outfits().Find(name))
+					return;
+
 				auto *clone = const_cast<Outfit *>(GameData::Outfits().Get(name));
 				*clone = *object;
 				object = clone;

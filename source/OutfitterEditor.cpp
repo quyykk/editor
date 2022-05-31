@@ -142,6 +142,9 @@ void OutfitterEditor::Render()
 		ImGui::OpenPopup("Clone Outfitter");
 	ImGui::BeginSimpleNewModal("New Outfitter", [this](const string &name)
 			{
+				if(GameData::Outfitters().Find(name))
+					return;
+
 				auto *newOutfitter = const_cast<Sale<Outfit> *>(GameData::Outfitters().Get(name));
 				newOutfitter->name = name;
 				object = newOutfitter;
@@ -149,6 +152,9 @@ void OutfitterEditor::Render()
 			});
 	ImGui::BeginSimpleRenameModal("Rename Outfitter", [this](const string &name)
 			{
+				if(GameData::Outfitters().Find(name))
+					return;
+
 				DeleteFromChanges();
 				editor.RenameObject(keyFor<Sale<Outfit>>(), object->name, name);
 				GameData::Outfitters().Rename(object->name, name);
@@ -158,6 +164,9 @@ void OutfitterEditor::Render()
 			});
 	ImGui::BeginSimpleCloneModal("Clone Outfitter", [this](const string &name)
 			{
+				if(GameData::Outfitters().Find(name))
+					return;
+
 				auto *clone = const_cast<Sale<Outfit> *>(GameData::Outfitters().Get(name));
 				*clone = *object;
 				object = clone;

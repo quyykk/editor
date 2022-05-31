@@ -141,6 +141,9 @@ void ShipyardEditor::Render()
 		ImGui::OpenPopup("Clone Shipyard");
 	ImGui::BeginSimpleNewModal("New Shipyard", [this](const string &name)
 			{
+				if(GameData::Shipyards().Find(name))
+					return;
+
 				auto *newShipyard = const_cast<Sale<Ship> *>(GameData::Shipyards().Get(name));
 				newShipyard->name = name;
 				object = newShipyard;
@@ -148,6 +151,9 @@ void ShipyardEditor::Render()
 			});
 	ImGui::BeginSimpleRenameModal("Rename Shipyard", [this](const string &name)
 			{
+				if(GameData::Shipyards().Find(name))
+					return;
+
 				DeleteFromChanges();
 				editor.RenameObject(keyFor<Sale<Ship>>(), object->name, name);
 				GameData::Shipyards().Rename(object->name, name);
@@ -157,6 +163,9 @@ void ShipyardEditor::Render()
 			});
 	ImGui::BeginSimpleCloneModal("Clone Shipyard", [this](const string &name)
 			{
+				if(GameData::Shipyards().Find(name))
+					return;
+
 				auto *clone = const_cast<Sale<Ship> *>(GameData::Shipyards().Get(name));
 				*clone = *object;
 				object = clone;

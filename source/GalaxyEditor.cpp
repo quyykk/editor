@@ -150,6 +150,9 @@ void GalaxyEditor::Render()
 		ImGui::OpenPopup("Clone Galaxy");
 	ImGui::BeginSimpleNewModal("New Galaxy", [this](const string &name)
 			{
+				if(GameData::Galaxies().Find(name))
+					return;
+
 				auto *newGalaxy = const_cast<Galaxy *>(GameData::Galaxies().Get(name));
 				newGalaxy->name = name;
 				object = newGalaxy;
@@ -157,6 +160,9 @@ void GalaxyEditor::Render()
 			});
 	ImGui::BeginSimpleRenameModal("Rename Galaxy", [this](const string &name)
 			{
+				if(GameData::Galaxies().Find(name))
+					return;
+
 				DeleteFromChanges();
 				editor.RenameObject(keyFor<Galaxy>(), object->name, name);
 				GameData::Galaxies().Rename(object->name, name);
@@ -166,6 +172,9 @@ void GalaxyEditor::Render()
 			});
 	ImGui::BeginSimpleCloneModal("Clone Galaxy", [this](const string &name)
 			{
+				if(GameData::Galaxies().Find(name))
+					return;
+
 				auto *clone = const_cast<Galaxy *>(GameData::Galaxies().Get(name));
 				*clone = *object;
 				object = clone;

@@ -142,6 +142,9 @@ void GovernmentEditor::Render()
 		ImGui::OpenPopup("Clone Government");
 	ImGui::BeginSimpleNewModal("New Government", [this](const string &name)
 			{
+				if(GameData::Governments().Find(name))
+					return;
+
 				auto *newGov = const_cast<Government *>(GameData::Governments().Get(name));
 				newGov->name = name;
 				newGov->displayName = name;
@@ -150,6 +153,9 @@ void GovernmentEditor::Render()
 			});
 	ImGui::BeginSimpleRenameModal("Rename Government", [this](const string &name)
 			{
+				if(GameData::Governments().Find(name))
+					return;
+
 				DeleteFromChanges();
 				editor.RenameObject(keyFor<Government>(), object->TrueName(), name);
 				GameData::Governments().Rename(object->TrueName(), name);
@@ -160,6 +166,9 @@ void GovernmentEditor::Render()
 			});
 	ImGui::BeginSimpleCloneModal("Clone Government", [this](const string &name)
 			{
+				if(GameData::Governments().Find(name))
+					return;
+
 				auto *clone = const_cast<Government *>(GameData::Governments().Get(name));
 				*clone = *object;
 				object = clone;

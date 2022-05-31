@@ -178,6 +178,9 @@ void FleetEditor::Render()
 		ImGui::OpenPopup("Clone Fleet");
 	ImGui::BeginSimpleNewModal("New Fleet", [this](const string &name)
 			{
+				if(GameData::Fleets().Find(name))
+					return;
+
 				auto *newFleet = const_cast<Fleet *>(GameData::Fleets().Get(name));
 				newFleet->fleetName = name;
 				object = newFleet;
@@ -185,6 +188,9 @@ void FleetEditor::Render()
 			});
 	ImGui::BeginSimpleRenameModal("Rename Fleet", [this](const string &name)
 			{
+				if(GameData::Fleets().Find(name))
+					return;
+
 				DeleteFromChanges();
 				editor.RenameObject(keyFor<Fleet>(), object->fleetName, name);
 				GameData::Fleets().Rename(object->fleetName, name);
@@ -194,6 +200,9 @@ void FleetEditor::Render()
 			});
 	ImGui::BeginSimpleCloneModal("Clone Fleet", [this](const string &name)
 			{
+				if(GameData::Fleets().Find(name))
+					return;
+
 				auto *clone = const_cast<Fleet *>(GameData::Fleets().Get(name));
 				*clone = *object;
 				object = clone;

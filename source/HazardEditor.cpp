@@ -141,6 +141,9 @@ void HazardEditor::Render()
 		ImGui::OpenPopup("Clone Hazard");
 	ImGui::BeginSimpleNewModal("New Hazard", [this](const string &name)
 			{
+				if(GameData::Hazards().Find(name))
+					return;
+
 				auto *newHazard = const_cast<Hazard *>(GameData::Hazards().Get(name));
 				newHazard->name = name;
 				object = newHazard;
@@ -148,6 +151,9 @@ void HazardEditor::Render()
 			});
 	ImGui::BeginSimpleRenameModal("Rename Hazard", [this](const string &name)
 			{
+				if(GameData::Hazards().Find(name))
+					return;
+
 				DeleteFromChanges();
 				editor.RenameObject(keyFor<Hazard>(), object->name, name);
 				GameData::Hazards().Rename(object->name, name);
@@ -157,6 +163,9 @@ void HazardEditor::Render()
 			});
 	ImGui::BeginSimpleCloneModal("Clone Hazard", [this](const string &name)
 			{
+				if(GameData::Hazards().Find(name))
+					return;
+
 				auto *clone = const_cast<Hazard *>(GameData::Hazards().Get(name));
 				*clone = *object;
 				object = clone;
