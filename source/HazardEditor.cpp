@@ -246,7 +246,7 @@ void HazardEditor::RenderHazard()
 			SetDirty();
 		if(ImGui::InputDoubleEx("relative hull damage", &object->damage[Weapon::RELATIVE_HULL_DAMAGE]))
 			SetDirty();
-		if(ImGui::InputDoubleEx("relative hull damage", &object->damage[Weapon::RELATIVE_FUEL_DAMAGE]))
+		if(ImGui::InputDoubleEx("relative fuel damage", &object->damage[Weapon::RELATIVE_FUEL_DAMAGE]))
 			SetDirty();
 		if(ImGui::InputDoubleEx("relative heat damage", &object->damage[Weapon::RELATIVE_HEAT_DAMAGE]))
 			SetDirty();
