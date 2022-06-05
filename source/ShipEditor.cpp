@@ -261,6 +261,39 @@ void ShipEditor::RenderShip()
 	if(ImGui::InputSwizzle("swizzle", &object->customSwizzle, true))
 		SetDirty();
 
+	if(ImGui::TreeNode("licenses"))
+	{
+		int index = 0;
+		auto toRemove = object->baseAttributes.licenses.end();
+		for(auto it = object->baseAttributes.licenses.begin(); it != object->baseAttributes.licenses.end(); ++it)
+		{
+			ImGui::PushID(index++);
+			if(ImGui::InputText("##license", &*it, ImGuiInputTextFlags_EnterReturnsTrue))
+			{
+				if(it->empty())
+					toRemove = it;
+				SetDirty();
+			}
+			ImGui::PopID();
+		}
+		if(toRemove != object->baseAttributes.licenses.end())
+		{
+			object->attributes.licenses.erase(object->attributes.licenses.begin() + (toRemove - object->baseAttributes.licenses.begin()));
+			object->baseAttributes.licenses.erase(toRemove);
+		}
+		ImGui::Spacing();
+
+		static string addLicense;
+		if(ImGui::InputText("##license", &addLicense, ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			object->baseAttributes.licenses.push_back(addLicense);
+			object->attributes.licenses.push_back(std::move(addLicense));
+			SetDirty();
+		}
+		ImGui::TreePop();
+
+	}
+
 	if(ImGui::TreeNode("attributes"))
 	{
 		if(ImGui::BeginCombo("category", object->baseAttributes.Category().c_str()))
