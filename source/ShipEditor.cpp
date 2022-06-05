@@ -337,14 +337,6 @@ void ShipEditor::RenderShip()
 			RenderEffect("jump effect", object->baseAttributes.jumpEffects);
 			ImGui::TreePop();
 		}
-		if(ImGui::InputDoubleEx("blast radius", &object->baseAttributes.blastRadius))
-			SetDirty();
-		if(ImGui::InputDoubleEx("shield damage", &object->baseAttributes.damage[Weapon::SHIELD_DAMAGE]))
-			SetDirty();
-		if(ImGui::InputDoubleEx("hull damage", &object->baseAttributes.damage[Weapon::HULL_DAMAGE]))
-			SetDirty();
-		if(ImGui::InputDoubleEx("hit force", &object->baseAttributes.damage[Weapon::HIT_FORCE]))
-			SetDirty();
 		for(auto &it : object->baseAttributes.attributes)
 			if(it.second || ImGui::IsInputFocused(it.first))
 			{
@@ -369,6 +361,19 @@ void ShipEditor::RenderShip()
 			SetDirty();
 		}
 
+		ImGui::TreePop();
+	}
+
+	if(ImGui::TreeNode("explosion"))
+	{
+		if(ImGui::InputDoubleEx("blast radius", &object->baseAttributes.blastRadius))
+			SetDirty();
+		if(ImGui::InputDoubleEx("shield damage", &object->baseAttributes.damage[Weapon::SHIELD_DAMAGE]))
+			SetDirty();
+		if(ImGui::InputDoubleEx("hull damage", &object->baseAttributes.damage[Weapon::HULL_DAMAGE]))
+			SetDirty();
+		if(ImGui::InputDoubleEx("hit force", &object->baseAttributes.damage[Weapon::HIT_FORCE]))
+			SetDirty();
 		ImGui::TreePop();
 	}
 
