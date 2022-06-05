@@ -351,8 +351,8 @@ void ShipEditor::RenderShip()
 				value = it.second;
 				if(ImGui::InputDoubleEx(it.first, &value))
 				{
+					object->attributes.attributes[it.first] += value - it.second;
 					it.second = value;
-					object->attributes.attributes[it.first] = value;
 					SetDirty();
 				}
 			}
