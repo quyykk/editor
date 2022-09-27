@@ -1,3 +1,7 @@
+This project has been discontinued and has been replaced by https://github.com/quyykk/plugin-editor.
+
+---
+
 # Editor
 
 This is a proof of concept plugin editor for Endless Sky. It uses [Dear ImGui](https://github.com/ocornut/imgui) to render the UI on top of the game and as such it is technically a fork. Make sure to check out the [Wiki](https://github.com/quyykk/editor/wiki) for more information!
